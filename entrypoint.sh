@@ -36,6 +36,9 @@ mem_sum() {
 chown -R www.www /data/wwwroot
 [ -z "${MEM_LIMIT}" ] && mem_sum
 [ "$EXPOSE_PHP" != "On" ] && EXPOSE_PHP=Off
+
+[[ "$MEMCACHE" =~ ^[yY][eE][sS]$ ]] && echo 'extension=memcache.so' > ${INSTALL_DIR}/etc/php.d/ext-memcache.ini
+
 TIMEZONE=${TIMEZONE-Asia/Shanghai}
 POST_MAX_SIZE=${POST_MAX_SIZE-100M}
 UPLOAD_MAX_FILESIZE=${UPLOAD_MAX_FILESIZE-50M}

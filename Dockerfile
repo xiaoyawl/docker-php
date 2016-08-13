@@ -13,7 +13,7 @@ RUN set -x && \
 	apk --update --no-cache upgrade && \
 	apk --update --no-cache add build-base libxml2-dev openssl-dev curl-dev libjpeg-turbo-dev \
 		libpng-dev libmcrypt-dev icu-dev imap-dev freetype-dev gettext-dev \
-		libxslt-dev libxpm-dev && \
+		libxslt-dev libxpm-dev m4 autoconf && \
 	addgroup -g 400 -S www && \
 	adduser -u 400 -S -H -s /sbin/nologin -g 'PHP' -G www www && \
 	curl -Lk http://www.php.net/distributions/php-${VERSION}.tar.xz|tar xJ -C /tmp && \
@@ -34,6 +34,16 @@ RUN set -x && \
 	make install && \
 	[ ! -e "${INSTALL_DIR}/etc/php.d" ] && mkdir -p ${INSTALL_DIR}/etc/php.d && \
 	/bin/cp php.ini-production ${INSTALL_DIR}/etc/php.ini && \
+	curl -Lk http://pecl.php.net/get/memcache-3.0.8.tgz|tar xz -C ${TEMP_DIR} && \
+	cd ${TEMP_DIR}/memcache-3.0.8 && \
+	${INSTALL_DIR}/bin/phpize && \
+	./configure --with-php-config=${INSTALL_DIR}/bin/php-config && \
+	make -j $(awk '/processor/{i++}END{print i}' /proc/cpuinfo) && \
+	make install && \
+	#curl -Lk https://launchpad.net/libmemcached/1.0/1.0.18/+download/libmemcached-1.0.18.tar.gz|tar xz -C ${TEMP_DIR} && \
+	#cd ${TEMP_DIR}/libmemcached-1.0.18 && \
+	#curl -Lk http://pecl.php.net/get/memcached-2.2.0.tgz|tar xz -C ${TEMP_DIR} && \
+	#cd ${TEMP_DIR}/memcached-2.2.0 && \
 	apk del --no-cache build-base tar wget curl git && \
 	rm -rf /var/cache/apk/* /tmp/*
 
