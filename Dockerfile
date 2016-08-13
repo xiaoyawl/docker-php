@@ -10,7 +10,7 @@ ENV INSTALL_DIR=/usr/local/php \
 	TEMP_DIR=/tmp/php
 
 RUN set -x && \
-	[ ! -d ] && mkdir -p ${TEMP_DIR} && \
+	[ ! -d ${TEMP_DIR} ] && mkdir -p ${TEMP_DIR} && \
 	apk --update --no-cache upgrade && \
 	apk --update --no-cache add build-base libxml2-dev openssl-dev curl-dev libjpeg-turbo-dev \
 		libpng-dev libmcrypt-dev icu-dev imap-dev freetype-dev gettext-dev \
