@@ -37,7 +37,13 @@ chown -R www.www /data/wwwroot
 [ -z "${MEM_LIMIT}" ] && mem_sum
 [ "$EXPOSE_PHP" != "On" ] && EXPOSE_PHP=Off
 
-[[ "$MEMCACHE" =~ ^[yY][eE][sS]$ ]] && echo 'extension=memcache.so' > ${INSTALL_DIR}/etc/php.d/ext-memcache.ini
+if [[ "$MEMCACHE" =~ ^[yY][eE][sS]$ ]]; then
+	echo 'extension=memcache.so' > ${INSTALL_DIR}/etc/php.d/ext-memcache.ini
+	cat > ${INSTALL_DIR}/etc/php.d/ext-memcached.ini <<-EOF
+		extension=memcached.so
+		memcached.use_sasl=1
+	EOF
+fi
 
 TIMEZONE=${TIMEZONE-Asia/Shanghai}
 POST_MAX_SIZE=${POST_MAX_SIZE-100M}
