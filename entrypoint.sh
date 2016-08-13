@@ -45,6 +45,13 @@ if [[ "$MEMCACHE" =~ ^[yY][eE][sS]$ ]]; then
 	EOF
 fi
 
+if [[ "$REDIS" =~ ^[yY][eE][sS]$ ]]; then
+	cat > ${INSTALL_DIR}/etc/php.d/ext-redis.ini <<-EOF
+		[redis]
+		extension=redis.so
+	EOF
+fi
+
 TIMEZONE=${TIMEZONE-Asia/Shanghai}
 POST_MAX_SIZE=${POST_MAX_SIZE-100M}
 UPLOAD_MAX_FILESIZE=${UPLOAD_MAX_FILESIZE-50M}
