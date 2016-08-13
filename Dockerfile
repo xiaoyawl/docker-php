@@ -66,7 +66,7 @@ RUN set -x && \
 	make -j $(awk '/processor/{i++}END{print i}' /proc/cpuinfo) && \
 	make install && \
 #Install redis-2.2.8
-	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/redis-2.2.8.tgz
+	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/redis-2.2.8.tgz && \
 #Uninstalll Build software an clean OS
 	apk del --no-cache build-base tar wget curl git m4 autoconf && \
 	rm -rf /var/cache/apk/* /tmp/*
