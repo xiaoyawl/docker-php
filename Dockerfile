@@ -16,7 +16,7 @@ RUN set -x && \
 	apk --update --no-cache upgrade && \
 	apk --update --no-cache add build-base libxml2-dev openssl-dev curl-dev libjpeg-turbo-dev libpng-dev libmcrypt-dev icu-dev \
 		#imap-dev freetype-dev gettext-dev libxslt-dev libxpm-dev m4 autoconf libevent-dev && \
-		imap-dev freetype-dev gettext-dev libxslt-dev libxpm-dev && \
+		imap-dev freetype-dev gettext-dev libxslt-dev libxpm-dev m4 autoconf && \
 #Add run php user&group
 	addgroup -g 400 -S www && \
 	adduser -u 400 -S -H -s /sbin/nologin -g 'PHP' -G www www && \
@@ -68,11 +68,12 @@ RUN set -x && \
 #Install redis-2.2.8
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/redis-2.2.8.tgz
 #Uninstalll Build software an clean OS
-	apk del --no-cache build-base tar wget curl git && \
+	apk del --no-cache build-base tar wget curl git m4 autoconf && \
 	rm -rf /var/cache/apk/* /tmp/*
 
 ENV PATH=${INSTALL_DIR}/bin:$PATH
-ENV PATH=${INSTALL_DIR}/sbin:$PATH
+ENV PATH=${INSTALL_DIR}/sbin:$PATH \
+	TERM=linux
 
 ADD entrypoint.sh /entrypoint.sh
 ADD php-fpm.conf ${INSTALL_DIR}/etc/php-fpm.conf
