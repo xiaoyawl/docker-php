@@ -16,7 +16,7 @@ RUN set -x && \
 	apk --update --no-cache upgrade && \
 	apk --update --no-cache add build-base libxml2-dev openssl-dev curl-dev libjpeg-turbo-dev libpng-dev libmcrypt-dev icu-dev \
 		#imap-dev freetype-dev gettext-dev libxslt-dev libxpm-dev m4 autoconf libevent-dev && \
-		imap-dev freetype-dev gettext-dev libxslt-dev libxpm-dev m4 autoconf && \
+		imap-dev freetype-dev gettext-dev libxslt-dev libxpm-dev m4 autoconf libaio-dev git linux-headers && \
 #Add run php user&group
 	addgroup -g 400 -S www && \
 	adduser -u 400 -S -H -s /sbin/nologin -g 'PHP' -G www www && \
@@ -36,25 +36,6 @@ RUN set -x && \
 	make install && \
 	[ ! -e "${INSTALL_DIR}/etc/php.d" ] && mkdir -p ${INSTALL_DIR}/etc/php.d && \
 	/bin/cp php.ini-production ${INSTALL_DIR}/etc/php.ini && \
-#Install zendopcache-7.0.5
-#	curl -Lk https://pecl.php.net/get/zendopcache-7.0.5.tgz|tar xz -C ${TEMP_DIR} && \
-#	cd ${TEMP_DIR}/zendopcache-7.0.5 && \
-#	${INSTALL_DIR}/bin/phpize && \
-#	./configure --with-php-config=${INSTALL_DIR}/bin/php-config && \
-#Install memcached-1.4.28
-#	curl -Lk http://www.memcached.org/files/memcached-1.4.28.tar.gz|tar xz -C ${TEMP_DIR} && \
-#	cd ${TEMP_DIR}/memcached-1.4.28 && \
-#	adduser -S -s /sbin/nologin -H memcached && \
-#	./configure --prefix=/usr/local/memcached && \
-#	make -j $(awk '/processor/{i++}END{print i}' /proc/cpuinfo) && \
-#	make install && \
-#Install memcache-3.0.8
-#	curl -Lk http://pecl.php.net/get/memcache-3.0.8.tgz|tar xz -C ${TEMP_DIR} && \
-#	cd ${TEMP_DIR}/memcache-3.0.8 && \
-#	${INSTALL_DIR}/bin/phpize && \
-#	./configure --with-php-config=${INSTALL_DIR}/bin/php-config && \
-#	make -j $(awk '/processor/{i++}END{print i}' /proc/cpuinfo) && \
-#	make install && \
 #Install libmemcached memcache-3.0.8
 	apk add --no-cache php5-memcache libmemcached-dev && \
 	mv /usr/lib/php5/modules/memcache.so ${INSTALL_DIR}/lib/php/20131226/memcache.so && \
@@ -67,8 +48,10 @@ RUN set -x && \
 	make install && \
 #Install redis-2.2.8
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/redis-2.2.8.tgz && \
+#Install swoole
+	${INSTALL_DIR}/bin/pecl install swoole && \
 #Uninstalll Build software an clean OS
-	apk del --no-cache build-base tar wget curl git m4 autoconf && \
+	apk del --no-cache build-base tar wget curl git m4 autoconf libaio-dev git linux-headers && \
 	rm -rf /var/cache/apk/* /tmp/*
 
 ENV PATH=${INSTALL_DIR}/bin:$PATH

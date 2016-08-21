@@ -52,6 +52,10 @@ if [[ "$REDIS" =~ ^[yY][eE][sS]$ ]]; then
 	EOF
 fi
 
+if [[ "${SWOOLE}" =~ ^[yY][eE][sS]$ ]]; then
+	echo 'extension=swoole.so' > ${INSTALL_DIR}/etc/php.d/ext-swoole.ini
+fi
+
 TIMEZONE=${TIMEZONE-Asia/Shanghai}
 POST_MAX_SIZE=${POST_MAX_SIZE-100M}
 UPLOAD_MAX_FILESIZE=${UPLOAD_MAX_FILESIZE-50M}
