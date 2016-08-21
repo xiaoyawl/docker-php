@@ -5,6 +5,7 @@ MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
 ARG VERSION=${VERSION:-5.6.24}
 ARG SHA256=${SHA256:-ed7c38c6dac539ade62e08118258f4dac0c49beca04d8603bee4e0ea6ca8250b}
+ARG SWOOLE_VERSION=${SWOOLE_VERSION:-1.8.9}
 
 ENV INSTALL_DIR=/usr/local/php \
 	TEMP_DIR=/tmp/php
@@ -49,7 +50,7 @@ RUN set -x && \
 #Install redis-2.2.8
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/redis-2.2.8.tgz && \
 #Install swoole
-	${INSTALL_DIR}/bin/pecl install swoole && \
+	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/swoole-${SWOOLE_VERSION}.tgz && \
 #Uninstalll Build software an clean OS
 	apk del --no-cache build-base tar wget curl git m4 autoconf libaio-dev git linux-headers && \
 	rm -rf /var/cache/apk/* /tmp/*
