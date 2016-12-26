@@ -3,26 +3,36 @@ FROM benyoo/alpine:3.4.20160812
 
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
-ARG VERSION=${VERSION:-5.6.24}
-ARG SHA256=${SHA256:-ed7c38c6dac539ade62e08118258f4dac0c49beca04d8603bee4e0ea6ca8250b}
+ARG VERSION=${VERSION:-5.6.29}
+ARG SHA256=${SHA256:-0ff352a433f73e2c82b0d5b283b600402518569bf72a74e247f356dacbf322a7}
 ARG SWOOLE_VERSION=${SWOOLE_VERSION:-1.8.9}
 
 ENV INSTALL_DIR=/usr/local/php \
 	TEMP_DIR=/tmp/php
 
 RUN set -x && \
+# Change Mirrors
+	LOCAL_MIRRORS=${LOCAL_MIRRORS:-http://mirrors.ds.com/alpine} && \
+	NET_MIRRORS=${NET_MIRRORS:-http://dl-cdn.alpinelinux.org/alpine} && \
+	LOCAL_MIRRORS_HTTP_CODE=$(curl -LI -m 10 -o /dev/null -sw %{http_code} ${LOCAL_MIRRORS}) && \
+	if [ "${LOCAL_MIRRORS_HTTP_CODE}" == "200" ]; then \
+		echo -e "${LOCAL_MIRRORS}/v3.4/main\n${LOCAL_MIRRORS}/v3.4/community" > /etc/apk/repositories; else \
+		echo -e "${NET_MIRRORS}/v3.4/main\n${NET_MIRRORS}/v3.4/community" > /etc/apk/repositories; fi && \
 #Mkdir TEMP_DIR
 	[ ! -d ${TEMP_DIR} ] && mkdir -p ${TEMP_DIR} && \
 #Upgrade OS and install 
 	apk --update --no-cache upgrade && \
 	apk --update --no-cache add build-base libxml2-dev openssl-dev curl-dev libjpeg-turbo-dev libpng-dev libmcrypt-dev icu-dev \
 		#imap-dev freetype-dev gettext-dev libxslt-dev libxpm-dev m4 autoconf libevent-dev && \
-		imap-dev freetype-dev gettext-dev libxslt-dev libxpm-dev m4 autoconf libaio-dev git linux-headers && \
+		imap-dev freetype-dev gettext-dev libxslt-dev libxpm-dev m4 autoconf libaio-dev git linux-headers cyrus-sasl-dev libsasl tar xz && \
 #Add run php user&group
 	addgroup -g 400 -S www && \
-	adduser -u 400 -S -H -s /sbin/nologin -g 'PHP' -G www www && \
+	adduser -u 400 -S -H -s /sbin/nologin -g 'PHP' -G www www
+RUN set -x && \
+	
 #Install PHP
-	curl -Lk http://www.php.net/distributions/php-${VERSION}.tar.xz|tar xJ -C ${TEMP_DIR} && \
+	#curl -Lk http://www.php.net/distributions/php-${VERSION}.tar.xz|tar xJ -C ${TEMP_DIR} && \
+	curl -Lk http://ftp.ntu.edu.tw/php/distributions/php-${VERSION}.tar.xz | tar xJ -C ${TEMP_DIR} && \
 	cd ${TEMP_DIR}/php-${VERSION}/ && \
 	./configure --prefix=${INSTALL_DIR} --with-config-file-path=${INSTALL_DIR}/etc \
 		--with-config-file-scan-dir=${INSTALL_DIR}/etc/php.d --with-fpm-user=php --with-fpm-group=php --enable-fpm --enable-opcache \
@@ -51,6 +61,8 @@ RUN set -x && \
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/redis-2.2.8.tgz && \
 #Install swoole
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/swoole-${SWOOLE_VERSION}.tgz && \
+#Install xdebug
+	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/xdebug-2.5.0.tgz && \
 #Uninstalll Build software an clean OS
 	apk del --no-cache build-base tar wget curl git m4 autoconf libaio-dev git linux-headers && \
 	rm -rf /var/cache/apk/* /tmp/*
@@ -59,9 +71,8 @@ ENV PATH=${INSTALL_DIR}/bin:$PATH
 ENV PATH=${INSTALL_DIR}/sbin:$PATH \
 	TERM=linux
 
-ADD entrypoint.sh /entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
 ADD php-fpm.conf ${INSTALL_DIR}/etc/php-fpm.conf
-RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 

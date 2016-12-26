@@ -20,6 +20,10 @@ curl -Lks https://get.docker.com/ | sh
 | PHP_FPM_CONF | ${INSTALL_DIR}/etc/php-fpm.conf | PHP-FPM 配置文件路径 |
 | PHP_FPM_PID | ${INSTALL_DIR}/var/run/php-fpm.pid | PHP-PID 路径 |
 | PHP_DISABLE_FUNCTIONS | 见注1 | PHP disable_functions 值 |
+| DISPLAY_ERROES | Off | 控制PHP错误是否输出 |
+| XDEBUG | disable | 控制启用Xdebug |
+| XDEBUG_REMOTE_HOST | localhost | 设定Xdebug的监听地址 |
+| XDEBUG_REMOTE_PORT | 9900 | 设定Xdebug的监听端口 |
 
 ```bash
 # 注1: PHP_DISABLE_FUNCTIONS=passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server,fsocket,popen
