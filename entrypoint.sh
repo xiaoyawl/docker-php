@@ -84,6 +84,7 @@ if [[ "#{XDEBUG}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
 		#xdebug.trace_output_name
 		#函数调用跟踪信息输出文件命名规则，默认为trace.%c
 	EOF
+fi
 
 TIMEZONE=${TIMEZONE-Asia/Shanghai}
 POST_MAX_SIZE=${POST_MAX_SIZE-100M}
