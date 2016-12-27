@@ -55,6 +55,8 @@ fi
 if [[ "${SWOOLE}" =~ ^[yY][eE][sS]$ ]]; then
 	echo 'extension=swoole.so' > ${INSTALL_DIR}/etc/php.d/ext-swoole.ini
 fi
+
+XDEBUG_DEFAULT_CONF=${XDEBUG_DEFAULT_CONF:-enable}
 XDEBUG=${XDEBUG:-disable}
 XDEBUG_REMOTE_HOST=${XDEBUG_REMOTE_HOST:-localhost}
 XDEBUG_REMOTE_PORT=${XDEBUG_REMOTE_PORT:-9900}
@@ -104,27 +106,40 @@ cat > ${INSTALL_DIR}/etc/php.d/ext-opcache.ini <<-EOF
 EOF
 
 if [[ "${XDEBUG}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
-	cat >> ${INSTALL_DIR}/etc/php.d/ext-xdebug.ini <<-EOF
-		zend_extension="xdebug.so"
-		xdebug.remote_enable = on
-		xdebug.remote_handler = "dbgp"
-		;官方設明文件中有提到，從xdebug 2.1以後的版本只支援"dbgp"這個協定
-		xdebug.remote_host = "${XDEBUG_REMOTE_HOST}"
-		xdebug.remote_port = $XDEBUG_REMOTE_PORT
-		xdebug.remote_connect_back=1
-		xdebug.auto_trace = on
-		xdebug.auto_profile = on
-		xdebug.collect_params = on
-		xdebug.collect_return = on
-		xdebug.profiler_enable = on
-		xdebug.trace_output_dir = "/tmp"
-		xdebug.profiler_output_dir = "/tmp"
-		xdebug.dump.GET = *
-		xdebug.dump.POST = *
-		xdebug.dump.COOKIE = *
-		xdebug.dump.SESSION = *
-		xdebug.var_display_max_data = 4056
-		xdebug.var_display_max_depth = 5
-	EOF
+	if [[ "${XDEBUG_DEFAULT_CONF}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
+		cat >> ${INSTALL_DIR}/etc/php.d/ext-xdebug.ini <<-EOF
+			zend_extension="xdebug.so"
+			xdebug.remote_enable=on
+			;远程调试开关
+			xdebug.remote_handler="dbgp"
+			;官方文档说从xdebug2.1以后的版本只支持dbgp这个协议
+			xdebug.remote_host = "${XDEBUG_REMOTE_HOST}"
+			;远程调试xdebug回连的主机ip，如果开启了remote_connect_back，则该配置无效
+			xdebug.remote_port = $XDEBUG_REMOTE_PORT
+			;远程调试回连的port，默认即为9000，如果有端口冲突，可以修改，对应ide的debug配置里面也要同步修改
+			xdebug.remote_connect_back=1
+			;是否回连，如果开启该选项，那么xdebug回连的ip会是发起调试请求对应的ip
+			xdebug.auto_trace=on
+			;当此设置被设置为on，函数调用跟踪将要启用的脚本运行之前。这使得有可能跟踪代码中的auto_prepend_file。
+			xdebug.auto_profile=on
+			xdebug.collect_params=on
+			xdebug.collect_return = on
+			xdebug.profiler_enable = on
+			xdebug.trace_output_dir = "/tmp"
+			xdebug.profiler_output_dir = "/tmp"
+			xdebug.dump.GET = *
+			xdebug.dump.POST = *
+			xdebug.dump.COOKIE = *
+			xdebug.dump.SESSION = *
+			xdebug.var_display_max_data = 4056
+			xdebug.var_display_max_depth = 5
+			;xdebug.idekey=netbeans
+			;调试使用的关键字，发起IDE上的idekey应该和这里配置的idekey一致，不一致则无效
+		EOF
+	elif [[ ! -f ${INSTALL_DIR}/etc/php.d/ext-xdebug.ini ]]; then
+		echo >&2 "error:  missing Can't found ${INSTALL_DIR}/etc/php.d/ext-xdebug.ini"
+		echo >&2 "Did you forget to add -v /xdebug_config_file:${INSTALL_DIR}/etc/php.d/ext-xdebug.ini"
+		exit 1
+	fi
 fi
 exec "$@"

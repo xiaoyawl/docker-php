@@ -16,7 +16,7 @@ curl -Lks https://get.docker.com/ | sh
 | TIMEZONE | Asia/Shanghai | PHP 时区 |
 | POST_MAX_SIZE | 100M | PHP post_max_size 值 |
 | UPLOAD_MAX_FILESIZE | 50M | PHP upload_max_filesize 值 |
-| MAX_EXECUTION_TIME | 5 | PHP max_execution_time 值 |
+| MAX_EXECUTION_TIME | 5 | PHP脚本执行最大超时时间 |
 | PHP_FPM_CONF | ${INSTALL_DIR}/etc/php-fpm.conf | PHP-FPM 配置文件路径 |
 | PHP_FPM_PID | ${INSTALL_DIR}/var/run/php-fpm.pid | PHP-PID 路径 |
 | PHP_DISABLE_FUNCTIONS | 见注1 | PHP disable_functions 值 |
@@ -24,6 +24,7 @@ curl -Lks https://get.docker.com/ | sh
 | XDEBUG | disable | 控制启用Xdebug |
 | XDEBUG_REMOTE_HOST | localhost | 设定Xdebug的监听地址 |
 | XDEBUG_REMOTE_PORT | 9900 | 设定Xdebug的监听端口 |
+| XDEBUG_DEFAULT_CONF | enable | 默认使用默认的Xdebug的配置文件 |
 
 ```bash
 # 注1: PHP_DISABLE_FUNCTIONS=passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server,fsocket,popen
