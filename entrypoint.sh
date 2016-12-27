@@ -59,32 +59,6 @@ XDEBUG=${XDEBUG:-disable}
 XDEBUG_REMOTE_HOST=${XDEBUG_REMOTE_HOST:-localhost}
 XDEBUG_REMOTE_PORT=${XDEBUG_REMOTE_PORT:-9900}
 
-if [[ "#{XDEBUG}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
-	cat >> ${INSTALL_DIR}/etc/php.ini <<-EOF
-
-		xdebug.remote_handler = "dbgp"
-		#官方設明文件中有提到，從xdebug 2.1以後的版本只支援"dbgp"這個協定
-		xdebug.remote_host = "${XDEBUG_REMOTE_HOST}"
-		xdebug.remote_port = $XDEBUG_REMOTE_PORT
-		zend_extension="xdebug.so"
-		xdebug.auto_trace = 1
-		#是否允许Xdebug跟踪函数调用，跟踪信息以文件形式存储，默认值为0
-		collect_params = 1
-		#是否允许Xdebug跟踪函数参数，默认值为0
-		xdebug.collect_return = 1
-		#是否允许Xdebug跟踪函数返回值，默认值为0
-		xdebug.profiler_enable = 1
-		#打开xdebug的性能分析器，以文件形式存储，这项配置是不能以ini_set()函数配置的，默认值为0
-		#xdebug.profiler_output_dir
-		#性能分析文件的存放位置，默认值为/tmp
-		#xdebug.profiler_output_name
-		#性能分析文件的命名规则，默认值为cachegrind.out.%p
-		#xdebug.trace_output_dir
-		#函数调用跟踪信息输出文件目录，默认值为/tmp
-		#xdebug.trace_output_name
-		#函数调用跟踪信息输出文件命名规则，默认为trace.%c
-	EOF
-fi
 
 TIMEZONE=${TIMEZONE-Asia/Shanghai}
 POST_MAX_SIZE=${POST_MAX_SIZE-100M}
@@ -129,4 +103,28 @@ cat > ${INSTALL_DIR}/etc/php.d/ext-opcache.ini <<-EOF
 	;opcache.optimization_level=0
 EOF
 
+if [[ "${XDEBUG}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
+	cat >> ${INSTALL_DIR}/etc/php.d/ext-xdebug.ini <<-EOF
+		zend_extension="xdebug.so"
+		xdebug.remote_enable = on
+		xdebug.remote_handler = "dbgp"
+		;官方設明文件中有提到，從xdebug 2.1以後的版本只支援"dbgp"這個協定
+		xdebug.remote_host = "${XDEBUG_REMOTE_HOST}"
+		xdebug.remote_port = $XDEBUG_REMOTE_PORT
+		xdebug.remote_connect_back=1
+		xdebug.auto_trace = on
+		xdebug.auto_profile = on
+		xdebug.collect_params = on
+		xdebug.collect_return = on
+		xdebug.profiler_enable = on
+		xdebug.trace_output_dir = "/tmp"
+		xdebug.profiler_output_dir = "/tmp"
+		xdebug.dump.GET = *
+		xdebug.dump.POST = *
+		xdebug.dump.COOKIE = *
+		xdebug.dump.SESSION = *
+		xdebug.var_display_max_data = 4056
+		xdebug.var_display_max_depth = 5
+	EOF
+fi
 exec "$@"
