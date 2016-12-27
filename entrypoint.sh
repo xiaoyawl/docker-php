@@ -56,6 +56,8 @@ if [[ "${SWOOLE}" =~ ^[yY][eE][sS]$ ]]; then
 	echo 'extension=swoole.so' > ${INSTALL_DIR}/etc/php.d/ext-swoole.ini
 fi
 
+OPCACHE=${OPCACHE:-enable}
+
 XDEBUG_DEFAULT_CONF=${XDEBUG_DEFAULT_CONF:-enable}
 XDEBUG=${XDEBUG:-disable}
 XDEBUG_REMOTE_HOST=${XDEBUG_REMOTE_HOST:-localhost}
@@ -91,19 +93,21 @@ sed -i "s@^disable_functions.*@disable_functions = ${PHP_DISABLE_FUNCTIONS}@" ${
 sed -i "s@^;sendmail_path.*@sendmail_path = /usr/sbin/sendmail -t -i@" ${INSTALL_DIR}/etc/php.ini
 sed -i "s@^display_errors.*@display_errors = ${DISPLAY_ERROES}@" ${INSTALL_DIR}/etc/php.ini
 
-cat > ${INSTALL_DIR}/etc/php.d/ext-opcache.ini <<-EOF
-	[opcache]
-	zend_extension=opcache.so
-	opcache.enable=1
-	opcache.memory_consumption=$MEM_LIMIT
-	opcache.interned_strings_buffer=8
-	opcache.max_accelerated_files=4000
-	opcache.revalidate_freq=60
-	opcache.save_comments=0
-	opcache.fast_shutdown=1
-	opcache.enable_cli=1
-	;opcache.optimization_level=0
-EOF
+if [[ "${OPCACHE}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
+	cat > ${INSTALL_DIR}/etc/php.d/ext-opcache.ini <<-EOF
+		[opcache]
+		zend_extension=opcache.so
+		opcache.enable=1
+		opcache.memory_consumption=$MEM_LIMIT
+		opcache.interned_strings_buffer=8
+		opcache.max_accelerated_files=4000
+		opcache.revalidate_freq=60
+		opcache.save_comments=0
+		opcache.fast_shutdown=1
+		opcache.enable_cli=1
+		;opcache.optimization_level=0
+	EOF
+fi
 
 if [[ "${XDEBUG}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
 	if [[ "${XDEBUG_DEFAULT_CONF}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
@@ -142,4 +146,5 @@ if [[ "${XDEBUG}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
 		exit 1
 	fi
 fi
+
 exec "$@"

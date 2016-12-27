@@ -27,12 +27,10 @@ RUN set -x && \
 		imap-dev freetype-dev gettext-dev libxslt-dev libxpm-dev m4 autoconf libaio-dev git linux-headers cyrus-sasl-dev libsasl tar xz && \
 #Add run php user&group
 	addgroup -g 400 -S www && \
-	adduser -u 400 -S -H -s /sbin/nologin -g 'PHP' -G www www
-RUN set -x && \
-	
+	adduser -u 400 -S -H -s /sbin/nologin -g 'PHP' -G www www && \
 #Install PHP
-	#curl -Lk http://www.php.net/distributions/php-${VERSION}.tar.xz|tar xJ -C ${TEMP_DIR} && \
-	curl -Lk http://ftp.ntu.edu.tw/php/distributions/php-${VERSION}.tar.xz | tar xJ -C ${TEMP_DIR} && \
+	curl -Lk http://www.php.net/distributions/php-${VERSION}.tar.xz|tar xJ -C ${TEMP_DIR} && \
+	#curl -Lk http://ftp.ntu.edu.tw/php/distributions/php-${VERSION}.tar.xz | tar xJ -C ${TEMP_DIR} && \
 	cd ${TEMP_DIR}/php-${VERSION}/ && \
 	./configure --prefix=${INSTALL_DIR} --with-config-file-path=${INSTALL_DIR}/etc \
 		--with-config-file-scan-dir=${INSTALL_DIR}/etc/php.d --with-fpm-user=php --with-fpm-group=php --enable-fpm --enable-opcache \
@@ -43,7 +41,7 @@ RUN set -x && \
 		--with-xmlrpc --enable-ftp --enable-intl --with-xsl --with-gettext --enable-zip --enable-soap --disable-ipv6 --disable-debug \
 		--with-layout=GNU --with-pic --enable-cli --with-xpm-dir --enable-shared --with-imap --enable-memcache && \
 		#--enable-cgi
-	make -j $(awk '/processor/{i++}END{print i}' /proc/cpuinfo) && \
+	make -j$(getconf _NPROCESSORS_ONLN) && \
 	make install && \
 	[ ! -e "${INSTALL_DIR}/etc/php.d" ] && mkdir -p ${INSTALL_DIR}/etc/php.d && \
 	/bin/cp php.ini-production ${INSTALL_DIR}/etc/php.ini && \
