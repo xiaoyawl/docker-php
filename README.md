@@ -21,6 +21,7 @@ curl -Lks https://get.docker.com/ | sh
 | PHP_FPM_PID | ${INSTALL_DIR}/var/run/php-fpm.pid | PHP-PID 路径 |
 | PHP_DISABLE_FUNCTIONS | 见注1 | PHP disable_functions 值 |
 | DISPLAY_ERROES | Off | 控制PHP错误是否输出 |
+| OPCACHE | enable | 默认启用opcache |
 | XDEBUG | disable | 控制启用Xdebug |
 | XDEBUG_REMOTE_HOST | localhost | 设定Xdebug的监听地址 |
 | XDEBUG_REMOTE_PORT | 9900 | 设定Xdebug的监听端口 |
