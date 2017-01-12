@@ -32,7 +32,7 @@ RUN set -xe && \
 #Build PHP
 	export CFLAGS="$PHP_CFLAGS" CPPFLAGS="$PHP_CPPFLAGS" LDFLAGS="$PHP_LDFLAGS" && \
 	cd ${TEMP_DIR} && \
-	curl -Lk https://secure.php.net/get/php-${PHP_VERSION}.tar.xz/from/this/mirror | tar xJ -C ${TEMP_DIR} --strip-components=1 && \
+	curl -Lk "${PHP_URL}" | tar xJ -C ${TEMP_DIR} --strip-components=1 && \
 	./configure \
 		--prefix=${INSTALL_DIR} --with-config-file-path=${PHP_INI_DIR} \
 		--with-config-file-scan-dir=${PHP_INI_DIR}/php.d \
