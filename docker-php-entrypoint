@@ -13,7 +13,6 @@ set -e
 
 [ -d /data/wwwroot ] || mkdir -p /data/wwwroot
 [[ ! "$NO_CHOWN" =~ ^[yY][eE][sS]$ ]] && chown -R www.www /data/wwwroot
-[ -z "${MEM_LIMIT}" ] && mem_sum
 [ "$EXPOSE_PHP" != "On" ] && EXPOSE_PHP=Off
 
 OPCACHE=${OPCACHE:-enable}
@@ -57,6 +56,7 @@ mem_sum() {
 	fi
 }
 
+[ -z "${MEM_LIMIT}" ] && mem_sum
 set -- "$@" -F
 set -- "$@" -y ${PHP_FPM_CONF}
 set -- "$@" --pid ${PHP_FPM_PID}
