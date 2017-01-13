@@ -8,35 +8,8 @@
 #########################################################################
 
 set -e
-unset PHP_INI_DIR PHP_ASC_URL TEMP_DIR PHP_CFLAGS PHP_MD5 PHPIZE_DEPS PHP_URL PHP_LDFLAGS GPG_KEYS PHP_CPPFLAGS PHP_SHA256 PHP_EXTRA_CONFIGURE_ARGS
-# first arg is `-f` or `--some-option`
-#if [ "${1#-}" != "$1" ]; then
-#	set -- php-fpm "$@"
-#fi
-
-#[ "${1:0:1}" = '-' ] && set -- php-fpm "$@"
+#unset PHP_INI_DIR PHP_ASC_URL TEMP_DIR PHP_CFLAGS PHP_MD5 PHPIZE_DEPS PHP_URL PHP_LDFLAGS GPG_KEYS PHP_CPPFLAGS PHP_SHA256 PHP_EXTRA_CONFIGURE_ARGS
 [[ "${1#-}" != "$1" ]] && set -- php-fpm "$@"
-
-mem_sum() {
-	Mem=`free -m | awk '/Mem:/{print $2}'`
-	Swap=`free -m | awk '/Swap:/{print $2}'`
-
-	if [ $Mem -le 640 ];then
-		MEM_LIMIT=64
-	elif [ $Mem -gt 640 -a $Mem -le 1280 ];then
-		MEM_LIMIT=128
-	elif [ $Mem -gt 1280 -a $Mem -le 2500 ];then
-		MEM_LIMIT=192
-	elif [ $Mem -gt 2500 -a $Mem -le 3500 ];then
-		MEM_LIMIT=256
-	elif [ $Mem -gt 3500 -a $Mem -le 4500 ];then
-		MEM_LIMIT=320
-	elif [ $Mem -gt 4500 -a $Mem -le 8000 ];then
-		MEM_LIMIT=384
-	elif [ $Mem -gt 8000 ];then
-		MEM_LIMIT=448
-	fi
-}
 
 [ -d /data/wwwroot ] || mkdir -p /data/wwwroot
 [[ ! "$NO_CHOWN" =~ ^[yY][eE][sS]$ ]] && chown -R www.www /data/wwwroot
@@ -62,6 +35,27 @@ PHP_FPM_CONF=${PHP_FPM_CONF-${INSTALL_DIR}/etc/php-fpm.conf}
 PHP_FPM_PID=${PHP_FPM_PID-${INSTALL_DIR}/var/run/php-fpm.pid}
 PHP_DISABLE_FUNCTIONS=${PHP_DISABLE_FUNCTIONS:-passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server,fsocket,popen}
 DISPLAY_ERROES=${DISPLAY_ERROES:-Off}
+
+mem_sum() {
+	Mem=`free -m | awk '/Mem:/{print $2}'`
+	Swap=`free -m | awk '/Swap:/{print $2}'`
+
+	if [ $Mem -le 640 ];then
+		MEM_LIMIT=64
+	elif [ $Mem -gt 640 -a $Mem -le 1280 ];then
+		MEM_LIMIT=128
+	elif [ $Mem -gt 1280 -a $Mem -le 2500 ];then
+		MEM_LIMIT=192
+	elif [ $Mem -gt 2500 -a $Mem -le 3500 ];then
+		MEM_LIMIT=256
+	elif [ $Mem -gt 3500 -a $Mem -le 4500 ];then
+		MEM_LIMIT=320
+	elif [ $Mem -gt 4500 -a $Mem -le 8000 ];then
+		MEM_LIMIT=384
+	elif [ $Mem -gt 8000 ];then
+		MEM_LIMIT=448
+	fi
+}
 
 set -- "$@" -F
 set -- "$@" -y ${PHP_FPM_CONF}
@@ -107,7 +101,7 @@ fi
 
 if [[ "$MEMCACHE" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	echo 'extension=memcache.so' > ${INSTALL_DIR}/etc/php.d/10-memcache.ini
-	cat > ${INSTALL_DIR}/etc/php.d/ext-memcached.ini <<-EOF
+	cat > ${INSTALL_DIR}/etc/php.d/10-memcached.ini <<-EOF
 		[memcached]
 		extension=memcached.so
 		memcached.use_sasl=1
@@ -130,7 +124,7 @@ fi
 
 if [[ "${XDEBUG}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
 	if [[ "${XDEBUG_DEFAULT_CONF}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
-		cat >> ${INSTALL_DIR}/etc/php.d/ext-xdebug.ini <<-EOF
+		cat >> ${INSTALL_DIR}/etc/php.d/10-xdebug.ini <<-EOF
 			zend_extension="xdebug.so"
 			xdebug.remote_enable=on
 			;远程调试开关
