@@ -92,6 +92,15 @@ RUN set -xe && \
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/redis-3.1.0.tgz && \
 #Install Xdebug
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/xdebug-2.5.0.tgz && \
+#Install Event
+	bash -c "mkdir -p /tmp/{libevent,event}" && \
+	LIBEVENT_URL="https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz" && \
+	bash -c "curl -Lk ${LIBEVENT_URL} | tar -xz -C /tmp/libevent --strip-components=1" && \
+	cd /tmp/libevent && \
+	./configure && \
+	make -j "$(getconf _NPROCESSORS_ONLN)" && \
+	make install && \
+	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/event-2.2.1.tgz && \
 #Install Memcached
 	mkdir -p /tmp/memcached /tmp/memcache && \
 	git clone https://github.com/php-memcached-dev/php-memcached.git /tmp/memcached && \
@@ -114,7 +123,7 @@ RUN set -xe && \
 	apk add --no-cache --virtual .php-rundeps $runDeps && \
 #Clear OS
 	apk del .build-deps && \
-	bash -c "rm -rf /tmp/{php,pear,memcache{,d}}"
+	bash -c "rm -rf /tmp/{php,pear,memcache{,d},libevent,event}"
 
 #COPY docker-php-source /usr/local/bin/
 COPY docker-php-ext-* docker-php-entrypoint /usr/local/bin/
