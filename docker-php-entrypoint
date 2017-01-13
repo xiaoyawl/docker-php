@@ -15,6 +15,8 @@ set -e
 [[ ! "$NO_CHOWN" =~ ^[yY][eE][sS]$ ]] && chown -R www.www /data/wwwroot
 [ "$EXPOSE_PHP" != "On" ] && EXPOSE_PHP=Off
 
+PHP_CLI=${PHP_CLI:-disable}
+PHP_CLI_COMMAND=${PHP_CLI_COMMAND:-"php -a"}
 OPCACHE=${OPCACHE:-enable}
 EVENT=${EVENT:-enable}
 REDIS=${REDIS:-enable}
@@ -160,5 +162,7 @@ if [[ "${XDEBUG}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
 		exit 1
 	fi
 fi
+
+[[ "${PHP_CLI}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]] && { shift $# && set -- ${PHP_CLI_COMMAND} $@; }
 
 exec "$@"
