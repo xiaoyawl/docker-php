@@ -63,6 +63,7 @@ if [[ "${SWOOLE}" =~ ^[yY][eE][sS]$ ]]; then
 fi
 
 OPCACHE=${OPCACHE:-enable}
+EVENT=${EVENT:-enable}
 
 XDEBUG_DEFAULT_CONF=${XDEBUG_DEFAULT_CONF:-enable}
 XDEBUG=${XDEBUG:-disable}
@@ -100,7 +101,7 @@ sed -i "s@^;sendmail_path.*@sendmail_path = /usr/sbin/sendmail -t -i@" ${INSTALL
 sed -i "s@^display_errors.*@display_errors = ${DISPLAY_ERROES}@" ${INSTALL_DIR}/etc/php.ini
 
 if [[ "${OPCACHE}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
-	cat > ${INSTALL_DIR}/etc/php.d/ext-opcache.ini <<-EOF
+	cat > ${INSTALL_DIR}/etc/php.d/10-opcache.ini <<-EOF
 		[opcache]
 		zend_extension=opcache.so
 		opcache.enable=1
@@ -112,6 +113,12 @@ if [[ "${OPCACHE}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
 		opcache.fast_shutdown=1
 		opcache.enable_cli=1
 		;opcache.optimization_level=0
+	EOF
+fi
+
+if [[ "${EVENT}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
+	cat > ${INSTALL_DIR}/etc/php.d/10-event.ini <<-EOF
+		extension=event.so
 	EOF
 fi
 
