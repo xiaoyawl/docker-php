@@ -43,27 +43,10 @@ mem_sum() {
 [ -z "${MEM_LIMIT}" ] && mem_sum
 [ "$EXPOSE_PHP" != "On" ] && EXPOSE_PHP=Off
 
-if [[ "$MEMCACHE" =~ ^[yY][eE][sS]$ ]]; then
-	echo 'extension=memcache.so' > ${INSTALL_DIR}/etc/php.d/ext-memcache.ini
-	cat > ${INSTALL_DIR}/etc/php.d/ext-memcached.ini <<-EOF
-		extension=memcached.so
-		memcached.use_sasl=1
-	EOF
-fi
-
-if [[ "$REDIS" =~ ^[yY][eE][sS]$ ]]; then
-	cat > ${INSTALL_DIR}/etc/php.d/ext-redis.ini <<-EOF
-		[redis]
-		extension=redis.so
-	EOF
-fi
-
-if [[ "${SWOOLE}" =~ ^[yY][eE][sS]$ ]]; then
-	echo 'extension=swoole.so' > ${INSTALL_DIR}/etc/php.d/ext-swoole.ini
-fi
-
 OPCACHE=${OPCACHE:-enable}
 EVENT=${EVENT:-enable}
+REDIS=${REDIS:-enable}
+MEMCACHE=${MEMCACHE:-enable}
 
 XDEBUG_DEFAULT_CONF=${XDEBUG_DEFAULT_CONF:-enable}
 XDEBUG=${XDEBUG:-disable}
@@ -119,6 +102,29 @@ fi
 if [[ "${EVENT}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
 	cat > ${INSTALL_DIR}/etc/php.d/10-event.ini <<-EOF
 		extension=event.so
+	EOF
+fi
+
+if [[ "$MEMCACHE" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+	echo 'extension=memcache.so' > ${INSTALL_DIR}/etc/php.d/10-memcache.ini
+	cat > ${INSTALL_DIR}/etc/php.d/ext-memcached.ini <<-EOF
+		[memcached]
+		extension=memcached.so
+		memcached.use_sasl=1
+	EOF
+fi
+
+if [[ "$REDIS" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+	cat > ${INSTALL_DIR}/etc/php.d/10-redis.ini <<-EOF
+		[redis]
+		extension=redis.so
+	EOF
+fi
+
+if [[ "${SWOOLE}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+	cat > ${INSTALL_DIR}/etc/php.d/10-swoole.ini <<-EOF
+		[swoole]
+		extension=swoole.so
 	EOF
 fi
 
