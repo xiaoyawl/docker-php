@@ -17,21 +17,21 @@ ENV PHP_INI_DIR="${INSTALL_DIR}/etc" \
 	PHP_MD5="cf36039303c47f493100afea522a8f53"
 
 RUN set -xe && \
+#Mkdir INI_DIR
+	mkdir -p ${DATA_DIR} ${PHP_INI_DIR}/php.d ${TEMP_DIR} && \
+	cd ${TEMP_DIR} && \
 #Add run php user&group
 	addgroup -g 400 -S www && \
 	adduser -u 400 -S -H -s /sbin/nologin -g 'PHP' -G www www && \
-#Mkdir INI_DIR
-	mkdir -p ${DATA_DIR} ${PHP_INI_DIR}/php.d ${TEMP_DIR} && \
 #Insall DEPS PKG
 	export PERSISTENT_DEPS="ca-certificates curl tar xz" && \
-	apk add --no-cache --virtual .persistent-deps ${PERSISTENT_DEPS} && \
 	export PHPIZE_DEPS="autoconf file g++ gcc libc-dev make pkgconf re2c" && \
 	export MEMCACHE_DEPS="libmemcached-dev cyrus-sasl-dev libsasl linux-headers git" && \
+	apk add --no-cache --virtual .persistent-deps ${PERSISTENT_DEPS} && \
 	apk add --no-cache --virtual .build-deps $PHPIZE_DEPS curl-dev libedit-dev libxml2-dev openssl-dev sqlite-dev \
 		libjpeg-turbo-dev libpng-dev libmcrypt-dev icu-dev freetype-dev gettext-dev libxslt-dev zlib-dev ${MEMCACHE_DEPS} && \
 #Build PHP
 	export CFLAGS="$PHP_CFLAGS" CPPFLAGS="$PHP_CPPFLAGS" LDFLAGS="$PHP_LDFLAGS" && \
-	cd ${TEMP_DIR} && \
 	curl -Lk "${PHP_URL}" | tar xJ -C ${TEMP_DIR} --strip-components=1 && \
 	./configure \
 		--prefix=${INSTALL_DIR} --with-config-file-path=${PHP_INI_DIR} \
@@ -79,7 +79,7 @@ RUN set -xe && \
 		--with-libedit \
 		--disable-debug \
 		--disable-cgi \
-		--disable-ipv6 \
+#		--disable-ipv6 \
 		--disable-rpath && \
 	make -j "$(getconf _NPROCESSORS_ONLN)" && \
 	make install && \

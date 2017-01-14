@@ -98,6 +98,7 @@ fi
 
 if [[ "${EVENT}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
 	cat > ${PHP_INI_DIR}/php.d/10-event.ini <<-EOF
+		[event]
 		extension=event.so
 	EOF
 fi
@@ -128,6 +129,7 @@ fi
 if [[ "${XDEBUG}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
 	if [[ "${XDEBUG_DEFAULT_CONF}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
 		cat >> ${PHP_INI_DIR}/php.d/10-xdebug.ini <<-EOF
+			[xdebug]
 			zend_extension="xdebug.so"
 			xdebug.remote_enable=on
 			;远程调试开关
