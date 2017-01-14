@@ -156,9 +156,9 @@ if [[ "${XDEBUG}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
 			;xdebug.idekey=netbeans
 			;调试使用的关键字，发起IDE上的idekey应该和这里配置的idekey一致，不一致则无效
 		EOF
-	elif [[ ! -f ${INSTALL_DIR}/etc/php.d/ext-xdebug.ini ]]; then
-		echo >&2 "error:  missing Can't found ${INSTALL_DIR}/etc/php.d/ext-xdebug.ini"
-		echo >&2 "Did you forget to add -v /xdebug_config_file:${INSTALL_DIR}/etc/php.d/ext-xdebug.ini"
+	elif [[ ! -f ${INSTALL_DIR}/etc/php.d/10-xdebug.ini ]]; then
+		echo >&2 "error:  missing Can't found ${INSTALL_DIR}/etc/php.d/10-xdebug.ini"
+		echo >&2 "Did you forget to add -v /xdebug_config_file:${INSTALL_DIR}/etc/php.d/10-xdebug.ini"
 		exit 1
 	fi
 fi
