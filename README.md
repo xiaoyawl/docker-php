@@ -11,8 +11,8 @@ curl -Lks https://get.docker.com/ | sh
 | -------- | ------------- | ----------- |
 | MEM_LIMIT | 自动计算 | memory_limit的值 |
 | EXPOSE_PHP | Off  | 可选值Off或者On |
-| MEMCACHE | No | PHP Memcache 插件开关 |
-| REDIS | No | PHP Redis 插件开关 |
+| MEMCACHE | disable | PHP Memcache 插件开关 |
+| REDIS | disable | PHP Redis 插件开关 |
 | TIMEZONE | Asia/Shanghai | PHP 时区 |
 | POST_MAX_SIZE | 100M | PHP post_max_size 值 |
 | UPLOAD_MAX_FILESIZE | 50M | PHP upload_max_filesize 值 |
