@@ -37,7 +37,7 @@ chown -R www.www /data/wwwroot
 [ -z "${MEM_LIMIT}" ] && mem_sum
 [ "$EXPOSE_PHP" != "On" ] && EXPOSE_PHP=Off
 
-if [[ "$MEMCACHE" =~ ^[yY][eE][sS]$ ]]; then
+if [[ "$MEMCACHE" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	echo 'extension=memcache.so' > ${INSTALL_DIR}/etc/php.d/ext-memcache.ini
 	cat > ${INSTALL_DIR}/etc/php.d/ext-memcached.ini <<-EOF
 		extension=memcached.so
@@ -45,14 +45,14 @@ if [[ "$MEMCACHE" =~ ^[yY][eE][sS]$ ]]; then
 	EOF
 fi
 
-if [[ "$REDIS" =~ ^[yY][eE][sS]$ ]]; then
+if [[ "$REDIS" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	cat > ${INSTALL_DIR}/etc/php.d/ext-redis.ini <<-EOF
 		[redis]
 		extension=redis.so
 	EOF
 fi
 
-if [[ "${SWOOLE}" =~ ^[yY][eE][sS]$ ]]; then
+if [[ "${SWOOLE}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	echo 'extension=swoole.so' > ${INSTALL_DIR}/etc/php.d/ext-swoole.ini
 fi
 
@@ -93,7 +93,7 @@ sed -i "s@^disable_functions.*@disable_functions = ${PHP_DISABLE_FUNCTIONS}@" ${
 sed -i "s@^;sendmail_path.*@sendmail_path = /usr/sbin/sendmail -t -i@" ${INSTALL_DIR}/etc/php.ini
 sed -i "s@^display_errors.*@display_errors = ${DISPLAY_ERROES}@" ${INSTALL_DIR}/etc/php.ini
 
-if [[ "${OPCACHE}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
+if [[ "${OPCACHE}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	cat > ${INSTALL_DIR}/etc/php.d/ext-opcache.ini <<-EOF
 		[opcache]
 		zend_extension=opcache.so
@@ -109,7 +109,7 @@ if [[ "${OPCACHE}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
 	EOF
 fi
 
-if [[ "${XDEBUG}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
+if [[ "${XDEBUG}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	if [[ "${XDEBUG_DEFAULT_CONF}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
 		cat >> ${INSTALL_DIR}/etc/php.d/ext-xdebug.ini <<-EOF
 			zend_extension="xdebug.so"
