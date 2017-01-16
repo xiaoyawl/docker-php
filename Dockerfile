@@ -1,5 +1,4 @@
 FROM benyoo/alpine:3.4.20160812
-#FROM registry.ds.com/benyoo/alpine:3.4
 
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
@@ -12,22 +11,17 @@ ENV INSTALL_DIR=/usr/local/php \
 
 RUN set -x && \
 # Change Mirrors
-	LOCAL_MIRRORS=${LOCAL_MIRRORS:-http://mirrors.ds.com/alpine} && \
-	NET_MIRRORS=${NET_MIRRORS:-http://dl-cdn.alpinelinux.org/alpine} && \
-	#LOCAL_MIRRORS_HTTP_CODE=$(curl -LI -m 10 -o /dev/null -sw %{http_code} ${LOCAL_MIRRORS}) && \
 	PHP_URL="https://secure.php.net/get/php-${VERSION}.tar.xz/from/this/mirror" && \
 	LIBICONV_VERSION=1.14 && \
 	LIBICONV_DIR=/tmp/libiconv && \
+	MEMCACHE_DEPS="libmemcached-dev cyrus-sasl-dev libsasl linux-headers git" && \
+	PHPIZE_DEPS="autoconf file g++ gcc libc-dev make m4 pkgconf re2c xz tar curl" && \
 #Mkdir TEMP_DIR
 	mkdir -p ${LIBICONV_DIR} ${TEMP_DIR} /tmp/memcached && cd /tmp && \
-#Edit mirror url
-	#if [ "${LOCAL_MIRRORS_HTTP_CODE}" == "200" ]; then \
-	#	echo -e "${LOCAL_MIRRORS}/v3.4/main\n${LOCAL_MIRRORS}/v3.4/community" > /etc/apk/repositories; else \
-	#	echo -e "${NET_MIRRORS}/v3.4/main\n${NET_MIRRORS}/v3.4/community" > /etc/apk/repositories; fi && \
 #Upgrade OS and install
 	apk --update --no-cache upgrade && \
-	apk --update --no-cache add build-base libxml2-dev openssl-dev curl-dev libjpeg-turbo-dev libpng-dev libmcrypt-dev icu-dev \
-		imap-dev freetype-dev gettext-dev libxslt-dev libxpm-dev m4 autoconf libaio-dev git linux-headers cyrus-sasl-dev libsasl tar xz && \
+	apk add --no-cache --virtual .build-deps $PHPIZE_DEPS curl-dev libedit-dev libxml2-dev openssl-dev sqlite-dev libxpm-dev libaio-dev \
+		libjpeg-turbo-dev libpng-dev libmcrypt-dev icu-dev freetype-dev gettext-dev libxslt-dev zlib-dev imap-dev gettext-dev ${MEMCACHE_DEPS} && \
 #Add run php user&group
 	addgroup -g 400 -S www && \
 	adduser -u 400 -S -H -s /sbin/nologin -g 'PHP' -G www www && \
@@ -44,16 +38,58 @@ RUN set -x && \
 	make install && \
 #Install PHP
 	cd ${TEMP_DIR}/ && \
-	./configure --prefix=${INSTALL_DIR} --with-config-file-path=${INSTALL_DIR}/etc \
-		--with-config-file-scan-dir=${INSTALL_DIR}/etc/php.d --with-fpm-user=php --with-fpm-group=php --enable-fpm --enable-opcache \
-		--disable-fileinfo --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv --with-iconv-dir=/usr/local \
-		--with-freetype-dir --with-jpeg-dir --with-png-dir --with-zlib --with-zlib-dir --with-libxml-dir=/usr --enable-xml --disable-rpath \
-		--enable-bcmath --enable-shmop --enable-exif --enable-sysvsem --enable-inline-optimization --with-curl --enable-mbregex --enable-mbstring \
-		--with-mcrypt --with-gd --enable-gd-native-ttf --enable-gd-jis-conv --with-openssl --with-mhash --enable-pcntl --enable-sockets \
-		--with-xmlrpc --enable-ftp --enable-intl --with-xsl --with-gettext --enable-zip --enable-soap --disable-ipv6 --disable-debug \
-		--with-layout=GNU --with-pic --enable-cli --with-xpm-dir --enable-shared --with-imap --enable-memcache \
-		--with-iconv-dir=/usr/local && \
-		#--enable-cgi
+	PHP_EXTRA_CONFIGURE_ARGS="--enable-fpm --with-fpm-user=www --with-fpm-group=www" && \
+	./configure --prefix=${INSTALL_DIR} \
+		--with-config-file-path=${INSTALL_DIR}/etc \
+		--with-config-file-scan-dir=${INSTALL_DIR}/etc/php.d \
+		${PHP_EXTRA_CONFIGURE_ARGS} \
+		--enable-opcache \
+		--disable-fileinfo \
+		--with-mysql=mysqlnd \
+		--with-mysqli=mysqlnd \
+		--with-pdo-mysql=mysqlnd \
+		--with-iconv \
+		--with-iconv-dir=/usr/local \
+		--with-freetype-dir \
+		--with-jpeg-dir \
+		--with-png-dir \
+		--with-zlib \
+		--with-zlib-dir \
+		--with-libxml-dir=/usr \
+		--enable-xml \
+		--disable-rpath \
+		--enable-bcmath \
+		--enable-shmop \
+		--enable-exif \
+		--enable-sysvsem \
+		--enable-inline-optimization \
+		--with-curl \
+		--enable-mbregex \
+		--enable-mbstring \
+		--with-mcrypt \
+		--with-gd \
+		--enable-gd-native-ttf \
+		--enable-gd-jis-conv \
+		--with-openssl \
+		--with-mhash \
+		--enable-pcntl \
+		--enable-sockets \
+		--with-xmlrpc \
+		--enable-ftp \
+		--enable-intl \
+		--with-xsl \
+		--with-gettext \
+		--enable-zip \
+		--enable-soap \
+		--disable-ipv6 \
+		--disable-debug \
+		--with-layout=GNU \
+		--with-pic \
+		--enable-cli \
+		--with-xpm-dir \
+		--enable-shared \
+		--with-imap \
+		--enable-memcache && \
 	make -j$(getconf _NPROCESSORS_ONLN) && \
 	make install && \
 	[ ! -e "${INSTALL_DIR}/etc/php.d" ] && mkdir -p ${INSTALL_DIR}/etc/php.d && \
@@ -62,12 +98,7 @@ RUN set -x && \
 	apk add --no-cache php5-memcache libmemcached-dev && \
 	mv /usr/lib/php5/modules/memcache.so ${INSTALL_DIR}/lib/php/20131226/memcache.so && \
 #Install memcached-2.2.0
-	curl -Lk http://pecl.php.net/get/memcached-2.2.0.tgz|tar xz -C /tmp/memcached --strip-components=1 && \
-	cd /tmp/memcached && \
-	${INSTALL_DIR}/bin/phpize && \
-	./configure --with-php-config=${INSTALL_DIR}/bin/php-config --disable-memcached-sasl && \
-	make -j $(awk '/processor/{i++}END{print i}' /proc/cpuinfo) && \
-	make install && \
+	${INSTALL_DIR}/bin/pecl install http://pecl.php.net/get/memcached-2.2.0.tgz && \
 #Install redis-2.2.8
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/redis-2.2.8.tgz && \
 #Install swoole
@@ -75,7 +106,10 @@ RUN set -x && \
 #Install xdebug
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/xdebug-2.5.0.tgz && \
 #Uninstalll Build software an clean OS
-	apk del --no-cache build-base tar wget curl git m4 autoconf libaio-dev git linux-headers && \
+	#docker-php-source delete && \
+	runDeps="$( scanelf --needed --nobanner --recursive /usr/local | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' | sort -u | xargs -r apk info --installed | sort -u )" && \
+	apk add --no-cache --virtual .php-rundeps $runDeps && \
+	apk del .build-deps && \
 	rm -rf /var/cache/apk/* /tmp/*
 
 ENV PATH=${INSTALL_DIR}/bin:$PATH
