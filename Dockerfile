@@ -9,6 +9,8 @@ ENV SWOOLE_V=${SWOOLE_V:-1.7.19} \
 	EVENT_V=${EVENT_V:-2.2.1} \
 	RUN_USER=www
 
+ADD install.py /
+
 RUN set -x && \
 	TEMP_DIR=/tmp/php && SWOOLE_DIR=${TEMP_DIR}/swoole && MEMCACHE_DIR=${TEMP_DIR}/memcache && \
 	MEMCACHED_DIR=${TEMP_DIR}/memcached && REDIS_DIR=${TEMP_DIR}/redis && \
@@ -24,7 +26,9 @@ RUN set -x && \
 	sed -i 's/^mirrorlist/#&/;s/#baseurl/baseurl/;s/$releasever/7.2.1511/' etc/yum.repos.d/CentOS-Base.repo && \
 	#yum update -y && \
 	rpm --rebuilddb && \
+	#/install.py && \
 	yum install -y epel-release $PHPIZE && \
+	#/install.py && \
 	yum install -y $RPM_INSTALL $PHP_LIB --nogpgcheck && \
 #Mkdir Dir
 	mkdir -p ${TEMP_DIR} ${SWOOLE_DIR} ${MEMCACHE_DIR} ${MEMCACHED_DIR} ${REDIS_DIR} ${XDEBUF_DIR} ${EVENT_DIR} && \
