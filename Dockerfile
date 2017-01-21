@@ -2,10 +2,10 @@ FROM benyoo/alpine:3.4.20160812
 
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
-ARG VERSION=${VERSION:-5.6.29}
+ARG VERSION=${VERSION:-5.6.30}
 ARG SHA256=${SHA256:-0ff352a433f73e2c82b0d5b283b600402518569bf72a74e247f356dacbf322a7}
-#ARG SWOOLE_VERSION=${SWOOLE_VERSION:-1.7.19}
-ARG SWOOLE_VERSION=${SWOOLE_VERSION:-1.9.4}
+ARG SWOOLE_VERSION=${SWOOLE_VERSION:-1.7.17}
+#ARG SWOOLE_VERSION=${SWOOLE_VERSION:-1.9.4}
 
 ENV INSTALL_DIR=/usr/local/php \
 	TEMP_DIR=/tmp/php
@@ -103,7 +103,13 @@ RUN set -x && \
 #Install redis-2.2.8
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/redis-2.2.8.tgz && \
 #Install swoole
-	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/swoole-${SWOOLE_VERSION}.tgz && \
+	#${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/swoole-${SWOOLE_VERSION}.tgz && \
+	curl -Lk "https://pecl.php.net/get/swoole-${SWOOLE_VERSION}.tgz" | tar xz -C /tmp && \
+	cd /tmp/swoole-${SWOOLE_VERSION} && \
+	${INSTALL_DIR}/bin/phpize && \
+	./configure --with-php-config=${INSTALL_DIR}/bin/php-config && \
+	make -j "$(getconf _NPROCESSORS_ONLN)" && \
+	make install && \
 #Install xdebug
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/xdebug-2.5.0.tgz && \
 #Uninstalll Build software an clean OS
