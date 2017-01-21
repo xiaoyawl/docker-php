@@ -23,6 +23,7 @@ RUN set -x && \
 	echo -e "[dt-php-5.6]\nname=PHP for Enterprise Linux 7\nbaseurl=http://mirrors.dtops.cc/build_rpm/php5.6\nenabled=1\n" > /etc/yum.repos.d/dt-php.repo && \
 	sed -i 's/^mirrorlist/#&/;s/#baseurl/baseurl/;s/$releasever/7.2.1511/' etc/yum.repos.d/CentOS-Base.repo && \
 	#yum update -y && \
+	rpm --rebuilddb && \
 	yum install -y epel-release $PHPIZE && \
 	yum install -y $RPM_INSTALL $PHP_LIB --nogpgcheck && \
 #Mkdir Dir
