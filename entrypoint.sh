@@ -4,7 +4,7 @@
 # Author: LookBack
 # Email: admin#dwhd.org
 # Version:
-# Created Time: 2016年08月13日 星期六 00时50分04秒
+# Created Time: 2017年01月22日 星期日 18时11分36秒
 #########################################################################
 
 set -e
@@ -37,7 +37,27 @@ chown -R www.www /data/wwwroot
 [ -z "${MEM_LIMIT}" ] && mem_sum
 [ "$EXPOSE_PHP" != "On" ] && EXPOSE_PHP=Off
 
+if [[ "$MEMCACHE" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+	echo 'extension=memcache.so' > ${INSTALL_DIR}/etc/php.d/ext-memcache.ini
+	cat > ${INSTALL_DIR}/etc/php.d/ext-memcached.ini <<-EOF
+		extension=memcached.so
+		memcached.use_sasl=1
+	EOF
+fi
+
+if [[ "$REDIS" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+	cat > ${INSTALL_DIR}/etc/php.d/ext-redis.ini <<-EOF
+		[redis]
+		extension=redis.so
+	EOF
+fi
+
+if [[ "${SWOOLE}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+	echo 'extension=swoole.so' > ${INSTALL_DIR}/etc/php.d/ext-swoole.ini
+fi
+
 OPCACHE=${OPCACHE:-enable}
+
 XDEBUG_DEFAULT_CONF=${XDEBUG_DEFAULT_CONF:-enable}
 XDEBUG=${XDEBUG:-disable}
 XDEBUG_REMOTE_HOST=${XDEBUG_REMOTE_HOST:-localhost}
@@ -59,45 +79,22 @@ set -- "$@" --pid ${PHP_FPM_PID}
 
 sed -i "s@\$HOSTNAME@$HOSTNAME@" ${INSTALL_DIR}/etc/php-fpm.conf
 
-sed -i "s@^memory_limit.*@memory_limit = ${MEM_LIMIT}M@" /etc/php.ini
-sed -i "s@^output_buffering =@output_buffering = On\noutput_buffering =@" /etc/php.ini
-sed -i "s@^;cgi.fix_pathinfo.*@cgi.fix_pathinfo=0@" /etc/php.ini
-sed -i "s@^short_open_tag = Off@short_open_tag = On@" /etc/php.ini
-sed -i "s@^expose_php = On@expose_php = ${EXPOSE_PHP}@" /etc/php.ini
-sed -i "s@^request_order.*@request_order = \"CGP\"@" /etc/php.ini
-sed -i "s@^;date.timezone.*@date.timezone = ${TIMEZONE}@" /etc/php.ini
-sed -i "s@^post_max_size.*@post_max_size = ${POST_MAX_SIZE}@" /etc/php.ini
-sed -i "s@^upload_max_filesize.*@upload_max_filesize = ${UPLOAD_MAX_FILESIZE}@" /etc/php.ini
-sed -i "s@^max_execution_time.*@max_execution_time = ${MAX_EXECUTION_TIME}@" /etc/php.ini
-sed -i "s@^disable_functions.*@disable_functions = ${PHP_DISABLE_FUNCTIONS}@" /etc/php.ini
-sed -i "s@^;sendmail_path.*@sendmail_path = /usr/sbin/sendmail -t -i@" /etc/php.ini
-sed -i "s@^display_errors.*@display_errors = ${DISPLAY_ERROES}@" /etc/php.ini
-
-if [[ "$MEMCACHE" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
-	cat /etc/php.d/memcache.ini <<-EOF
-		; Enable memcache extension module
-		extension=memcache.so
-	EOF
-	cat > /etc/php.d/memcached.ini <<-EOF
-		; Enable memcached extension module
-		extension=memcached.so
-		memcached.use_sasl=1
-	EOF
-fi
-
-if [[ "$REDIS" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
-	cat > /etc/php.d/redis.ini <<-EOF
-		; Enable redis extension module
-		extension=redis.so
-	EOF
-fi
-
-if [[ "${SWOOLE}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
-	echo 'extension=swoole.so' > /etc/php.d/swoole.ini
-fi
+sed -i "s@^memory_limit.*@memory_limit = ${MEM_LIMIT}M@" ${INSTALL_DIR}/etc/php.ini
+sed -i "s@^output_buffering =@output_buffering = On\noutput_buffering =@" ${INSTALL_DIR}/etc/php.ini
+sed -i "s@^;cgi.fix_pathinfo.*@cgi.fix_pathinfo=0@" ${INSTALL_DIR}/etc/php.ini
+sed -i "s@^short_open_tag = Off@short_open_tag = On@" ${INSTALL_DIR}/etc/php.ini
+sed -i "s@^expose_php = On@expose_php = ${EXPOSE_PHP}@" ${INSTALL_DIR}/etc/php.ini
+sed -i "s@^request_order.*@request_order = \"CGP\"@" ${INSTALL_DIR}/etc/php.ini
+sed -i "s@^;date.timezone.*@date.timezone = ${TIMEZONE}@" ${INSTALL_DIR}/etc/php.ini
+sed -i "s@^post_max_size.*@post_max_size = ${POST_MAX_SIZE}@" ${INSTALL_DIR}/etc/php.ini
+sed -i "s@^upload_max_filesize.*@upload_max_filesize = ${UPLOAD_MAX_FILESIZE}@" ${INSTALL_DIR}/etc/php.ini
+sed -i "s@^max_execution_time.*@max_execution_time = ${MAX_EXECUTION_TIME}@" ${INSTALL_DIR}/etc/php.ini
+sed -i "s@^disable_functions.*@disable_functions = ${PHP_DISABLE_FUNCTIONS}@" ${INSTALL_DIR}/etc/php.ini
+sed -i "s@^;sendmail_path.*@sendmail_path = /usr/sbin/sendmail -t -i@" ${INSTALL_DIR}/etc/php.ini
+sed -i "s@^display_errors.*@display_errors = ${DISPLAY_ERROES}@" ${INSTALL_DIR}/etc/php.ini
 
 if [[ "${OPCACHE}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
-	cat > /etc/php.d/opcache.ini <<-EOF
+	cat > ${INSTALL_DIR}/etc/php.d/ext-opcache.ini <<-EOF
 		[opcache]
 		zend_extension=opcache.so
 		opcache.enable=1
@@ -114,7 +111,7 @@ fi
 
 if [[ "${XDEBUG}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	if [[ "${XDEBUG_DEFAULT_CONF}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
-		cat >> /etc/php.d/xdebug.ini <<-EOF
+		cat >> ${INSTALL_DIR}/etc/php.d/ext-xdebug.ini <<-EOF
 			zend_extension="xdebug.so"
 			xdebug.remote_enable=on
 			;远程调试开关
@@ -143,9 +140,9 @@ if [[ "${XDEBUG}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 			;xdebug.idekey=netbeans
 			;调试使用的关键字，发起IDE上的idekey应该和这里配置的idekey一致，不一致则无效
 		EOF
-	elif [[ ! -f /etc/php.d/xdebug.ini ]]; then
-		echo >&2 "error:  missing Can't found /etc/php.d/xdebug.ini"
-		echo >&2 "Did you forget to add -v /xdebug_config_file:/etc/php.d/xdebug.ini"
+	elif [[ ! -f ${INSTALL_DIR}/etc/php.d/ext-xdebug.ini ]]; then
+		echo >&2 "error:  missing Can't found ${INSTALL_DIR}/etc/php.d/ext-xdebug.ini"
+		echo >&2 "Did you forget to add -v /xdebug_config_file:${INSTALL_DIR}/etc/php.d/ext-xdebug.ini"
 		exit 1
 	fi
 fi
