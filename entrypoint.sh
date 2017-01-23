@@ -32,10 +32,12 @@ mem_sum() {
 	fi
 }
 
-[ -d /data/wwwroot ] || mkdir -p /data/wwwroot
-chown -R www.www /data/wwwroot
-[ -z "${MEM_LIMIT}" ] && mem_sum
-[ "$EXPOSE_PHP" != "On" ] && EXPOSE_PHP=Off
+if ! which php >/dev/null 2>&1; then export PATH=${INSTALL_DIR}/bin:${INSTALL_DIR}/sbin:$PATH; fi
+[[ -d /data/wwwroot ]] || mkdir -p /data/wwwroot
+[[ "${CHOWN_WEB_FILE}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]] && chown -R www.www /data/wwwroot
+[[ -z "${MEM_LIMIT}" ]] && mem_sum
+[[ -d ${INSTALL_DIR}/etc/php.d ]] || mkdir -p ${INSTALL_DIR}/etc/php.d
+[[ "$EXPOSE_PHP" != "On" ]] && EXPOSE_PHP=Off
 
 if [[ "$MEMCACHE" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	echo 'extension=memcache.so' > ${INSTALL_DIR}/etc/php.d/ext-memcache.ini

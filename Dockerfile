@@ -13,19 +13,25 @@ ENV VERSION=${VERSION:-5.6.30} \
 	TEMP_DIR=/tmp/php
 
 RUN set -x && \
+#Define variable
 	PHP_URL="https://secure.php.net/get/php-${VERSION}.tar.xz/from/this/mirror" && \
 	PHPIZE_DEPS="gcc gcc-c++ make autoconf" && \
 	PHPIZE_DEPS="${PHPIZE_DEPS} libxml2-devel openssl-devel curl-devel libjpeg-devel" && \
 	PHPIZE_DEPS="${PHPIZE_DEPS} libxslt-devel libpng-devel libXpm-devel freetype-devel libicu-devel libmcrypt-devel" && \
 	PHP_EXTRA_CONFIGURE_ARGS="--enable-fpm --with-fpm-user=${RUN_USER} --with-fpm-group=${RUN_USER}" && \
+#Add run user
 	groupadd -g 400 -r ${RUN_USER} && \
 	useradd -u 400 -r -s /sbin/nologin -g 400 -M -c 'php' ${RUN_USER} && \
+#Make temp directory
 	mkdir -p ${TEMP_DIR} && \
+#Down source file
 	curl -Lk "${PHP_URL}" | tar xJ -C ${TEMP_DIR} --strip-components=1 && \
 	cd ${TEMP_DIR}/ && \
 	rpm --rebuilddb && \
+#Resolve dependencies
 	yum install epel-release -y && \
 	yum install -y $PHPIZE_DEPS && \
+#Build php
 	./configure --prefix=${INSTALL_DIR} \
 		--with-config-file-path=${INSTALL_DIR}/etc \
 		--with-config-file-scan-dir=${INSTALL_DIR}/etc/php.d \
@@ -77,20 +83,30 @@ RUN set -x && \
 		--disable-debug && \
 	make -j$(getconf _NPROCESSORS_ONLN) && \
 	make install && \
+#Copy php.ini confige file
+	/bin/cp php.ini-production ${INSTALL_DIR}/etc/php.ini && \
+#Install memcache extended
 	printf "\n" | ${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/memcache-${MEMCACHE_V}.tgz && \
+#Install memcached extended
 	yum install -y libmemcached-devel && \
 	printf "\n" | ${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/memcached-${MEMCACHED_V}.tgz && \
+#Install redis extended
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/redis-${REDIS_V}.tgz && \
+#Install swoole extended
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/swoole-${SWOOLE_V}.tgz && \
+#Install xdebug extended
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/xdebug-${XDEBUG_V}.tgz && \
+#Install event extended
 	yum install -y libevent-devel && \
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/event-${EVENT_V}.tgz && \
+#Clean OS
 	yum remove -y gcc gcc-c++ make autoconf && \
 	yum clean all && \
 	rm -rf ${TEMP_DIR}
 
 COPY entrypoint.sh /entrypoint.sh
-ADD php-fpm.conf /etc/php-fpm.conf
+ADD php-fpm.conf ${INSTALL_DIR}/etc/php-fpm.conf
+ENV PATH=${INSTALL_DIR}/bin:${INSTALL_DIR}/sbin:$PATH
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["php-fpm"]
