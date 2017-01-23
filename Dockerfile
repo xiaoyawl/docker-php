@@ -102,7 +102,7 @@ RUN set -x && \
 #Clean OS
 	yum remove -y gcc gcc-c++ make autoconf && \
 	yum clean all && \
-	rm -rf ${TEMP_DIR}
+	rm -rf ${TEMP_DIR} /tmp/*
 
 COPY entrypoint.sh /entrypoint.sh
 ADD php-fpm.conf ${INSTALL_DIR}/etc/php-fpm.conf
