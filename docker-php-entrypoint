@@ -15,6 +15,7 @@ set -e
 [[ ! "$NO_CHOWN" =~ ^[yY][eE][sS]$ ]] && chown -R www.www /data/wwwroot
 [ "$EXPOSE_PHP" != "On" ] && EXPOSE_PHP=Off
 
+PHP_INI_DIR=${PHP_INI_DIR:-$INSTALL_DIR/etc}
 PHP_INI_CONF=${PHP_INI_CONF:-enable}
 PHP_CLI=${PHP_CLI:-disable}
 PHP_CLI_COMMAND=${PHP_CLI_COMMAND:-"php -a"}
@@ -31,11 +32,12 @@ XDEBUG_REMOTE_PORT=${XDEBUG_REMOTE_PORT:-9900}
 
 
 TIMEZONE=${TIMEZONE-Asia/Shanghai}
-POST_MAX_SIZE=${POST_MAX_SIZE-100M}
-UPLOAD_MAX_FILESIZE=${UPLOAD_MAX_FILESIZE-50M}
-MAX_EXECUTION_TIME=${MAX_EXECUTION_TIME-5}
-PHP_FPM_CONF=${PHP_FPM_CONF-${PHP_INI_DIR}/php-fpm.conf}
-PHP_FPM_PID=${PHP_FPM_PID-${INSTALL_DIR}/var/run/php-fpm.pid}
+POST_MAX_SIZE=${POST_MAX_SIZE:-100M}
+UPLOAD_MAX_FILESIZE=${UPLOAD_MAX_FILESIZE:-50M}
+MAX_EXECUTION_TIME=${MAX_EXECUTION_TIME:-5}
+PHP_FPM_CONF=${PHP_FPM_CONF:-${PHP_INI_DIR}/php-fpm.conf}
+PHP_FPM_PID=${PHP_FPM_PID:-${INSTALL_DIR}/var/run/php-fpm.pid}
+PHP_SESSION_DIR=${PHP_SESSION_DIR:-￥{INSTALL_DIR}/var/session}
 PHP_DISABLE_FUNCTIONS=${PHP_DISABLE_FUNCTIONS:-passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server,fsocket,popen}
 DISPLAY_ERROES=${DISPLAY_ERROES:-Off}
 
@@ -67,6 +69,7 @@ set -- "$@" --pid ${PHP_FPM_PID}
 
 sed -i "s@\$HOSTNAME@$HOSTNAME@" ${PHP_FPM_CONF}
 
+
 if [[ $PHP_INI_CONF =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	sed -i "s@^memory_limit.*@memory_limit = ${MEM_LIMIT}M@" ${PHP_INI_DIR}/php.ini
 	sed -i "s@^output_buffering =@output_buffering = On\noutput_buffering =@" ${PHP_INI_DIR}/php.ini
@@ -81,6 +84,8 @@ if [[ $PHP_INI_CONF =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	sed -i "s@^disable_functions.*@disable_functions = ${PHP_DISABLE_FUNCTIONS}@" ${PHP_INI_DIR}/php.ini
 	sed -i "s@^;sendmail_path.*@sendmail_path = /usr/sbin/sendmail -t -i@" ${PHP_INI_DIR}/php.ini
 	sed -i "s@^display_errors.*@display_errors = ${DISPLAY_ERROES}@" ${PHP_INI_DIR}/php.ini
+	[ -f ${PHP_SESSION_DIR} ] && { mkdir -p ${PHP_SESSION_DIR} && chown -R www:www ${INSTALL_DIR}/var; }
+	sed -i "s@^;session.save_path = .*@session.save_path = \"${PHP_SESSION_DIR}\"@" ${PHP_INI_DIR}/php.ini
 fi
 
 if [[ "${OPCACHE}" =~ [eE][nN][aA][bB][lL][eE] ]]; then
