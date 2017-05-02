@@ -10,7 +10,7 @@ ENV PHP_INI_DIR="${INSTALL_DIR}/etc" \
 	PHP_EXTRA_CONFIGURE_ARGS="--enable-fpm --with-fpm-user=www --with-fpm-group=www" \
 	PHP_CPPFLAGS="$PHP_CFLAGS" \
 	PHP_LDFLAGS="-Wl,-O1 -Wl,--hash-style=both -pie" \
-	GPG_KEYS=A917B1ECDA84AEC2B568FED6F50ABC807BD5DCD0 \
+	GPG_KEYS=1A4E8B7277C42E53DBA9C7B9BCAA30EA9C0D5763 \
 	PHP_URL="https://secure.php.net/get/php-${PHP_VERSION}.tar.xz/from/this/mirror" \
 	PHP_ASC_URL="https://secure.php.net/get/php-${PHP_VERSION}.tar.xz.asc/from/this/mirror" \
 	PHP_SHA256="b20cc63d507032b39d8bb14cb64784e460b0e47997e90a8704b703bcbb233fd1" \
