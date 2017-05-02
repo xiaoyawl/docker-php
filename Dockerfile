@@ -1,7 +1,7 @@
 FROM benyoo/alpine:3.4.20160812
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
-ENV PHP_VERSION="7.0.18" \
+ENV PHP_VERSION="7.1.14" \
 	INSTALL_DIR=/usr/local/php DATA_DIR=/data/wwwroot TEMP_DIR=/tmp/php \
 	PHP_CFLAGS="-fstack-protector-strong -fpic -fpie -O2"
 
@@ -13,8 +13,8 @@ ENV PHP_INI_DIR="${INSTALL_DIR}/etc" \
 	GPG_KEYS=A917B1ECDA84AEC2B568FED6F50ABC807BD5DCD0 \
 	PHP_URL="https://secure.php.net/get/php-${PHP_VERSION}.tar.xz/from/this/mirror" \
 	PHP_ASC_URL="https://secure.php.net/get/php-${PHP_VERSION}.tar.xz.asc/from/this/mirror" \
-	PHP_SHA256="b20cc63d507032b39d8bb14cb64784e460b0e47997e90a8704b703bcbb233fd1" \
-	PHP_MD5="f3b3934799c18614b0775ddd0d602a4d"
+	PHP_SHA256="71514386adf3e963df087c2044a0b3747900b8b1fc8da3a99f0a0ae9180d300b" \
+	PHP_MD5="a74c13f8779349872b365e6732e8c98e"
 
 RUN set -xe && \
 #Mkdir INI_DIR
