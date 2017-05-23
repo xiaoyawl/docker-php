@@ -33,6 +33,8 @@ mem_sum() {
 }
 
 [ -d /data/wwwroot ] || mkdir -p /data/wwwroot
+[ -d /data/wwwlogs/supervisor ] || mkdir -p /data/wwwlogs/supervisor
+[ -d /var/log/supervisor ] || mkdir -p /var/log/supervisor
 chown -R www.www /data/wwwroot
 [ -z "${MEM_LIMIT}" ] && mem_sum
 [ "$EXPOSE_PHP" != "On" ] && EXPOSE_PHP=Off
@@ -150,4 +152,5 @@ if [[ "${XDEBUG}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	fi
 fi
 
-exec "$@"
+#exec "$@"
+supervisord -n -c /etc/supervisord.conf

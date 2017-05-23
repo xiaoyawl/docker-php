@@ -1,5 +1,4 @@
-FROM benyoo/alpine:3.4.20160812
-
+FROM benyoo/alpine:3.5.20170325
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
 ARG VERSION=${VERSION:-5.6.30}
@@ -10,19 +9,22 @@ ARG SWOOLE_VERSION=${SWOOLE_VERSION:-1.9.4}
 ENV INSTALL_DIR=/usr/local/php \
 	TEMP_DIR=/tmp/php
 
+#Install PHP iconv from source
 RUN set -x && \
 # Change Mirrors
 	PHP_URL="https://secure.php.net/get/php-${VERSION}.tar.xz/from/this/mirror" && \
-	LIBICONV_VERSION=1.14 && \
+	LIBICONV_VERSION=1.15 && \
 	LIBICONV_DIR=/tmp/libiconv && \
 	MEMCACHE_DEPS="libmemcached-dev cyrus-sasl-dev libsasl linux-headers git" && \
-	PHPIZE_DEPS="autoconf file g++ gcc libc-dev make m4 pkgconf re2c xz tar curl" && \
+	PHPIZE_DEPS="autoconf file g++ gcc libc-dev make m4 pkgconf re2c xz tar" && \
+	PHPIZE_BUILD="curl-dev libjpeg-turbo-dev libpng-dev libmcrypt-dev icu-dev imap-dev gettext-dev" && \
+	PHPIZE_BUILD="$PHPIZE_BUILD libxslt-dev libxpm-dev libxml2-dev freetype-dev libaio-dev libedit-dev" && \
+	PHPIZE_BUILD="$PHPIZE_BUILD sqlite-dev zlib-dev imap-dev libressl-dev readline-dev" && \
 #Mkdir TEMP_DIR
 	mkdir -p ${LIBICONV_DIR} ${TEMP_DIR} /tmp/memcached && cd /tmp && \
 #Upgrade OS and install
 	apk --update --no-cache upgrade && \
-	apk add --no-cache --virtual .build-deps $PHPIZE_DEPS curl-dev libedit-dev libxml2-dev openssl-dev sqlite-dev libxpm-dev libaio-dev \
-		libjpeg-turbo-dev libpng-dev libmcrypt-dev icu-dev freetype-dev gettext-dev libxslt-dev zlib-dev imap-dev gettext-dev ${MEMCACHE_DEPS} && \
+	apk add --no-cache --virtual .build-deps $MEMCACHE_DEPS $PHPIZE_DEPS $PHPIZE_BUILD && \
 #Add run php user&group
 	addgroup -g 400 -S www && \
 	adduser -u 400 -S -H -s /sbin/nologin -g 'PHP' -G www www && \
@@ -31,14 +33,13 @@ RUN set -x && \
 	curl -SL http://ftp.gnu.org/pub/gnu/libiconv/libiconv-${LIBICONV_VERSION}.tar.gz | tar -xz -C ${LIBICONV_DIR} --strip-components=1 && \
 #Install libiconv
 	rm /usr/bin/iconv && \
-	curl -Lk https://github.com/mxe/mxe/raw/7e231efd245996b886b501dad780761205ecf376/src/libiconv-1-fixes.patch > libiconv-1-fixes.patch && \
 	cd ${LIBICONV_DIR} && \
-	patch -p1 < ../libiconv-1-fixes.patch && \
 	./configure --prefix=/usr/local && \
 	make -j "$(getconf _NPROCESSORS_ONLN)" && \
 	make install && \
 #Install PHP
 	cd ${TEMP_DIR}/ && \
+	export LD_PRELOAD=/usr/local/lib/preloadable_libiconv.so && \
 	PHP_EXTRA_CONFIGURE_ARGS="--enable-fpm --with-fpm-user=www --with-fpm-group=www" && \
 	./configure --prefix=${INSTALL_DIR} \
 		--with-config-file-path=${INSTALL_DIR}/etc \
@@ -49,8 +50,7 @@ RUN set -x && \
 		--with-mysql=mysqlnd \
 		--with-mysqli=mysqlnd \
 		--with-pdo-mysql=mysqlnd \
-		--with-iconv \
-		--with-iconv-dir=/usr/local \
+		--with-iconv=/usr/local \
 		--with-freetype-dir \
 		--with-jpeg-dir \
 		--with-png-dir \
@@ -112,20 +112,24 @@ RUN set -x && \
 	make install && \
 #Install xdebug
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/xdebug-2.5.0.tgz && \
+#Add iconv
+	echo "extension=iconv.so" > ${INSTALL_DIR}/etc/php.d/iconv.ini && \
 #Uninstalll Build software an clean OS
 	#docker-php-source delete && \
-	runDeps="$( scanelf --needed --nobanner --recursive /usr/local | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' | sort -u | xargs -r apk info --installed | sort -u )" && \
-	apk add --no-cache --virtual .php-rundeps $runDeps && \
+	RUN_DEPS="$( scanelf --needed --nobanner --recursive /usr/local/ | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' | sort -u | xargs -r apk info --installed | sort -u )" && \
+	RUN_DEPS="${RUN_DEPS} inotify-tools supervisor logrotate python" && \
+	apk add --no-cache --virtual .php-rundeps $RUN_DEPS && \
 	apk del .build-deps && \
 	rm -rf /var/cache/apk/* /tmp/*
 
-ENV PATH=${INSTALL_DIR}/bin:$PATH
-ENV PATH=${INSTALL_DIR}/sbin:$PATH \
-	TERM=linux
+ENV PATH=${INSTALL_DIR}/bin:$PATH \
+	TERM=linux \
+	LD_PRELOAD=/usr/local/lib/preloadable_libiconv.so
+ENV PATH=${INSTALL_DIR}/sbin:$PATH
 
 COPY entrypoint.sh /entrypoint.sh
+ADD etc /etc
 ADD php-fpm.conf ${INSTALL_DIR}/etc/php-fpm.conf
 
 ENTRYPOINT ["/entrypoint.sh"]
-
-CMD ["php-fpm"]
+#CMD ["php-fpm"]
