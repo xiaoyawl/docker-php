@@ -39,6 +39,7 @@ chown -R www.www /data/wwwroot
 [ -z "${MEM_LIMIT}" ] && mem_sum
 [ "$EXPOSE_PHP" != "On" ] && EXPOSE_PHP=Off
 PHP_INI_CONF=${PHP_INI_CONF:-enable}
+PHP_FPM_CONF_DEF=${PHP_FPM_CONF:-enable}
 
 if [[ "$MEMCACHE" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	echo 'extension=memcache.so' > ${INSTALL_DIR}/etc/php.d/ext-memcache.ini
@@ -80,11 +81,13 @@ set -- "$@" -F
 set -- "$@" -y ${PHP_FPM_CONF}
 set -- "$@" --pid ${PHP_FPM_PID}
 
-sed -i "s@\$HOSTNAME@$HOSTNAME@" ${INSTALL_DIR}/etc/php-fpm.conf
+if [[ $PHP_FPM_CONF_DEF =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+	sed -i "s@\$HOSTNAME@$HOSTNAME@" ${PHP_FPM_CONF}
+fi
 
 if [[ $PHP_INI_CONF =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	sed -i "s@^memory_limit.*@memory_limit = ${MEM_LIMIT}M@" ${INSTALL_DIR}/etc/php.ini
-	sed -i "s@^output_buffering =@output_buffering = On\noutput_buffering =@" ${INSTALL_DIR}/etc/php.ini
+	sed -i "s@^output_buffering =.*@output_buffering = On@" ${INSTALL_DIR}/etc/php.ini
 	sed -i "s@^;cgi.fix_pathinfo.*@cgi.fix_pathinfo=0@" ${INSTALL_DIR}/etc/php.ini
 	sed -i "s@^short_open_tag = Off@short_open_tag = On@" ${INSTALL_DIR}/etc/php.ini
 	sed -i "s@^expose_php = On@expose_php = ${EXPOSE_PHP}@" ${INSTALL_DIR}/etc/php.ini
