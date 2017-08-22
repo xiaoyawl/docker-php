@@ -39,7 +39,7 @@ chown -R www.www /data/wwwroot
 [ -z "${MEM_LIMIT}" ] && mem_sum
 [ "$EXPOSE_PHP" != "On" ] && EXPOSE_PHP=Off
 PHP_INI_CONF=${PHP_INI_CONF:-enable}
-PHP_FPM_CONF_DEF=${PHP_FPM_CONF:-enable}
+PHP_FPM_CONF_DEF=${PHP_FPM_CONF_DEF:-enable}
 
 if [[ "$MEMCACHE" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	echo 'extension=memcache.so' > ${INSTALL_DIR}/etc/php.d/ext-memcache.ini
