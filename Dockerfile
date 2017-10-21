@@ -113,14 +113,20 @@ RUN set -x && \
 #Install xdebug
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/xdebug-2.5.0.tgz && \
 #Add iconv
-	echo "extension=iconv.so" > ${INSTALL_DIR}/etc/php.d/iconv.ini && \
+	cd ${TEMP_DIR}/ext/iconv && \
+	${INSTALL_DIR}/bin/phpize && \
+	./configure --with-php-config=${INSTALL_DIR}/bin/php-config && \
+	make -j "$(getconf _NPROCESSORS_ONLN)" && \
+	make install && \
+	#echo "extension=iconv.so" > ${INSTALL_DIR}/etc/php.d/iconv.ini && \
 #Uninstalll Build software an clean OS
 	#docker-php-source delete && \
 	RUN_DEPS="$( scanelf --needed --nobanner --recursive /usr/local/ | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' | sort -u | xargs -r apk info --installed | sort -u )" && \
 	RUN_DEPS="${RUN_DEPS} inotify-tools supervisor logrotate python" && \
 	apk add --no-cache --virtual .php-rundeps $RUN_DEPS && \
-	apk del .build-deps && \
-	rm -rf /var/cache/apk/* /tmp/*
+	#apk del .build-deps && \
+	#rm -rf /var/cache/apk/* /tmp/*
+	echo "Built finsh"
 
 ENV PATH=${INSTALL_DIR}/bin:$PATH \
 	TERM=linux \

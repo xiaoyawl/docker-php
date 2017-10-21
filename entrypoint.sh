@@ -101,6 +101,10 @@ if [[ $PHP_INI_CONF =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	sed -i "s@^display_errors.*@display_errors = ${DISPLAY_ERROES}@" ${INSTALL_DIR}/etc/php.ini
 fi
 
+if [[ "${ICONV}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+	echo "extension=iconv.so" > ${INSTALL_DIR}/etc/php.d/iconv.ini
+fi
+
 if [[ "${OPCACHE}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	cat > ${INSTALL_DIR}/etc/php.d/ext-opcache.ini <<-EOF
 		[opcache]
