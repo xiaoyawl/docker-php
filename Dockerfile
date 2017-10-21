@@ -124,8 +124,8 @@ RUN set -x && \
 	RUN_DEPS="$( scanelf --needed --nobanner --recursive /usr/local/ | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' | sort -u | xargs -r apk info --installed | sort -u )" && \
 	RUN_DEPS="${RUN_DEPS} inotify-tools supervisor logrotate python" && \
 	apk add --no-cache --virtual .php-rundeps $RUN_DEPS && \
-	#apk del .build-deps && \
-	#rm -rf /var/cache/apk/* /tmp/*
+	apk del .build-deps && \
+	rm -rf /var/cache/apk/* /tmp/*
 	echo "Built finsh"
 
 ENV PATH=${INSTALL_DIR}/bin:$PATH \
