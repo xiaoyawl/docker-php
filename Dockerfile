@@ -1,8 +1,8 @@
 FROM benyoo/alpine:3.5.20170325
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
-ARG VERSION=${VERSION:-5.6.31}
-ARG SHA256=${SHA256:-0ff352a433f73e2c82b0d5b283b600402518569bf72a74e247f356dacbf322a7}
+ARG VERSION=${VERSION:-5.6.33}
+ARG SHA256=${SHA256:-9004995fdf55f111cd9020e8b8aff975df3d8d4191776c601a46988c375f3553}
 #ARG SWOOLE_VERSION=${SWOOLE_VERSION:-1.7.17}
 ARG SWOOLE_VERSION=${SWOOLE_VERSION:-1.9.4}
 
@@ -119,6 +119,9 @@ RUN set -x && \
 	make -j "$(getconf _NPROCESSORS_ONLN)" && \
 	make install && \
 	#echo "extension=iconv.so" > ${INSTALL_DIR}/etc/php.d/iconv.ini && \
+#Install MongoDB
+	${INSTALL_DIR}/bin/pecl install mongo && \
+	${INSTALL_DIR}/bin/pecl install mongodb && \
 #Uninstalll Build software an clean OS
 	#docker-php-source delete && \
 	RUN_DEPS="$( scanelf --needed --nobanner --recursive /usr/local/ | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' | sort -u | xargs -r apk info --installed | sort -u )" && \

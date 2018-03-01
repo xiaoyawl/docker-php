@@ -60,6 +60,14 @@ if [[ "${SWOOLE}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	echo 'extension=swoole.so' > ${INSTALL_DIR}/etc/php.d/ext-swoole.ini
 fi
 
+if [[ "${MONGO}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+	echo 'extension=mongo.so' > ${INSTALL_DIR}/etc/php.d/ext-mongo.ini
+fi
+
+if [[ "${MONGODB}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+	echo 'extension=mongodb.so' > ${INSTALL_DIR}/etc/php.d/ext-mongodb.ini
+fi
+
 OPCACHE=${OPCACHE:-enable}
 
 XDEBUG_DEFAULT_CONF=${XDEBUG_DEFAULT_CONF:-enable}
