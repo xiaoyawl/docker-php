@@ -119,6 +119,12 @@ RUN set -x && \
 	make -j "$(getconf _NPROCESSORS_ONLN)" && \
 	make install && \
 	#echo "extension=iconv.so" > ${INSTALL_DIR}/etc/php.d/iconv.ini && \
+#install fileinfo
+	cd ext/fileinfo && \
+	${INSTALL_DIR}/bin/phpize && \
+ 	./configure --with-php-config=${INSTALL_DIR}/bin/php-config && \
+	make -j "$(getconf _NPROCESSORS_ONLN)" && \
+	make install && \
 #Install MongoDB
 	${INSTALL_DIR}/bin/pecl install mongo && \
 	${INSTALL_DIR}/bin/pecl install mongodb && \
