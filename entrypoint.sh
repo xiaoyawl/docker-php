@@ -68,6 +68,10 @@ if [[ "${MONGODB}" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
 	echo 'extension=mongodb.so' > ${INSTALL_DIR}/etc/php.d/ext-mongodb.ini
 fi
 
+if [[ "$FILEINFO" =~ ^[eE][nN][aA][bB][lL][eE]$ ]]; then
+	echo 'extension=fileinfo.so' > ${INSTALL_DIR}/etc/php.d/ext-fileinfo.ini
+fi
+
 OPCACHE=${OPCACHE:-enable}
 
 XDEBUG_DEFAULT_CONF=${XDEBUG_DEFAULT_CONF:-enable}
