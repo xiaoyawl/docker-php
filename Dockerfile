@@ -120,7 +120,7 @@ RUN set -x && \
 	make install && \
 	#echo "extension=iconv.so" > ${INSTALL_DIR}/etc/php.d/iconv.ini && \
 #install fileinfo
-	cd ext/fileinfo && \
+	cd ${TEMP_DIR}/ext/fileinfo && \
 	${INSTALL_DIR}/bin/phpize && \
  	./configure --with-php-config=${INSTALL_DIR}/bin/php-config && \
 	make -j "$(getconf _NPROCESSORS_ONLN)" && \
