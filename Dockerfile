@@ -1,7 +1,7 @@
-FROM benyoo/alpine:3.4.20160812
+FROM benyoo/alpine:3.9.20190527
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
-ENV PHP_VERSION="7.1.14" \
+ENV PHP_VERSION="7.3.5" \
 	INSTALL_DIR=/usr/local/php DATA_DIR=/data/wwwroot TEMP_DIR=/tmp/php \
 	PHP_CFLAGS="-fstack-protector-strong -fpic -fpie -O2"
 
@@ -13,7 +13,7 @@ ENV PHP_INI_DIR="${INSTALL_DIR}/etc" \
 	GPG_KEYS=A917B1ECDA84AEC2B568FED6F50ABC807BD5DCD0 \
 	PHP_URL="https://secure.php.net/get/php-${PHP_VERSION}.tar.xz/from/this/mirror" \
 	PHP_ASC_URL="https://secure.php.net/get/php-${PHP_VERSION}.tar.xz.asc/from/this/mirror" \
-	PHP_SHA256="71514386adf3e963df087c2044a0b3747900b8b1fc8da3a99f0a0ae9180d300b" \
+	PHP_SHA256="4380b80ef98267c3823c3416eb05f7729ba7a33de6b3d14ec96013215d62c35e" \
 	PHP_MD5="a74c13f8779349872b365e6732e8c98e"
 
 RUN set -xe && \
@@ -29,7 +29,7 @@ RUN set -xe && \
 	export MEMCACHE_DEPS="libmemcached-dev cyrus-sasl-dev libsasl linux-headers git" && \
 	apk add --no-cache --virtual .persistent-deps ${PERSISTENT_DEPS} && \
 	apk add --no-cache --virtual .build-deps $PHPIZE_DEPS curl-dev libedit-dev libxml2-dev openssl-dev sqlite-dev \
-		libjpeg-turbo-dev libpng-dev libmcrypt-dev icu-dev freetype-dev gettext-dev libxslt-dev zlib-dev ${MEMCACHE_DEPS} && \
+		libjpeg-turbo-dev libpng-dev libmcrypt-dev icu-dev freetype-dev gettext-dev libxslt-dev zlib-dev libzip-dev ${MEMCACHE_DEPS} && \
 #Build PHP
 	export CFLAGS="$PHP_CFLAGS" CPPFLAGS="$PHP_CPPFLAGS" LDFLAGS="$PHP_LDFLAGS" && \
 	curl -Lk "${PHP_URL}" | tar xJ -C ${TEMP_DIR} --strip-components=1 && \
@@ -89,27 +89,28 @@ RUN set -xe && \
 #Install Swoole
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/swoole-1.9.4.tgz && \
 #Install Redis
-	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/redis-3.1.0.tgz && \
+	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/redis-4.3.0.tgz && \
 #Install Xdebug
-	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/xdebug-2.5.0.tgz && \
+	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/xdebug-2.7.2.tgz && \
 #Install Event
 	bash -c "mkdir -p /tmp/{libevent,event}" && \
-	LIBEVENT_URL="https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz" && \
+	LIBEVENT_URL="https://github.com/libevent/libevent/releases/download/release-2.1.10-stable/libevent-2.1.10-stable.tar.gz" && \
 	bash -c "curl -Lk ${LIBEVENT_URL} | tar -xz -C /tmp/libevent --strip-components=1" && \
 	cd /tmp/libevent && \
 	./configure && \
 	make -j "$(getconf _NPROCESSORS_ONLN)" && \
 	make install && \
-	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/event-2.2.1.tgz && \
+	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/event-2.5.1.tgz && \
 #Install Memcached
-	mkdir -p /tmp/memcached /tmp/memcache && \
-	git clone https://github.com/php-memcached-dev/php-memcached.git /tmp/memcached && \
-	cd /tmp/memcached && \
-	git checkout php7 && \
-	${INSTALL_DIR}/bin/phpize && \
-	./configure --with-php-config=${INSTALL_DIR}/bin/php-config && \
-	make -j "$(getconf _NPROCESSORS_ONLN)" && \
-	make install && \
+#	mkdir -p /tmp/memcached /tmp/memcache && \
+#	git clone https://github.com/php-memcached-dev/php-memcached.git /tmp/memcached && \
+#	cd /tmp/memcached && \
+#	git checkout php7 && \
+#	${INSTALL_DIR}/bin/phpize && \
+#	./configure --with-php-config=${INSTALL_DIR}/bin/php-config && \
+#	make -j "$(getconf _NPROCESSORS_ONLN)" && \
+#	make install && \
+	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/memcached-3.1.3.tgz && \
 #Install Memcache
 	git clone https://github.com/websupport-sk/pecl-memcache /tmp/memcache && \
 	cd /tmp/memcache && \
@@ -117,7 +118,15 @@ RUN set -xe && \
 	./configure --with-php-config=${INSTALL_DIR}/bin/php-config && \
 	make -j "$(getconf _NPROCESSORS_ONLN)" && \
 	make install && \
-	\
+#	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/memcache-3.0.8.tgz && \
+#Install ionCube
+	mkdir -p ${TEMP_DIR}/ioncube && \
+	curl -Lk https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz | tar -xz -C ${TEMP_DIR}/ioncube/ --strip-components=1 && \
+	cp ${TEMP_DIR}/ioncube/ioncube_loader_lin_7.3.so /usr/local/php/lib/php/extensions/no-debug-non-zts-20180731/ && \
+	echo -e '[ionCube Loader]\nzend_extension = ioncube_loader_lin_7.3.so' > ${PHP_INI_DIR}/php.d/10-ioncube.ini && \
+#Add
+	chmod +x -R /usr/local/php/lib/php/extensions/no-debug-non-zts-20180731/ && \
+\
 	#docker-php-source delete && \
 	runDeps="$( scanelf --needed --nobanner --recursive /usr/local | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' | sort -u | xargs -r apk info --installed | sort -u )" && \
 	apk add --no-cache --virtual .php-rundeps $runDeps && \
