@@ -129,17 +129,23 @@ RUN set -xe && \
 \
 	#docker-php-source delete && \
 	runDeps="$( scanelf --needed --nobanner --recursive /usr/local | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' | sort -u | xargs -r apk info --installed | sort -u )" && \
+	runDeps="${runDeps} inotify-tools supervisor logrotate python tzdata" && \
 	apk add --no-cache --virtual .php-rundeps $runDeps && \
+	cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
 #Clear OS
 	apk del .build-deps && \
 	bash -c "rm -rf /tmp/{php,pear,memcache{,d},libevent,event}"
 
 #COPY docker-php-source /usr/local/bin/
-COPY docker-php-ext-* docker-php-entrypoint /usr/local/bin/
+COPY docker-php-ext-* /usr/local/bin/
+COPY entrypoint.sh /entrypoint.sh
 COPY php-fpm.conf ${PHP_INI_DIR}/
+ADD etc /etc
+#ADD php-fpm.conf ${INSTALL_DIR}/etc/php-fpm.conf
 
 WORKDIR /data/wwwroot
 
-ENTRYPOINT ["docker-php-entrypoint"]
 EXPOSE 9000
-CMD ["php-fpm"]
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/local/php/sbin/php-fpm"]
