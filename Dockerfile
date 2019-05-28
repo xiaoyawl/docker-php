@@ -29,7 +29,7 @@ RUN set -xe && \
 	export MEMCACHE_DEPS="libmemcached-dev cyrus-sasl-dev libsasl linux-headers git" && \
 	apk add --no-cache --virtual .persistent-deps ${PERSISTENT_DEPS} && \
 	apk add --no-cache --virtual .build-deps $PHPIZE_DEPS curl-dev libedit-dev libxml2-dev openssl-dev sqlite-dev \
-		libjpeg-turbo-dev libpng-dev libmcrypt-dev icu-dev freetype-dev gettext-dev libxslt-dev zlib-dev libzip-dev ${MEMCACHE_DEPS} && \
+		libjpeg-turbo-dev libpng-dev libmcrypt-dev icu-dev freetype-dev gettext-dev libxslt-dev zlib-dev libzip-dev imagemagick-dev ${MEMCACHE_DEPS} && \
 #Build PHP
 	export CFLAGS="$PHP_CFLAGS" CPPFLAGS="$PHP_CPPFLAGS" LDFLAGS="$PHP_LDFLAGS" && \
 	curl -Lk "${PHP_URL}" | tar xJ -C ${TEMP_DIR} --strip-components=1 && \
@@ -100,6 +100,7 @@ RUN set -xe && \
 	./configure && \
 	make -j "$(getconf _NPROCESSORS_ONLN)" && \
 	make install && \
+	cd - && \
 	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/event-2.5.1.tgz && \
 #Install Memcached
 #	mkdir -p /tmp/memcached /tmp/memcache && \
@@ -118,13 +119,25 @@ RUN set -xe && \
 	./configure --with-php-config=${INSTALL_DIR}/bin/php-config && \
 	make -j "$(getconf _NPROCESSORS_ONLN)" && \
 	make install && \
+	cd - && \
 #	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/memcache-3.0.8.tgz && \
 #Install ionCube
 	mkdir -p ${TEMP_DIR}/ioncube && \
 	curl -Lk https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz | tar -xz -C ${TEMP_DIR}/ioncube/ --strip-components=1 && \
 	cp ${TEMP_DIR}/ioncube/ioncube_loader_lin_7.3.so /usr/local/php/lib/php/extensions/no-debug-non-zts-20180731/ && \
 	echo -e '[ionCube Loader]\nzend_extension = ioncube_loader_lin_7.3.so' > ${PHP_INI_DIR}/php.d/10-ioncube.ini && \
-#Add
+#Install ImageMagick
+	mkdir -p ${TEMP_DIR}/ImageMagick && \
+	curl -Lks https://imagemagick.org/download/ImageMagick-7.0.8-47.tar.gz|tar -xz -C ${TEMP_DIR}/ImageMagick/ --strip-components=1 && \
+	cd ${TEMP_DIR}/ImageMagick && \
+	./configure --prefix=/usr/local/imagemagick && \
+	make -j "$(getconf _NPROCESSORS_ONLN)" && \
+	make install && \
+	cd - && \
+#Install imagick
+	${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/imagick-3.4.4.tgz && \
+	echo -e '[ImageMagick]\nextension = imagick.so' > ${PHP_INI_DIR}/php.d/10-ImageMagick.ini && \
+#Modify file permissions
 	chmod +x -R /usr/local/php/lib/php/extensions/no-debug-non-zts-20180731/ && \
 \
 	#docker-php-source delete && \
@@ -136,7 +149,6 @@ RUN set -xe && \
 	apk del .build-deps && \
 	bash -c "rm -rf /tmp/{php,pear,memcache{,d},libevent,event}"
 
-#COPY docker-php-source /usr/local/bin/
 COPY docker-php-ext-* /usr/local/bin/
 COPY entrypoint.sh /entrypoint.sh
 COPY php-fpm.conf ${PHP_INI_DIR}/
