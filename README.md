@@ -27,6 +27,10 @@ curl -Lks https://get.docker.com/ | sh
 | XDEBUG_REMOTE_PORT | 9900 | 设定Xdebug的监听端口 |
 | XDEBUG_DEFAULT_CONF | enable | 默认使用默认的Xdebug的配置文件 |
 
+## 已安装扩展
+Swoole、Redis、Xdebug、Event、Memcached、Memcache、ionCube、imagick
+
+
 ```bash
 # 注1: PHP_DISABLE_FUNCTIONS=passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server,fsocket,popen
 ```
