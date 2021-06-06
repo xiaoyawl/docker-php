@@ -1,7 +1,7 @@
 FROM benyoo/alpine:3.13.20210531
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
-ENV PHP_VERSION="8.0.6" \
+ENV PHP_VERSION="8.0.7" \
     INSTALL_DIR=/usr/local/php DATA_DIR=/data/wwwroot TEMP_DIR=/tmp/php \
     PHP_CFLAGS="-fstack-protector-strong -fpic -fpie -O2"
 
