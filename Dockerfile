@@ -1,7 +1,7 @@
-FROM benyoo/alpine:3.13.20210531
+FROM benyoo/alpine:3.16.20220908
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
-ENV PHP_VERSION="7.4.20" \
+ENV PHP_VERSION="7.4.32" \
     INSTALL_DIR=/usr/local/php DATA_DIR=/data/wwwroot TEMP_DIR=/tmp/php \
     PHP_CFLAGS="-fstack-protector-strong -fpic -fpie -O2"
 
@@ -41,12 +41,13 @@ ENV PHP_INI_DIR="${INSTALL_DIR}/etc" \
 # 208b3330af881b44a6a8c6858d569c72db78dab97810332978cc65206b0ec2dc  php-8.0.1.tar.xz
 # 52ad70ea64968d6095c6e38139533d57  php-8.0.0.tar.xz
 # b5278b3eef584f0c075d15666da4e952fa3859ee509d6b0cc2ed13df13f65ebb  php-8.0.0.tar.x
-# 
+
+# 323332c991e8ef30b1d219cb10f5e30f11b5f319ce4c6642a5470d75ade7864a  php-7.4.32.tar.xz
 # 6e0b6f6ac5c726e1194bff67f421cb5f  php-7.4.20.tar.xz
-# 1fa46ca6790d780bf2cb48961df65f0ca3640c4533f0bca743cd61b71cb66335  php-7.4.20.tar.xz
+# 1fa46ca6790d780bf2cb48961df65f0ca3640c4533f0bca743cd61b71cb66335  php-7.4.32.tar.xz
 # 287ee24d4401489881be7338eff87f77  php-7.4.19.tar.xz
 # 6c17172c4a411ccb694d9752de899bb63c72a0a3ebe5089116bc13658a1467b2  php-7.4.19.tar.xz
-# 
+
 # 1be06424d70625db235c79209f939a87  php-7.3.28.tar.xz
 # a2a84dbec8c1eee3f46c5f249eaaa2ecb3f9e7a6f5d0604d2df44ff8d4904dbe  php-7.3.28.tar.xz
 # f43ed3ac572a0ec7452be15f4ae7c28c  php-7.3.27.tar.xz
@@ -79,7 +80,9 @@ RUN set -xe && \
         --enable-bcmath \
         --enable-shmop \
         --enable-exif \
+        --enable-intl \
         --enable-sysvsem \
+        --enable-gd-native-ttf \
         --enable-inline-optimization \
         --enable-ftp \
         --enable-mbregex \
@@ -104,11 +107,9 @@ RUN set -xe && \
         --with-curl=/usr/local \
         --with-mcrypt \
         --with-gd \
-        --enable-gd-native-ttf \
         --with-openssl \
         --with-mhash \
         --with-xmlrpc \
-        --enable-intl \
         --with-xsl \
         --with-pear \
         --with-gettext \
@@ -125,6 +126,8 @@ RUN set -xe && \
     { find /usr/local/php/bin /usr/local/php/sbin -type f -perm +0111 -exec strip --strip-all '{}' + || true; } && \
     make clean && \
 ###     echo
+#Install APCu
+    ${INSTALL_DIR}/bin/pecl install APCu && \
 #Install Swoole
     ${INSTALL_DIR}/bin/pecl install swoole && \
 #Install Redis
@@ -143,18 +146,23 @@ RUN set -xe && \
 ###    ${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/event-2.5.1.tgz && \
     ${INSTALL_DIR}/bin/pecl install event && \
 ####Install Memcached
-    ${INSTALL_DIR}/bin/pecl install memcached && \
+    ${INSTALL_DIR}/bin/pecl install http://pecl.php.net/get/memcached-3.2.0.tgz && \
 ####Install Memcache
 ####    ${INSTALL_DIR}/bin/pecl install memcache && \
 ###php8.0
 ###    ${INSTALL_DIR}/bin/pecl install http://pecl.php.net/get/memcache-8.0.tgz && \
-###php7.4.20
+###php7.4.32
     ${INSTALL_DIR}/bin/pecl install http://pecl.php.net/get/memcache-4.0.5.2.tgz && \
-####Install ionCube
+####Install ionCube 7.3
 ###    mkdir -p ${TEMP_DIR}/ioncube && \
 ###    curl -Lk https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz | tar -xz -C ${TEMP_DIR}/ioncube/ --strip-components=1 && \
-###    cp ${TEMP_DIR}/ioncube/ioncube_loader_lin_7.3.so /usr/local/php/lib/php/extensions/no-debug-non-zts-20180731/ && \
-###    echo -e '[ionCube Loader]\nzend_extension = ioncube_loader_lin_7.3.so' > ${PHP_INI_DIR}/php.d/10-ioncube.ini && \
+###    cp ${TEMP_DIR}/ioncube/ioncube_loader_lin_7.4.so /usr/local/php/lib/php/extensions/no-debug-non-zts-20180731/ && \
+###    echo -e '[ionCube Loader]\nzend_extension = ioncube_loader_lin_7.4.so' >> ${PHP_INI_DIR}/php.d/10-ioncube.ini && \
+####Install ionCube 7.4
+    mkdir -p ${TEMP_DIR}/ioncube && \
+    curl -Lk https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz | tar -xz -C ${TEMP_DIR}/ioncube/ --strip-components=1 && \
+    cp ${TEMP_DIR}/ioncube/ioncube_loader_lin_7.4.so /usr/local/php/lib/php/extensions/no-debug-non-zts-20190902/ && \
+    echo -e '[ionCube Loader]\nzend_extension = ioncube_loader_lin_7.4.so' >> ${PHP_INI_DIR}/php.d/10-ioncube.ini && \
 ####Install ImageMagick
 ###    mkdir -p ${TEMP_DIR}/ImageMagick && \
 ###    curl -Lks https://imagemagick.org/download/ImageMagick-7.0.8-47.tar.gz|tar -xz -C ${TEMP_DIR}/ImageMagick/ --strip-components=1 && \
@@ -164,12 +172,17 @@ RUN set -xe && \
 ###    make install && \
 ###    cd - && \
 ####Install imagick
-###    ${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/imagick-3.4.4.tgz && \
-###    echo -e '[ImageMagick]\nextension = imagick.so' > ${PHP_INI_DIR}/php.d/10-ImageMagick.ini && \
+    ${INSTALL_DIR}/bin/pecl install https://pecl.php.net/get/imagick-3.7.0.tgz && \
+###    echo -e '[ImageMagick]\nextension = imagick.so' >> ${PHP_INI_DIR}/php.d/10-ImageMagick.ini && \
+####Install SourceGuardian
+    mkdir -p ${TEMP_DIR}/sourceguardian && \
+    curl -Lks http://www.sourceguardian.com/loaders/download/loaders.linux-x86_64.tar.gz | tar -xz -C ${TEMP_DIR}/sourceguardian/ && \
+    cp ${TEMP_DIR}/sourceguardian/ixed.7.4.lin /usr/local/php/lib/php/extensions/no-debug-non-zts-20190902/ && \
+    echo -e '[SourceGuardian]\nextension = ixed.7.4.lin' >> ${PHP_INI_DIR}/php.d/10-SourceGuardian.ini && \
 #Modify file permissions
-###
+###php7.3
 ###     chmod +x -R /usr/local/php/lib/php/extensions/no-debug-non-zts-20180731/ && \
-###php7.4.20
+###php7.4
     chmod +x -R /usr/local/php/lib/php/extensions/no-debug-non-zts-20190902/ && \
 ###php8.0.6-8.0.7
 ####    chmod +x -R /usr/local/php/lib/php/extensions/no-debug-non-zts-20200930/ && \
