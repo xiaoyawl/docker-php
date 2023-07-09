@@ -1,7 +1,7 @@
 FROM benyoo/alpine:3.16.20220908
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
-ENV PHP_VERSION="7.4.32" \
+ENV PHP_VERSION="7.4.33" \
     INSTALL_DIR=/usr/local/php DATA_DIR=/data/wwwroot TEMP_DIR=/tmp/php \
     PHP_CFLAGS="-fstack-protector-strong -fpic -fpie -O2"
 
@@ -129,11 +129,11 @@ RUN set -xe && \
 #Install APCu
     ${INSTALL_DIR}/bin/pecl install APCu && \
 #Install Swoole
-    ${INSTALL_DIR}/bin/pecl install swoole && \
+    ${INSTALL_DIR}/bin/pecl install http://pecl.php.net/get/swoole-4.8.13.tgz && \
 #Install Redis
     ${INSTALL_DIR}/bin/pecl install redis && \
 #Install Xdebug
-    ${INSTALL_DIR}/bin/pecl install xdebug && \
+    ${INSTALL_DIR}/bin/pecl install http://pecl.php.net/get/xdebug-3.1.6.tgz && \
 #Install Event
     bash -c "mkdir -p /tmp/{libevent,event}" && \
     LIBEVENT_URL="https://github.com/libevent/libevent/releases/download/release-2.1.12-stable/libevent-2.1.12-stable.tar.gz" && \
