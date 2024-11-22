@@ -1,4 +1,5 @@
 FROM benyoo/alpine:3.16.20220908
+#FROM benyoo/alpine:3.19.20241120
 MAINTAINER from www.dwhd.org by lookback (mondeolove@gmail.com)
 
 ENV PHP_VERSION="7.4.33" \
@@ -29,29 +30,7 @@ ENV PHP_INI_DIR="${INSTALL_DIR}/etc" \
 # 8.0 1729F83938DA44E27BA0F4D3DBDB397470D12172
 # 8.1 528995BFEDFBA7191D46839EF9BA0ADA31CBD89E
 
-# d7b95830ccbc909980bd0c202e6606ad  php-8.0.6.tar.xz
-# e9871d3b6c391fe9e89f86f6334852dcc10eeaaa8d5565beb8436e7f0cf30e20  php-8.0.6.tar.xz
-# ae27a7444ede5f2e118b6fd869d29958  php-8.0.5.tar.xz
-# 5dd358b35ecd5890a4f09fb68035a72fe6b45d3ead6999ea95981a107fd1f2ab  php-8.0.5.tar.xz
-# 6baaddeea5823ade61609f4c4d90f7a7  php-8.0.3.tar.xz
-# c9816aa9745a9695672951eaff3a35ca5eddcb9cacf87a4f04b9fb1169010251  php-8.0.3.tar.xz
-# 4fc1c90ee10b72d6a56447f8491a9857  php-8.0.2.tar.xz
-# 84dd6e36f48c3a71ff5dceba375c1f6b34b71d4fa9e06b720780127176468ccc  php-8.0.2.tar.xz
-# f860a700a0eb929444c85f3ca53faa60  php-8.0.1.tar.xz
-# 208b3330af881b44a6a8c6858d569c72db78dab97810332978cc65206b0ec2dc  php-8.0.1.tar.xz
-# 52ad70ea64968d6095c6e38139533d57  php-8.0.0.tar.xz
-# b5278b3eef584f0c075d15666da4e952fa3859ee509d6b0cc2ed13df13f65ebb  php-8.0.0.tar.x
-
-# 323332c991e8ef30b1d219cb10f5e30f11b5f319ce4c6642a5470d75ade7864a  php-7.4.32.tar.xz
-# 6e0b6f6ac5c726e1194bff67f421cb5f  php-7.4.20.tar.xz
-# 1fa46ca6790d780bf2cb48961df65f0ca3640c4533f0bca743cd61b71cb66335  php-7.4.32.tar.xz
-# 287ee24d4401489881be7338eff87f77  php-7.4.19.tar.xz
-# 6c17172c4a411ccb694d9752de899bb63c72a0a3ebe5089116bc13658a1467b2  php-7.4.19.tar.xz
-
-# 1be06424d70625db235c79209f939a87  php-7.3.28.tar.xz
-# a2a84dbec8c1eee3f46c5f249eaaa2ecb3f9e7a6f5d0604d2df44ff8d4904dbe  php-7.3.28.tar.xz
-# f43ed3ac572a0ec7452be15f4ae7c28c  php-7.3.27.tar.xz
-# 65f616e2d5b6faacedf62830fa047951b0136d5da34ae59e6744cbaf5dca148d  php-7.3.27.tar.xz
+# 5a2337996f07c8a097e03d46263b5c98d2c8e355227756351421003bea8f463e php-7.4.33.tar.xz
 
 RUN set -xe && \
 #Mkdir INI_DIR
@@ -82,6 +61,7 @@ RUN set -xe && \
         --enable-exif \
         --enable-intl \
         --enable-sysvsem \
+        --enable-gd \
         --enable-gd-native-ttf \
         --enable-inline-optimization \
         --enable-ftp \
@@ -99,8 +79,11 @@ RUN set -xe && \
         --with-iconv \
         --with-iconv-dir=/usr/local \
         --with-freetype-dir \
+        --with-freetype \
         --with-jpeg-dir \
+        --with-jpeg \
         --with-png-dir \
+        --with-png \
         --with-zlib \
         --with-zlib-dir \
         --with-libxml-dir=/usr \
@@ -193,7 +176,7 @@ RUN set -xe && \
     apk add --no-cache --virtual .php-rundeps $runDeps && \
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
 #Clear OS
-    apk del .build-deps && \
+###    apk del .build-deps
 ###    bash -c "rm -rf /tmp/{php,pear,memcache{,d},libevent,event}"
     echo
 
