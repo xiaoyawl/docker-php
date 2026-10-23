@@ -218,6 +218,8 @@ printf '%s' "$令牌" | DOCKERHUB_USER=benyoo bash scripts/push-image.sh   # 原
 
 | 镜像标签（已推送） | 索引摘要（仓库端与归档一致） | amd64 清单 | arm64 清单 | 压缩层 amd64 / arm64 | OCI 归档 SHA-256 |
 |---|---|---|---|---|---|
-| `benyoo/php-alpine:7.4.33.20261023` | `sha256:3198bc940b4bd7df6cc967833c403e73c07c7dfcad670898bf8c0ae10f13e84e` | `sha256:e25c05942677fa1bf5d46542a1dc4749b9cad96639843edd5a49e3ccbdf1e0f1` | `sha256:6262f12a4b208e5149d9f190beda68fd9aa522876472132053f3a313f43909ce` | 约 119 / 119 MB | `8e7d5f5aa50baca5d10518897436e865a7f52562676df41dcc82fff9ba1171d7` |
+| `benyoo/php-alpine:7.4.33.20261023` | `sha256:51624b76feba7ce00052932b9668149b15659e7a66e5805f0525b37f051ec48f` | `sha256:c6762bb9a909f2d1e42a2a953d963202acaa2d6908bbca1aafd0c86ce9851104` | `sha256:7f0f87fa8abce08ba53d436e9888b81c025030ff36fc58a813e372f961fb847e` | 约 119 / 119 MB | `7589c31bac3b16fac0b15b54c1dfe8682d6afd1b3d0fe38ab4503b211ab7c922` |
 
 Trivy 扫描（每个变体与架构）：amd64 0、arm64 0 项。
+
+2026-10-24 以相同构建日重建并覆盖上述标签：只把维护者标签改为 Manta（`org.opencontainers.image.authors`、`maintainer`），编译阶段复用缓存；两种架构重新完成全套功能验收与 Trivy 扫描（0 项），上游 PHPT 未重跑（编译阶段未变，沿用上述结果）。
