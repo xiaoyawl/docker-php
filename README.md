@@ -2,7 +2,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-7.4.33-777BB4)
 ![Alpine](https://img.shields.io/badge/Alpine-3.24-0D597F)
-![架构](https://img.shields.io/badge/架构-amd64-blue)
+![架构](https://img.shields.io/badge/架构-amd64%20%7C%20arm64-blue)
 ![维护状态](https://img.shields.io/badge/上游-EOL-B0332B)
 
 本分支 `php-7.4.33` 构建 `benyoo/php-alpine:7.4.33.<构建日>`：基于 Alpine 3.24 从源码编译 PHP 7.4.33，纳入可信安全回补、现代依赖适配、常用数据库与缓存扩展、官方 Loader，并在构建时更新 CA 信任库。
@@ -94,8 +94,8 @@ configure 参数见 [`config/php-configure.txt`](config/php-configure.txt)。
 | imagick | 3.8.1 | `IMAGICK` | 运行镜像含 imagemagick 格式模块 |
 | hprose | 1.8.0 | `HPROSE` | 上游最终版本；只在 PHP 7.x 提供 |
 | FFI | 7.4.33（内置） | `FFI` | 以共享模块编译，开启时同时设置 `ffi.enable=1` |
-| ionCube Loader | 15.5.1 | `IONCUBE` | 官方 musl 版，无需 glibc 兼容层；与 Xdebug 互斥 |
-| SourceGuardian Loader | 17.0.0 | `SOURCEGUARDIAN` | 官方 glibc 版，依赖 gcompat 与 libudev-zero |
+| ionCube Loader | 15.5.1 | `IONCUBE` | 官方 musl 版，无需 glibc 兼容层；与 Xdebug 互斥；arm64 使用官方 aarch64 glibc 版，启用时预加载 gcompat |
+| SourceGuardian Loader | 17.0.0 | `SOURCEGUARDIAN` | 官方 glibc 版，依赖 gcompat 与 libudev-zero；arm64 使用官方 aarch64 版 |
 
 扩展的版本、编译参数与开关统一定义在 [`config/extensions.json`](config/extensions.json)，源码摘要见 [`sources.lock.json`](sources.lock.json)。
 
@@ -175,9 +175,10 @@ configure 参数见 [`config/php-configure.txt`](config/php-configure.txt)。
 | `libgd/` | 补丁版 libgd 的源码锁与补丁 |
 
 ```bash
-# 在指定的远程 Linux 构建节点执行（只构建 amd64，不推送）
-bash scripts/build-image.sh       # 产物：artifacts/<变体>/php-7.4.33-amd64.oci.tar
-bash scripts/verify-artifact.sh   # 全套验收：功能、扩展、数据库与缓存真实读写、TLS/CA、FPM 生命周期、扫描
+# 在指定的远程 Linux 构建节点执行（默认 linux/amd64,linux/arm64，不推送；PLATFORMS 可只构建部分架构）
+bash scripts/build-image.sh       # 产物：artifacts/<变体>/php-7.4.33.oci.tar（多架构 OCI 索引）
+bash scripts/verify-artifact.sh   # 按架构全套验收：功能、扩展、数据库与缓存真实读写、TLS/CA、FPM 生命周期、扫描
+printf '%s' "$令牌" | DOCKERHUB_USER=benyoo bash scripts/push-image.sh   # 原样推送已验收归档并核对仓库端摘要
 ```
 
 ## 目录与维护说明
@@ -207,13 +208,16 @@ bash scripts/verify-artifact.sh   # 全套验收：功能、扩展、数据库�
 
 ## 验收结果
 
-最近一次模板构建（2026-10-23，amd64，`benyoo/php-alpine:7.4.33.20261023`）：
+最近一次模板构建（2026-10-23，linux/amd64 与 linux/arm64，两种架构分别验收，`benyoo/php-alpine:7.4.33.20261023`）：
 
-- **产物**：OCI SHA-256 `f96e056d40bf21346a250503ce17a4a3d91d7d96b30660ed9efe323cb5cc5f9f`；清单 `sha256:5a7050e8…4653e693f`；配置 `sha256:49bf1368…4aba591`；镜像约 119 MB。
 - **全套验收通过**：扩展与 Loader 版本逐项核对（memcache 4.0.5.2、memcached 3.4.0、redis 6.3.0、swoole 4.8.13、xdebug 3.1.6、mongodb 1.20.1、zstd 0.18.0、event 3.1.6、apcu 5.1.28、imagick 3.8.1、hprose 1.8.0、FFI、ionCube 15.5.1、SourceGuardian 17.0.0）；ionCube + SourceGuardian + OPcache 组合与 FPM worker 中加载；libgd 旋转回归 210 组；可选扩展离线功能（Imagick、SourceGuardian、APCu、FFI、Hprose）；Xdebug 3.1.6 覆盖率与跟踪；Swoole 4.8.13 旧类名 TCP 收发；Redis 6.3.0 接口基线与真实读写；git 与 Composer；MySQL / PostgreSQL / Memcache / Memcached 真实读写；MongoDB 8.0；HTTP 与 mysqlnd 协议安全回归、TLS 与 CA；FPM 同 worker 请求、内存耗尽后 worker 按 0164 补丁退出并由 master 补充（清单 `fpm.oom_worker_exits=true`）、重启与退出；扩展包许可文件随镜像保存在 `/usr/local/php/share/licenses/`；Trivy 扫描 0 项（扫描器无法识别自编译 PHP 与闭源 Loader，0 项不等于没有漏洞）。
-- **上游 PHPT**（官方 `run-tests.php`，非 root、断网）：共 635 个用例（补丁附带 177 个 + GD、PCRE 全套 + mysqlnd 安全用例），通过 545、失败 27、跳过 63。失败项逐项核实，**没有安全修复缺失**：
+- **上游 PHPT**（官方 `run-tests.php`，非 root、断网）：linux/amd64 与 linux/arm64 结果相同、失败清单一致，没有 arm64 独有失败；共 635 个用例（补丁附带 177 个 + GD、PCRE 全套 + mysqlnd 安全用例），通过 545、失败 27、跳过 63。失败项逐项核实，**没有安全修复缺失**：
   - 25 项为环境或系统库差异：外部 libgd / FreeType 的警告文案、度量与旋转尺寸 14 项（含 bug65148；GD 溢出类用例均被安全拒绝）、libxml2 2.13 诊断文案 4 项（外部实体仍被拒绝加载）、PCRE2 10.49 错误文本与偏移 4 项、musl 区域设置 2 项、musl `crypt()` 失败标记 1 项；
   - 1 项为测试预期过时：bug75535 期望无冒号响应头返回空串，安全修复 GHSA-pcmh-g36c-qc44 起改为拒绝；
-  - 1 项为运行资源限制：soap_qname_crash 需 `memory_limit=8G`，运行器容器上限 3G；以 12G 单独复跑通过（命令与结果见 `artifacts/default/upstream-phpt/resource-rerun-soap_qname_crash.log`），对应修复 GHSA-453j-q27h-5p8x 有效。
+  - 1 项为运行资源限制：soap_qname_crash 需 `memory_limit=8G`，运行器容器上限 3G，主运行无输出或只输出 `Termsig=0`（两种架构均为进程被中止）；以 12G 单独复跑通过（命令与结果见 `artifacts/default/upstream-phpt/resource-rerun-soap_qname_crash.log`），对应修复 GHSA-453j-q27h-5p8x 有效。
 
-镜像摘要在推送后补充。
+| 镜像标签（已推送） | 索引摘要（仓库端与归档一致） | amd64 清单 | arm64 清单 | 压缩层 amd64 / arm64 | OCI 归档 SHA-256 |
+|---|---|---|---|---|---|
+| `benyoo/php-alpine:7.4.33.20261023` | `sha256:3198bc940b4bd7df6cc967833c403e73c07c7dfcad670898bf8c0ae10f13e84e` | `sha256:e25c05942677fa1bf5d46542a1dc4749b9cad96639843edd5a49e3ccbdf1e0f1` | `sha256:6262f12a4b208e5149d9f190beda68fd9aa522876472132053f3a313f43909ce` | 约 119 / 119 MB | `8e7d5f5aa50baca5d10518897436e865a7f52562676df41dcc82fff9ba1171d7` |
+
+Trivy 扫描（每个变体与架构）：amd64 0、arm64 0 项。
