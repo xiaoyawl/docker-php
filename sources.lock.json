@@ -68,14 +68,22 @@
     {
       "file": "ioncube_loaders_lin_musl_x86-64.tar.gz",
       "url": "https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin-musl_x86-64.tar.gz",
-      "sha256": "5c7d7913ceca745253d4bf99df3e7d11b16db34fca4fd6dc16feccd642ecdf8b"
+      "sha256": "5c7d7913ceca745253d4bf99df3e7d11b16db34fca4fd6dc16feccd642ecdf8b",
+      "arch": "amd64"
     },
     {
       "file": "loaders.linux-x86_64.tar.gz",
       "url": "https://www.sourceguardian.com/loaders/download/loaders.linux-x86_64.tar.gz",
       "sha256": "aeaf6b5cf8f27ff01fd05affebdec490e6f7a01284c000a63ae3ceb6dcb6e419",
       "extract_dir": "sourceguardian",
-      "note": "官方下载地址不含版本号；厂商更新后摘要校验会失败并中止构建，需重新审查后更新锁定"
+      "note": "官方下载地址不含版本号；厂商更新后摘要校验会失败并中止构建，需重新审查后更新锁定",
+      "arch": "amd64"
+    },
+    {
+      "file": "ioncube_loaders_lin_aarch64.tar.gz",
+      "url": "https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_aarch64.tar.gz",
+      "sha256": "b091974aa80a76bd798d71fd5209797d93749b0be13eaff978a3dbe0106b9e1f",
+      "arch": "arm64"
     },
     {
       "file": "composer-2.2.30.phar",
@@ -691,7 +699,8 @@
       "libc_mode": "musl-native",
       "license": "ioncube/LICENSE.txt",
       "license_sha256": "8050ac3dea9472fc31eb53b4dbfb5dd7b4379491ed80d36666fdaa1ed31e90c9",
-      "dir": "ioncube"
+      "dir": "ioncube",
+      "arch": "amd64"
     },
     {
       "name": "SourceGuardian Loader",
@@ -703,7 +712,21 @@
       "libc_mode": "gcompat-libc.so.6-and-libudev-zero",
       "license": "sourceguardian/SourceGuardian Loader License.pdf",
       "license_sha256": "3c6512267e5a21acd904e0e531442b573c43543b761ef2fa76da5d6392193c23",
-      "dir": "sourceguardian"
+      "dir": "sourceguardian",
+      "arch": "amd64"
+    },
+    {
+      "name": "ionCube Loader",
+      "php": "7.1",
+      "version": "15.5.1",
+      "file": "ioncube_loader_lin_7.1.so",
+      "sha256": "7b64e724930e83626fa621495e3f752aa31b72021e151a6ee5d55ee7c853c766",
+      "platform": "linux/arm64",
+      "libc_mode": "gcompat-preload-when-enabled",
+      "license": "ioncube/LICENSE.txt",
+      "license_sha256": "8050ac3dea9472fc31eb53b4dbfb5dd7b4379491ed80d36666fdaa1ed31e90c9",
+      "dir": "ioncube",
+      "arch": "arm64"
     }
   ]
 }
