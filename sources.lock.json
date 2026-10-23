@@ -53,7 +53,8 @@
     {
       "file": "ioncube_loaders_lin_musl_x86-64.tar.gz",
       "url": "https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin-musl_x86-64.tar.gz",
-      "sha256": "5c7d7913ceca745253d4bf99df3e7d11b16db34fca4fd6dc16feccd642ecdf8b"
+      "sha256": "5c7d7913ceca745253d4bf99df3e7d11b16db34fca4fd6dc16feccd642ecdf8b",
+      "arch": "amd64"
     },
     {
       "file": "imagick-3.8.1.tgz",
@@ -65,7 +66,8 @@
       "url": "https://www.sourceguardian.com/loaders/download/loaders.linux-x86_64.tar.gz",
       "sha256": "aeaf6b5cf8f27ff01fd05affebdec490e6f7a01284c000a63ae3ceb6dcb6e419",
       "extract_dir": "sourceguardian",
-      "note": "官方下载地址不含版本号；厂商更新后摘要校验会失败并中止构建，需重新审查后更新锁定"
+      "note": "官方下载地址不含版本号；厂商更新后摘要校验会失败并中止构建，需重新审查后更新锁定",
+      "arch": "amd64"
     },
     {
       "file": "composer-2.10.3.phar",
@@ -78,6 +80,21 @@
       "file": "apcu-5.1.28.tgz",
       "url": "https://pecl.php.net/get/apcu-5.1.28.tgz",
       "sha256": "ca9c1820810a168786f8048a4c3f8c9e3fd941407ad1553259fb2e30b5f057bf"
+    },
+    {
+      "file": "ioncube_loaders_lin_aarch64.tar.gz",
+      "url": "https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_aarch64.tar.gz",
+      "sha256": "b091974aa80a76bd798d71fd5209797d93749b0be13eaff978a3dbe0106b9e1f",
+      "arch": "arm64",
+      "note": "ionCube 官方没有 aarch64 musl 版，使用 glibc 版并在启用时预加载 gcompat"
+    },
+    {
+      "file": "loaders.linux-aarch64.tar.gz",
+      "url": "https://www.sourceguardian.com/loaders/download/loaders.linux-aarch64.tar.gz",
+      "sha256": "4f843f83e07dab908e9400eb15b5aee9ca6f5e3ae1b686df679a0f5352e1cbc5",
+      "extract_dir": "sourceguardian",
+      "arch": "arm64",
+      "note": "官方下载地址不含版本号；厂商更新后摘要校验会失败并中止构建，需重新审查后更新锁定"
     }
   ],
   "patches": [
@@ -121,7 +138,8 @@
       "libc_mode": "musl",
       "license": "ioncube/LICENSE.txt",
       "license_sha256": "8050ac3dea9472fc31eb53b4dbfb5dd7b4379491ed80d36666fdaa1ed31e90c9",
-      "dir": "ioncube"
+      "dir": "ioncube",
+      "arch": "amd64"
     },
     {
       "name": "SourceGuardian Loader",
@@ -133,7 +151,34 @@
       "libc_mode": "gcompat-libc.so.6-and-libudev-zero",
       "license": "sourceguardian/SourceGuardian Loader License.pdf",
       "license_sha256": "3c6512267e5a21acd904e0e531442b573c43543b761ef2fa76da5d6392193c23",
-      "dir": "sourceguardian"
+      "dir": "sourceguardian",
+      "arch": "amd64"
+    },
+    {
+      "name": "ionCube Loader",
+      "php": "8.5",
+      "version": "15.5.1",
+      "file": "ioncube_loader_lin_8.5.so",
+      "sha256": "be24188d58cc257e648957f1d6e891689fc663fa79dee44312405f6156601c3b",
+      "platform": "linux/arm64",
+      "libc_mode": "gcompat-preload-when-enabled",
+      "license": "ioncube/LICENSE.txt",
+      "license_sha256": "8050ac3dea9472fc31eb53b4dbfb5dd7b4379491ed80d36666fdaa1ed31e90c9",
+      "dir": "ioncube",
+      "arch": "arm64"
+    },
+    {
+      "name": "SourceGuardian Loader",
+      "php": "8.5",
+      "version": "17.0.0",
+      "file": "ixed.8.5.lin",
+      "sha256": "d5cd45c45ff1c52930aef0a067cfc22e0d796c3a45bd425b63f7902253cffde0",
+      "platform": "linux/arm64",
+      "libc_mode": "gcompat-libc.so.6-and-libudev-zero",
+      "license": "sourceguardian/SourceGuardian Loader License.pdf",
+      "license_sha256": "3c6512267e5a21acd904e0e531442b573c43543b761ef2fa76da5d6392193c23",
+      "dir": "sourceguardian",
+      "arch": "arm64"
     }
   ]
 }

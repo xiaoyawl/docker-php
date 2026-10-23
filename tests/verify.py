@@ -23,10 +23,14 @@ name = 'php-check-' + uuid.uuid4().hex[:10]
 manifest = json.loads((project / 'config/extensions.json').read_text())
 php_version = manifest['php']
 variant = os.environ.get('VARIANT_SUFFIX', '-')
+# 目标架构由平台参数决定，manifest 据此筛选该架构提供的官方 Loader。
+arch = platform.split('/')[-1]
+os.environ['TARGETARCH'] = arch
+loaders = [item for item in manifest['loaders'] if item.get('arch', arch) == arch]
 expected = json.loads(subprocess.run([sys.executable, str(project / 'scripts/manifest.py'), 'expected-versions', variant],
     check=True, text=True, capture_output=True).stdout)
 switches = sorted({item['switch'] for item in manifest['extensions']})
-loader_switches = [item['switch'] for item in manifest['loaders']]
+loader_switches = [item['switch'] for item in loaders]
 
 
 def run(args, **kwargs):
@@ -79,13 +83,19 @@ if 'xdebug' in expected:
     actual = run(base + enable('XDEBUG') + [image, 'php', '-r', 'echo phpversion("xdebug");']).strip()
     require(actual == expected['xdebug'], 'Xdebug 版本应为 {}，实际 {}'.format(expected['xdebug'], actual))
 print('扩展与 Loader 版本核对通过：' + json.dumps(expected, ensure_ascii=False), flush=True)
-if 'IONCUBE' in loader_switches:
-    combo = run(base + enable('IONCUBE', 'SOURCEGUARDIAN') + [image, 'php', '-r',
-        'echo extension_loaded("ionCube Loader") && extension_loaded("SourceGuardian") && extension_loaded("Zend OPcache") ? "ok" : "fail";'])
-    require(combo.strip() == 'ok', 'ionCube、SourceGuardian 与 OPcache 组合加载')
-    conflict = subprocess.run(base + enable('IONCUBE', 'XDEBUG') + [image, 'php', '-v'], capture_output=True, text=True)
-    require(conflict.returncode != 0 and '不可同时启用' in conflict.stderr, '拒绝 ionCube/Xdebug 冲突')
-    print('ionCube、SourceGuardian 与 OPcache 组合加载通过；拒绝 ionCube/Xdebug 同时启用', flush=True)
+if loaders:
+    # 组合用例只包含当前架构实际提供的 Loader（例如 5.6 arm64 只有 ionCube）。
+    modules_expr = ' && '.join('extension_loaded("{}")'.format(item['module']) for item in loaders)
+    combo = run(base + enable(*loader_switches) + [image, 'php', '-r',
+        'echo ' + modules_expr + ' && extension_loaded("Zend OPcache") ? "ok" : "fail";'])
+    names = '、'.join(item['module'] for item in loaders)
+    require(combo.strip() == 'ok', names + ' 与 OPcache 组合加载')
+    message = names + ' 与 OPcache 组合加载通过'
+    if 'IONCUBE' in loader_switches:
+        conflict = subprocess.run(base + enable('IONCUBE', 'XDEBUG') + [image, 'php', '-v'], capture_output=True, text=True)
+        require(conflict.returncode != 0 and '不可同时启用' in conflict.stderr, '拒绝 ionCube/Xdebug 冲突')
+        message += '；拒绝 ionCube/Xdebug 同时启用'
+    print(message, flush=True)
 
 print(run(base + enable('MONGODB', 'ZSTD', 'EVENT') + [image, 'php', '/tests/additional-extensions.php']).strip(), flush=True)
 print(run(base + enable(*others) + [image, 'php', '-d', 'apc.enable_cli=1', '/tests/optional-extensions.php']).strip(), flush=True)
@@ -221,7 +231,7 @@ if loader_switches:
             time.sleep(0.3)
         require('LOADERS ' in output, 'FPM 中 Loader 探测请求')
         loaded = json.loads(output.split('LOADERS ', 1)[1].strip().splitlines()[0])
-        for item in manifest['loaders']:
+        for item in loaders:
             require(loaded.get(item['module']) == expected[item['module']], 'FPM 中加载 ' + item['module'])
         print('FPM worker 中官方 Loader 加载通过：' + json.dumps(loaded, ensure_ascii=False), flush=True)
     finally:

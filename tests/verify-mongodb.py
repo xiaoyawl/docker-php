@@ -37,7 +37,8 @@ def run(args, **kwargs):
 
 try:
     run(['docker', 'network', 'create', '--internal', network])
-    run(['docker', 'run', '-d', '--pull=never', '--platform', platform, '--name', service,
+    # MongoDB 服务端固定在构建节点原生架构运行（5.0 起要求较新的 ARM 指令集，QEMU 下可能无法启动）；被测 PHP 客户端按目标架构运行。
+    run(['docker', 'run', '-d', '--pull=never', '--platform', 'linux/amd64', '--name', service,
             '--network', network, '--network-alias', 'mongo', '--memory', '1g',
             '--tmpfs', '/data/db:rw,size=512m', '--tmpfs', '/data/configdb:rw,size=32m',
             '-e', 'MONGO_INITDB_ROOT_USERNAME', '-e', 'MONGO_INITDB_ROOT_PASSWORD',
