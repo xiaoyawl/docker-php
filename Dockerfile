@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # ============================================================================
 # 项目：LookBack PHP Alpine 镜像（全版本统一模板）
-# 维护者：LookBack <mondeolove@gmail.com>
+# 维护者：Manta <manta.ops.dstw@gmail.com>
 # 仓库：https://git.dwhd.org/lookback/docker-php
 # 用途：提供 PHP CLI/FPM/CGI、常用数据库与缓存扩展、官方 Loader；构建 amd64 与 arm64。
 # 版本：PHP 版本、扩展、Loader 与 Swoole 变体见 config/extensions.json；
@@ -72,7 +72,8 @@ SHELL ["/bin/bash", "-c"]
 
 # 使用 OCI 元数据描述版本，避免将自有回补伪装为 PHP 上游新版本。
 LABEL org.opencontainers.image.title="LookBack PHP ${PHP_VERSION} 镜像" \
-    org.opencontainers.image.authors="LookBack <mondeolove@gmail.com>" \
+    org.opencontainers.image.authors="Manta <manta.ops.dstw@gmail.com>" \
+    maintainer="Manta <manta.ops.dstw@gmail.com>" \
     org.opencontainers.image.source="https://git.dwhd.org/lookback/docker-php" \
     org.opencontainers.image.version="${IMAGE_TAG}" \
     org.opencontainers.image.description="PHP ${PHP_VERSION}，可信安全回补、CA 更新、常用扩展与官方 Loader；amd64/arm64"
