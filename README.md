@@ -2,7 +2,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-5.6.40-777BB4)
 ![Alpine](https://img.shields.io/badge/Alpine-3.24-0D597F)
-![架构](https://img.shields.io/badge/架构-amd64-blue)
+![架构](https://img.shields.io/badge/架构-amd64%20%7C%20arm64-blue)
 ![维护状态](https://img.shields.io/badge/上游-EOL-B0332B)
 
 本分支 `php-5.6.40` 构建 `benyoo/php-alpine:5.6.40.<构建日>`：基于 Alpine 3.24 从源码编译 PHP 5.6.40，纳入可信安全回补、现代依赖适配、常用数据库与缓存扩展、官方 Loader，并在构建时更新 CA 信任库。
@@ -97,7 +97,7 @@ configure 参数见 [`config/php-configure.txt`](config/php-configure.txt)。
 | imagick | 3.8.1 | `IMAGICK` | 运行镜像含 imagemagick 格式模块 |
 | hprose | 1.8.0 | `HPROSE` | 上游最终版本 |
 | ionCube Loader | 15.5.1 | `IONCUBE` | 官方 glibc 版，启用时预加载 gcompat；与 Xdebug 互斥 |
-| SourceGuardian Loader | 17.0.0 | `SOURCEGUARDIAN` | 官方 glibc 版，依赖 gcompat 与 libudev-zero |
+| SourceGuardian Loader | 17.0.0 | `SOURCEGUARDIAN` | 官方 glibc 版，依赖 gcompat 与 libudev-zero；仅 amd64（官方无 PHP 5.6 的 aarch64 版），arm64 开启即报错退出 |
 
 扩展的版本、编译参数与开关统一定义在 [`config/extensions.json`](config/extensions.json)，源码摘要见 [`sources.lock.json`](sources.lock.json)。
 
@@ -174,9 +174,10 @@ configure 参数见 [`config/php-configure.txt`](config/php-configure.txt)。
 | `libgd/` | 补丁版 libgd 的源码锁与补丁 |
 
 ```bash
-# 在指定的远程 Linux 构建节点执行（只构建 amd64，不推送）
-bash scripts/build-image.sh       # 产物：artifacts/<变体>/php-5.6.40-amd64.oci.tar
-bash scripts/verify-artifact.sh   # 全套验收：功能、扩展、数据库与缓存真实读写、TLS/CA、FPM 生命周期、扫描
+# 在指定的远程 Linux 构建节点执行（默认 linux/amd64,linux/arm64，不推送；PLATFORMS 可只构建部分架构）
+bash scripts/build-image.sh       # 产物：artifacts/<变体>/php-5.6.40.oci.tar（多架构 OCI 索引）
+bash scripts/verify-artifact.sh   # 按架构全套验收：功能、扩展、数据库与缓存真实读写、TLS/CA、FPM 生命周期、扫描、上游 PHPT
+printf '%s' "$令牌" | DOCKERHUB_USER=benyoo bash scripts/push-image.sh   # 原样推送已验收归档并核对仓库端摘要
 ```
 
 ## 目录与维护说明
@@ -206,19 +207,18 @@ bash scripts/verify-artifact.sh   # 全套验收：功能、扩展、数据库�
 
 ## 验收结果
 
-最近一次模板构建（2026-10-23，amd64）：
+最近一次模板构建（2026-10-23，linux/amd64 与 linux/arm64，两种架构分别验收）：
 
 - **全套验收通过**：扩展与 Loader 版本逐项核对；libgd 旋转回归 210 组；可选扩展离线功能；git 与 Composer；MySQL / PostgreSQL / Redis / Memcache / Memcached 真实读写；MongoDB 8.0 与旧驱动连 MongoDB 5.0；TLS 与 CA；FPM 同 worker 请求、内存耗尽补进程、重启与退出；Trivy 扫描 0 项（扫描器无法识别自编译 PHP 与闭源 Loader，0 项不等于没有漏洞）。
-- **上游 PHPT**（官方 `run-tests.php`，非 root、断网）：共 463 个用例（补丁附带 134 个 + GD 全套），通过 379、失败 27、跳过 56。失败项逐项核实，**没有安全修复缺失**：
+- **上游 PHPT**（官方 `run-tests.php`，非 root、断网）：两种架构结果相同，各 463 个用例（补丁附带 134 个 + GD 全套），通过 379、失败 27、跳过 56；两种架构的失败清单一致，没有 arm64 独有失败。失败项逐项核实，**没有安全修复缺失**：
   - 20 项为新版系统库的输出差异：外部 libgd / FreeType 的文案与度量（GD 溢出类用例均被安全拒绝，关闭内存分配器复现无崩溃）、OpenSSL 3 拒绝测试自带的旧弱证书、cURL 8 / libxml2 2.13 / SQLite 3.53 的文案变化；
   - 7 项为运行环境限制：断网、内置 CLI 服务器启动横幅混入输出等。
 
 | 产物 | 值 |
 |---|---|
-| 镜像标签 | `benyoo/php-alpine:5.6.40.20261023` |
-| OCI 归档 SHA-256 | `a93891f2fc416797398a602c18b10f779458058dd133e37710c3cabe72acf86f` |
-| 清单摘要 | `sha256:d5772fd8a3c7d3bbd6c3a19b080cac3487c539405ab83490be930a7cf2d272bd` |
-| 配置摘要 | `sha256:bc13a1590c81a1f193cbd2cfbe4d4ed5266906c643b9470c83b8dc3bc2af641e` |
-| 镜像大小 | 约 110 MB |
-
-镜像尚未推送；推送后补充仓库端摘要。
+| 镜像标签 | `benyoo/php-alpine:5.6.40.20261023`（已推送，仓库端摘要与归档一致） |
+| OCI 归档 SHA-256 | `91c73713ad0871a6732a6ef807ea3ef14eae2444019ffec8ee1d01ce218f869e` |
+| 索引摘要 | `sha256:3fe6637807f43185272068b2b68e3cc33c6f229114917e41e63e653ebfde3e5a` |
+| amd64 清单摘要 | `sha256:bcea4a8bdec623bf21f4ddfba62e1b54aa83a447e6a9bd8d534ee7c143fd361e` |
+| arm64 清单摘要 | `sha256:0e3063c7bd97c3b9a40ed02986de43b100cc03ce92bcc674ce8fb2334000b78e` |
+| 压缩层大小 | amd64 约 110 MB，arm64 约 110 MB |

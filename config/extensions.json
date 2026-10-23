@@ -225,7 +225,8 @@
       "path": "/usr/local/ioncube/ioncube_loader_lin_5.6.so",
       "preload": "/lib/libgcompat.so.0",
       "conflicts": "XDEBUG",
-      "reason": "PHP 5.6 只有官方 glibc 版 Loader，启用时预加载 gcompat"
+      "reason": "PHP 5.6 只有官方 glibc 版 Loader，启用时预加载 gcompat",
+      "arch": "amd64"
     },
     {
       "name": "SourceGuardian Loader",
@@ -235,7 +236,19 @@
       "path": "/usr/local/sourceguardian/ixed.5.6.lin",
       "preload": "",
       "conflicts": "",
-      "reason": "官方 glibc 版 Loader，依赖 gcompat 提供的 libc.so.6 与 libudev-zero"
+      "reason": "官方 glibc 版 Loader，依赖 gcompat 提供的 libc.so.6 与 libudev-zero",
+      "arch": "amd64"
+    },
+    {
+      "name": "ionCube Loader",
+      "module": "ionCube Loader",
+      "switch": "IONCUBE",
+      "zend": true,
+      "path": "/usr/local/ioncube/ioncube_loader_lin_5.6.so",
+      "preload": "/lib/libgcompat.so.0",
+      "conflicts": "XDEBUG",
+      "reason": "官方 aarch64 Loader 只有 glibc 版，启用时预加载 gcompat；官方 aarch64 SourceGuardian 包不含 PHP 5.6，arm64 不提供 SourceGuardian",
+      "arch": "arm64"
     }
   ]
 }
