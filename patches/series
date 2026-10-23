@@ -1,0 +1,5 @@
+compat/0047-fix-implicit-function-declaration.patch
+security/9001-mysqlnd-ok-payload-and-length-prefix.patch
+compat/9002-system-gd-bicubic.patch
+security/9003-mysqlnd-preserve-high-length-bits.patch
+compat/pcre2-system-message-compatibility.patch

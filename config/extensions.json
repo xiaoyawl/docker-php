@@ -1,0 +1,237 @@
+{
+  "schema_version": 1,
+  "php": "8.2.35",
+  "native_modules": [
+    "bcmath",
+    "bz2",
+    "calendar",
+    "Core",
+    "ctype",
+    "curl",
+    "date",
+    "dba",
+    "dom",
+    "enchant",
+    "exif",
+    "fileinfo",
+    "filter",
+    "ftp",
+    "gd",
+    "gettext",
+    "gmp",
+    "hash",
+    "iconv",
+    "imap",
+    "intl",
+    "json",
+    "ldap",
+    "libxml",
+    "mbstring",
+    "mysqli",
+    "mysqlnd",
+    "odbc",
+    "openssl",
+    "pcntl",
+    "pcre",
+    "PDO",
+    "pdo_dblib",
+    "pdo_mysql",
+    "PDO_ODBC",
+    "pdo_pgsql",
+    "pdo_sqlite",
+    "pgsql",
+    "Phar",
+    "posix",
+    "pspell",
+    "random",
+    "readline",
+    "Reflection",
+    "session",
+    "shmop",
+    "SimpleXML",
+    "snmp",
+    "soap",
+    "sockets",
+    "sodium",
+    "SPL",
+    "sqlite3",
+    "standard",
+    "sysvmsg",
+    "sysvsem",
+    "sysvshm",
+    "tidy",
+    "tokenizer",
+    "xml",
+    "xmlreader",
+    "xmlwriter",
+    "xsl",
+    "zip",
+    "zlib"
+  ],
+  "comment": "本文件是分支的版本差异清单：扩展、开关、编译参数与 Loader 均在此定义，脚本不写死版本信息。",
+  "opcache": {
+    "builtin": false
+  },
+  "fpm": {
+    "oom_worker_exits": false,
+    "oom_reason": "官方修复：bailout 后安全清理请求状态，同一 worker 继续服务"
+  },
+  "tools": {
+    "composer": "composer-2.10.3.phar",
+    "composer_reason": "PHP 7.2 起的分支使用 Composer 最新稳定版",
+    "packages": "git 与 ssh 客户端见 config/runtime-packages.txt"
+  },
+  "variants": [
+    {
+      "suffix": "swoole5",
+      "swoole": "swoole-5.1.8"
+    },
+    {
+      "suffix": "swoole6",
+      "swoole": "swoole-6.2.3"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "memcache",
+      "package": "memcache-8.2",
+      "switch": "MEMCACHE",
+      "configure": [],
+      "ini": []
+    },
+    {
+      "name": "memcached",
+      "package": "memcached-3.4.0",
+      "switch": "MEMCACHE",
+      "configure": [
+        "--enable-memcached-sasl"
+      ],
+      "ini": [
+        "memcached.use_sasl=1"
+      ]
+    },
+    {
+      "name": "redis",
+      "package": "redis-6.3.0",
+      "switch": "REDIS",
+      "configure": [
+        "--enable-redis-session",
+        "--disable-redis-igbinary",
+        "--disable-redis-lzf"
+      ],
+      "ini": [],
+      "reason": "保留 Session 支持和默认存储格式，不引入额外序列化扩展"
+    },
+    {
+      "name": "swoole",
+      "package": "variant",
+      "switch": "SWOOLE",
+      "configure": [
+        "--enable-openssl",
+        "--enable-sockets",
+        "--enable-swoole-curl",
+        "--enable-mysqlnd"
+      ],
+      "ini": [],
+      "reason": "U6：Swoole 5.1/6.2 均支持的最大公共参数集合"
+    },
+    {
+      "name": "xdebug",
+      "package": "xdebug-3.5.3",
+      "switch": "XDEBUG",
+      "zend": true,
+      "configure": [],
+      "ini": [],
+      "xdebug_ini": [
+        "xdebug.mode=debug,develop",
+        "xdebug.start_with_request=trigger",
+        "xdebug.client_host={host}",
+        "xdebug.client_port={port}",
+        "xdebug.discover_client_host=0",
+        "xdebug.output_dir=/tmp"
+      ],
+      "reason": "Xdebug 3 配置；历史 XDEBUG_REMOTE_HOST/PORT 映射到 client_host/client_port"
+    },
+    {
+      "name": "mongodb",
+      "package": "mongodb-2.5.5",
+      "switch": "MONGODB",
+      "configure": [
+        "--with-mongodb-system-libs=no",
+        "--with-mongodb-client-side-encryption=no"
+      ],
+      "ini": [],
+      "reason": "MongoDB 2.x 需要 libmongoc 2.x，Alpine 3.24 只有 1.30，使用扩展源码随附的 C 驱动 2.5.6"
+    },
+    {
+      "name": "zstd",
+      "package": "zstd-0.18.0",
+      "switch": "ZSTD",
+      "configure": [
+        "--with-libzstd"
+      ],
+      "ini": []
+    },
+    {
+      "name": "event",
+      "package": "event-3.1.6",
+      "switch": "EVENT",
+      "configure": [
+        "--with-event-core",
+        "--with-event-extra",
+        "--with-event-openssl"
+      ],
+      "ini": []
+    },
+    {
+      "name": "apcu",
+      "package": "apcu-5.1.28",
+      "switch": "APCU",
+      "configure": [
+        "--enable-apcu"
+      ],
+      "ini": []
+    },
+    {
+      "name": "imagick",
+      "package": "imagick-3.8.1",
+      "switch": "IMAGICK",
+      "configure": [
+        "--with-imagick"
+      ],
+      "ini": []
+    },
+    {
+      "name": "ffi",
+      "package": "native",
+      "switch": "FFI",
+      "configure": [],
+      "ini": [
+        "ffi.enable=1"
+      ],
+      "reason": "PHP 内置 FFI 以共享模块编译，默认不加载"
+    }
+  ],
+  "loaders": [
+    {
+      "name": "ionCube Loader",
+      "module": "ionCube Loader",
+      "switch": "IONCUBE",
+      "zend": true,
+      "path": "/usr/local/ioncube/ioncube_loader_lin-musl_8.2.so",
+      "preload": "",
+      "conflicts": "XDEBUG",
+      "reason": "官方 musl 版 Loader，无需 gcompat 预加载"
+    },
+    {
+      "name": "SourceGuardian Loader",
+      "module": "SourceGuardian",
+      "switch": "SOURCEGUARDIAN",
+      "zend": false,
+      "path": "/usr/local/sourceguardian/ixed.8.2.lin",
+      "preload": "",
+      "conflicts": "",
+      "reason": "官方 glibc 版 Loader，依赖 gcompat 提供的 libc.so.6 与 libudev-zero"
+    }
+  ]
+}
