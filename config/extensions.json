@@ -213,7 +213,19 @@
       "path": "/usr/local/sourceguardian/ixed.8.0.lin",
       "preload": "",
       "conflicts": "",
-      "reason": "官方 glibc 版 Loader，依赖 gcompat 提供的 libc.so.6 与 libudev-zero"
+      "reason": "官方 glibc 版 Loader，依赖 gcompat 提供的 libc.so.6 与 libudev-zero",
+      "arch": "amd64"
+    },
+    {
+      "name": "SourceGuardian Loader",
+      "module": "SourceGuardian",
+      "switch": "SOURCEGUARDIAN",
+      "zend": false,
+      "path": "/usr/local/sourceguardian/ixed.8.0.lin",
+      "preload": "",
+      "conflicts": "",
+      "reason": "官方 aarch64 glibc 版 Loader，依赖 gcompat 提供的 libc.so.6 与 libudev-zero",
+      "arch": "arm64"
     }
   ]
 }

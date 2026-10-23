@@ -2,7 +2,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.0.30-777BB4)
 ![Alpine](https://img.shields.io/badge/Alpine-3.24-0D597F)
-![架构](https://img.shields.io/badge/架构-amd64-blue)
+![架构](https://img.shields.io/badge/架构-amd64%20%7C%20arm64-blue)
 ![维护状态](https://img.shields.io/badge/上游-EOL-B0332B)
 
 本分支 `php-8.0.30` 构建 `benyoo/php-alpine:8.0.30.<构建日>-swoole5`：基于 Alpine 3.24 从源码编译 PHP 8.0.30，纳入可信安全回补、现代依赖适配、常用数据库与缓存扩展、官方 Loader，并在构建时更新 CA 信任库。
@@ -92,7 +92,7 @@ configure 参数见 [`config/php-configure.txt`](config/php-configure.txt)。
 | zstd | 0.18.0 | `ZSTD` | 链接系统 libzstd |
 | imagick | 3.8.1 | `IMAGICK` | 运行镜像含 imagemagick 格式模块 |
 | FFI | 8.0.30（内置） | `FFI` | 以共享模块编译，开启时同时设置 `ffi.enable=1` |
-| SourceGuardian Loader | 17.0.0 | `SOURCEGUARDIAN` | 官方 glibc 版，依赖 gcompat 与 libudev-zero |
+| SourceGuardian Loader | 17.0.0 | `SOURCEGUARDIAN` | 官方 glibc 版，依赖 gcompat 与 libudev-zero；arm64 使用官方 aarch64 版 |
 
 扩展的版本、编译参数与开关统一定义在 [`config/extensions.json`](config/extensions.json)，源码摘要见 [`sources.lock.json`](sources.lock.json)。
 
@@ -174,9 +174,10 @@ configure 参数见 [`config/php-configure.txt`](config/php-configure.txt)。
 | `libgd/` | 补丁版 libgd 的源码锁与补丁 |
 
 ```bash
-# 在指定的远程 Linux 构建节点执行（只构建 amd64，不推送）
-bash scripts/build-image.sh       # 产物：artifacts/<变体>/php-8.0.30-amd64.oci.tar
-bash scripts/verify-artifact.sh   # 全套验收：功能、扩展、数据库与缓存真实读写、TLS/CA、FPM 生命周期、扫描
+# 在指定的远程 Linux 构建节点执行（默认 linux/amd64,linux/arm64，不推送；PLATFORMS 可只构建部分架构）
+bash scripts/build-image.sh       # 产物：artifacts/<变体>/php-8.0.30.oci.tar（多架构 OCI 索引）
+bash scripts/verify-artifact.sh   # 按架构全套验收：功能、扩展、数据库与缓存真实读写、TLS/CA、FPM 生命周期、扫描
+printf '%s' "$令牌" | DOCKERHUB_USER=benyoo bash scripts/push-image.sh   # 原样推送已验收归档并核对仓库端摘要
 ```
 
 ## 目录与维护说明
@@ -206,13 +207,18 @@ bash scripts/verify-artifact.sh   # 全套验收：功能、扩展、数据库�
 
 ## 验收结果
 
-最近一次模板构建（2026-10-23，amd64，`benyoo/php-alpine:8.0.30.20261023-swoole5`）：
+最近一次模板构建（2026-10-23，linux/amd64 与 linux/arm64，两种架构分别验收，`benyoo/php-alpine:8.0.30.20261023-swoole5`）：
 
-- **产物**：OCI SHA-256 `b34197b673b54ca9789d16e0800ad9c136bfd3d2f1344ec54fd8104b92d66e02`；清单 `sha256:e6e963b5…1a2cfed4`；配置 `sha256:5f72cc8d…2b2cb759`；镜像约 118 MB。
 - **全套验收通过**：扩展与 Loader 版本逐项核对（memcache 8.2、memcached 3.4.0、redis 6.3.0、swoole 5.1.8、xdebug 3.5.3、mongodb 1.20.1、zstd 0.18.0、event 3.1.6、apcu 5.1.28、imagick 3.8.1、FFI、SourceGuardian 17.0.0）；FPM worker 中 SourceGuardian 加载；`IONCUBE` / `HPROSE` / `MONGO` 开关报错退出；libgd 旋转回归 210 组；可选扩展离线功能（Imagick、SourceGuardian、APCu、FFI）；Xdebug 3.5.3 覆盖率与跟踪；Swoole 5.1.8（`Swoole\Server` / `Swoole\Client`）TCP 收发；Redis 6.3.0 接口基线与真实读写；git 与 Composer；MySQL / PostgreSQL / Memcache / Memcached 真实读写；MongoDB 8.0；HTTP 与 mysqlnd 协议安全回归、TLS 与 CA；FPM 同 worker 请求、内存耗尽后 worker 按 0137 补丁退出并由 master 补充（清单 `fpm.oom_worker_exits=true`）、重启与退出；扩展包许可文件随镜像保存在 `/usr/local/php/share/licenses/`；argon2、WebP、db4 实测生效；Trivy 扫描 0 项（扫描器无法识别自编译 PHP 与闭源 Loader，0 项不等于没有漏洞）。
-- **上游 PHPT**（官方 `run-tests.php`，非 root、断网）：共 588 个用例（补丁附带 161 个 + GD、PCRE 全套 + mysqlnd 安全用例），通过 508、失败 28、跳过 52。失败项逐项核实，**没有安全修复缺失**：
+- **上游 PHPT**（官方 `run-tests.php`，非 root、断网）：linux/amd64 与 linux/arm64 结果相同、失败清单一致，没有 arm64 独有失败；共 588 个用例（补丁附带 161 个 + GD、PCRE 全套 + mysqlnd 安全用例），通过 508、失败 28、跳过 52。失败项逐项核实，**没有安全修复缺失**：
   - 26 项为环境或系统库差异：外部 libgd / FreeType 的警告文案（含首字母大小写）、度量与旋转缩放尺寸 16 项（含 bug65148；溢出类输入均被安全拒绝）、libxml2 2.13 诊断文案 4 项（外部实体仍被拒绝加载）、PCRE2 10.49 错误文本与偏移 4 项、musl 区域设置 2 项；
   - 1 项为测试预期过时：bug75535 期望无冒号响应头返回空串，安全修复 GHSA-pcmh-g36c-qc44 起改为拒绝；
-  - 1 项为运行资源限制：soap_qname_crash 需 `memory_limit=8G`，运行器容器上限 3G；以 12G 单独复跑通过（命令与结果见 `artifacts/swoole5/upstream-phpt/resource-rerun-soap_qname_crash.log`），对应修复 GHSA-453j-q27h-5p8x 有效。
+  - 1 项为运行资源限制：soap_qname_crash 需 `memory_limit=8G`，运行器容器上限 3G，主运行无输出或只输出 `Termsig=0`（两种架构均为进程被中止）；以 12G 单独复跑通过（命令与结果见 `artifacts/swoole5/upstream-phpt/resource-rerun-soap_qname_crash.log`），对应修复 GHSA-453j-q27h-5p8x 有效。
 
-镜像摘要在推送后补充。
+| 镜像标签（已推送） | 索引摘要（仓库端与归档一致） | amd64 清单 | arm64 清单 | 压缩层 amd64 / arm64 | OCI 归档 SHA-256 |
+|---|---|---|---|---|---|
+| `benyoo/php-alpine:8.0.30.20261023-swoole5` | `sha256:08acc83be5bf03b61c752d68916e9516821fb124da2ea93d0a8cafda50b2515d` | `sha256:cf67ec6a8f87eca96b54d87db25d5b77bf6eb4fcee3ed8ff4571b5b01f6f6e7d` | `sha256:83d5e78e5b42086576ed862157149a53c743d7e24133c741b113d62144271ee6` | 约 118 / 117 MB | `704cdc4ec869b4b36ede2c604ff56d867bf6e54c2f8269df085dc64ad5e6be87` |
+
+无后缀标签 `benyoo/php-alpine:8.0.30.20261023` 是 swoole5 标签的别名，指向同一索引摘要。
+
+Trivy 扫描（每个变体与架构）：amd64 0、arm64 0 项。

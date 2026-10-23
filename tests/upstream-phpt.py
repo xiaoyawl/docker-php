@@ -54,7 +54,7 @@ environment = dict(os.environ, TEST_PHP_EXECUTABLE=php, TEST_PHP_CGI_EXECUTABLE=
     NO_INTERACTION='1', REPORT_EXIT_STATUS='0', SKIP_SLOW_TESTS='1', SKIP_ONLINE_TESTS='1', SKIP_IO_CAPTURE_TESTS='1')
 summary = Path('/tmp/phpt-summary.txt')
 completed = subprocess.run([php, 'run-tests.php', '-q', '-s', str(summary), *existing], cwd=work, env=environment,
-    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors='replace', timeout=7200)
+    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors='replace', timeout=int(os.environ.get('PHPT_TIMEOUT', '7200')))
 (results / 'run-tests.log').write_text(completed.stdout)
 text = summary.read_text(errors='replace') if summary.exists() else completed.stdout
 

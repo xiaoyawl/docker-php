@@ -65,7 +65,16 @@
       "url": "https://www.sourceguardian.com/loaders/download/loaders.linux-x86_64.tar.gz",
       "sha256": "aeaf6b5cf8f27ff01fd05affebdec490e6f7a01284c000a63ae3ceb6dcb6e419",
       "extract_dir": "sourceguardian",
-      "note": "官方下载地址不含版本号；厂商更新后摘要校验会失败并中止构建，需重新审查后更新锁定"
+      "note": "官方下载地址不含版本号；厂商更新后摘要校验会失败并中止构建，需重新审查后更新锁定",
+      "arch": "amd64"
+    },
+    {
+      "file": "loaders.linux-aarch64.tar.gz",
+      "url": "https://www.sourceguardian.com/loaders/download/loaders.linux-aarch64.tar.gz",
+      "sha256": "4f843f83e07dab908e9400eb15b5aee9ca6f5e3ae1b686df679a0f5352e1cbc5",
+      "extract_dir": "sourceguardian",
+      "note": "官方下载地址不含版本号；厂商更新后摘要校验会失败并中止构建，需重新审查后更新锁定",
+      "arch": "arm64"
     },
     {
       "file": "composer-2.10.3.phar",
@@ -520,7 +529,21 @@
       "libc_mode": "gcompat-libc.so.6-and-libudev-zero",
       "license": "sourceguardian/SourceGuardian Loader License.pdf",
       "license_sha256": "3c6512267e5a21acd904e0e531442b573c43543b761ef2fa76da5d6392193c23",
-      "dir": "sourceguardian"
+      "dir": "sourceguardian",
+      "arch": "amd64"
+    },
+    {
+      "name": "SourceGuardian Loader",
+      "php": "8.0",
+      "version": "17.0.0",
+      "file": "ixed.8.0.lin",
+      "sha256": "7e32422dff112f8adaae3b2de8dd89ffa2803fcaef3ead03eee7de3ea8ae47c2",
+      "platform": "linux/arm64",
+      "libc_mode": "gcompat-libc.so.6-and-libudev-zero",
+      "license": "sourceguardian/SourceGuardian Loader License.pdf",
+      "license_sha256": "3c6512267e5a21acd904e0e531442b573c43543b761ef2fa76da5d6392193c23",
+      "dir": "sourceguardian",
+      "arch": "arm64"
     }
   ]
 }
