@@ -1,0 +1,21 @@
+{
+  "patches": [
+    {
+      "package": "event-3.1.6",
+      "file": "extension-patches/event-3.1.6/0001-initialize-pair-callback-context.patch",
+      "sha256": "32c89a3e2febbe713c3e691221746d9b7cc3ca15547ecd98d35fa81972b3abaa",
+      "reason": "PHP5 createPair 未保存 self/base，回调接收 null；对齐同包 PHP7 实现并保留 PHP5 引用计数；修正读写/状态回调异常路径中参数重复释放",
+      "reference": "event-3.1.6/php7/classes/buffer_event.c:createPair",
+      "regression": "tests/additional-extensions.php"
+    },
+    {
+      "package": "swoole-2.0.11",
+      "file": "extension-patches/swoole-2.0.11/0001-disable-have-pcre-code-path.patch",
+      "sha256": "9ca409498db5862e790f938f7f989c7fb6f7122a1b2650870e458a13b4039121",
+      "reason": "PHP 5.6 链接系统 PCRE 时定义 HAVE_PCRE，Swoole 2.0.11 在该条件下重复声明 swoole_server::$connections，内部类以 efree 释放常驻 zval 改写 Zend 内存管理器，加载即报内存耗尽；取消该宏，保持与内置 PCRE 构建（rc2、现网）相同代码路径",
+      "reference": "上游 swoole 2.0.12 swoole.c 删除 HAVE_PCRE 下的重复 connections 声明",
+      "regression": "tests/verify.py（SWOOLE=enable 加载与定时器）",
+      "known_issues": "2.0.11 既有问题（rc2 已存在，补丁不改变）：脚本文件中调用 swoole_event_wait 后进程退出码为 1；关闭 OPcache 时 foreach swoole_table 对象后进入事件循环，请求结束段错误。现网 1.9.4 与 1.10.5 无此问题"
+    }
+  ]
+}

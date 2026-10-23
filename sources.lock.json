@@ -1,0 +1,1032 @@
+{
+  "sources": [
+    {
+      "file": "php-5.6.40.tar.xz",
+      "url": "https://www.php.net/distributions/php-5.6.40.tar.xz",
+      "sha256": "1369a51eee3995d7fbd1c5342e5cc917760e276d561595b6052b21ace2656d1c"
+    },
+    {
+      "file": "libiconv-1.18.tar.gz",
+      "url": "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.18.tar.gz",
+      "sha256": "3b08f5f4f9b4eb82f151a7040bfd6fe6c6fb922efe4b1659c66ea933276965e8"
+    },
+    {
+      "file": "memcache-3.0.8.tgz",
+      "url": "https://pecl.php.net/get/memcache-3.0.8.tgz",
+      "sha256": "2cae5b423ffbfd33a259829849f6000d4db018debe3e29ecf3056f06642e8311"
+    },
+    {
+      "file": "memcached-2.2.0.tgz",
+      "url": "https://pecl.php.net/get/memcached-2.2.0.tgz",
+      "sha256": "17b9600f6d4c807f23a3f5c45fcd8775ca2e61d6eda70370af2bef4c6e159f58"
+    },
+    {
+      "file": "redis-4.3.0.tgz",
+      "url": "https://pecl.php.net/get/redis-4.3.0.tgz",
+      "sha256": "c0f04cec349960a842b60920fb8a433656e2e494eaed6e663397d67102a51ba2"
+    },
+    {
+      "file": "swoole-2.0.11.tgz",
+      "url": "https://pecl.php.net/get/swoole-2.0.11.tgz",
+      "sha256": "07df75ede4bf0833d2c2443b666a5c3054bc498a78f5251babc1b0e7cc8cd573"
+    },
+    {
+      "file": "xdebug-2.5.5.tgz",
+      "url": "https://pecl.php.net/get/xdebug-2.5.5.tgz",
+      "sha256": "72108bf2bc514ee7198e10466a0fedcac3df9bbc5bd26ce2ec2dafab990bf1a4"
+    },
+    {
+      "file": "mongodb-1.7.5.tgz",
+      "url": "https://pecl.php.net/get/mongodb-1.7.5.tgz",
+      "sha256": "e48a07618c0ae8be628299991b5f481861c891a22544a2365a63361cc181c379"
+    },
+    {
+      "file": "zstd-0.11.0.tgz",
+      "url": "https://pecl.php.net/get/zstd-0.11.0.tgz",
+      "sha256": "5832e1b2d52de9668541e1193b572811232958a42dfda6bdc2c0529359bf552e"
+    },
+    {
+      "file": "event-3.1.6.tgz",
+      "url": "https://pecl.php.net/get/event-3.1.6.tgz",
+      "sha256": "5b74554c6370aae8c284c8110fe27e071d3f663953c3eb762ffc429b0a3c83a2"
+    },
+    {
+      "file": "ioncube_loaders_lin_x86-64.tar.gz",
+      "url": "https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz",
+      "sha256": "739962bd012e77ee82bf01f77a9641f050e4be057f0a5d1a95fe59ce11fd62ba"
+    },
+    {
+      "file": "mongo-1.6.16.tgz",
+      "url": "https://pecl.php.net/get/mongo-1.6.16.tgz",
+      "sha256": "c061ebbeb6618568a71d7a6a9d7a31a34fe107f09c8c01a43c934fbed0665457"
+    },
+    {
+      "file": "imagick-3.8.1.tgz",
+      "url": "https://pecl.php.net/get/imagick-3.8.1.tgz",
+      "sha256": "3a3587c0a524c17d0dad9673a160b90cd776e836838474e173b549ed864352ee"
+    },
+    {
+      "file": "loaders.linux-x86_64.tar.gz",
+      "url": "https://www.sourceguardian.com/loaders/download/loaders.linux-x86_64.tar.gz",
+      "sha256": "aeaf6b5cf8f27ff01fd05affebdec490e6f7a01284c000a63ae3ceb6dcb6e419",
+      "extract_dir": "sourceguardian",
+      "note": "官方下载地址不含版本号；厂商更新后摘要校验会失败并中止构建，需重新审查后更新锁定"
+    },
+    {
+      "file": "composer-2.2.30.phar",
+      "url": "https://getcomposer.org/download/2.2.30/composer.phar",
+      "sha256": "8c2b4478b64f8f7cdf1574838fdb0033b29049ca821dad452db7a3dcfcdbffc2",
+      "extract": false,
+      "note": "Composer 2.2 LTS 是支持 PHP 5.3–7.1 的版本；官方摘要见同目录 composer.phar.sha256sum"
+    },
+    {
+      "file": "apcu-4.0.11.tgz",
+      "url": "https://pecl.php.net/get/apcu-4.0.11.tgz",
+      "sha256": "454f302ec13a6047ca4c39e081217ce5a61bbea815aec9c1091fb849e70b4d00"
+    },
+    {
+      "file": "hprose-1.8.0.tgz",
+      "url": "https://pecl.php.net/get/hprose-1.8.0.tgz",
+      "sha256": "8b5303192098c68c2c9d195f0055174085b8fb75036da243c44612943e85039b"
+    }
+  ],
+  "patches": [
+    {
+      "file": "compat/0053-Adjust-tidy-extension-for-tidy-html5.patch",
+      "sha256": "9a78a940db12f383888476bdf2e330d3795c438a45fa7f1a1dad344753e11a8b",
+      "change": "原样提取；新增原生 tidy 扩展适配 tidy-html5"
+    },
+    {
+      "file": "compat/0054-Fix-check-for-CURL-include-in-M-A-directory.patch",
+      "sha256": "24a055dbeca277584c7572245e5c3af32cc41f933a677827001ee6ab3cf44a54",
+      "change": "原样提取"
+    },
+    {
+      "file": "compat/0055-Use-OpenSSL-1.1-compatibility-patch-when-built-with-.patch",
+      "sha256": "2d82b96750e6e27c49dd96525cce9e0802e8e5b85151baf9e50fec71ffb377f4",
+      "change": "原样提取"
+    },
+    {
+      "file": "security/0056-Fix-PHP-bug-64827-Segfault-in-zval_mark_grey-zend_gc.patch",
+      "sha256": "445f1fb38e9a8fd8c26c61b14b8da8b0edaafdeee5332e0f4777d2c9e8a8673d",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "compat/0057-Use-pkg-config-for-FreeType2-detection.patch",
+      "sha256": "befbfb84f18982325969eca6807be5d3cd3f9ed81964dbc2262a2e31a14ff2b0",
+      "change": "原样提取"
+    },
+    {
+      "file": "security/0058-Fix-bug-77396-Null-Pointer-Dereference-in-phar_creat.patch",
+      "sha256": "56a818341b617b244c2000fd828386d7c3f7a240fdac6627dff15fb50bd2e914",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0059-Fix-77431-SplFileInfo-__construct-accepts-NUL-bytes.patch",
+      "sha256": "8eb059863eb6e70ad6da43928d4c9b14a1b2fcdba162ef7d02fb3341225719a8",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0060-Fix-test.patch",
+      "sha256": "de0fe25fdb8fa914e6859fc528fc2329882f9ef98e346072d3fc3a02f743cd42",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0061-Fix-integer-overflows-on-32-bits.patch",
+      "sha256": "8e2b62e85f9d7cf0065276f770377c6e95ebc506202fecce197216ddc558e343",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0062-Fix-bug-77540-Invalid-Read-on-exif_process_SOFn.patch",
+      "sha256": "3b228646deda791539bf37471f0fa9a1712c460faf89a82c067458c3cba7f92a",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0063-Fix-bug-77563-Uninitialized-read-in-exif_process_IFD.patch",
+      "sha256": "2e6f1eeb5c11d08e94272f67a57239be4b8589e10daac25642f97285e793d030",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0064-Fix-test-error-message.patch",
+      "sha256": "5f1a50a3f8c5249957928759710ab744460b20150927d3548723be03146562e7",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0065-Fix-bug-77586-phar_tar_writeheaders_int-buffer-overf.patch",
+      "sha256": "589d36b3f5d481d076c15644ad069c6bbe972e792baa4dd6398fb86810231feb",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0066-Fix-test.patch",
+      "sha256": "cb34912ec698970d0997efcd73c38cbefbea44fdd8520df8e057254fab2a7c70",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0067-Fix-bug-77630-safer-rename-procedure.patch",
+      "sha256": "3b9f278b258a2724d006a84aa751fc5bcb56d77e67fb4e421829bf1337a3edde",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0068-Fix-test-portability.patch",
+      "sha256": "632c0f9273c3ab6d8cced130784208fadb93504b93a90643bdafd4d3b9d0c702",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "compat/0070-Use-pkg-config-for-ICU-as-the-old-icu-config-has-bee.patch",
+      "sha256": "24858f11c9b8b373807c61074d072a8a1991f1f7f64c8d1c470d4ca2782bfd45",
+      "change": "原样提取"
+    },
+    {
+      "file": "compat/0071-ext-intl-Use-C-namespaces-for-ICU-63.1.patch",
+      "sha256": "1ba1502b4331f372cbd4db3a90da58cb9d2d6edf19ee3a18961ff5335d77a6f4",
+      "change": "原样提取"
+    },
+    {
+      "file": "security/0072-Fix-rl_completion_matches-compilation-with-newer-lib.patch",
+      "sha256": "314e4625828bf990e8cf3d892be57a0c5db81b95d5f73f55a5702f6c5674f050",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0073-SQLite3-add-DEFENSIVE-config-for-SQLite-3.26.0-as-a-.patch",
+      "sha256": "38bc0ca913ea42aeb3fe0469ff5dd74a6b83c551ba46db2b99485a627e845dff",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0074-Fix-bug-77753-Heap-buffer-overflow-in-php_ifd_get32s.patch",
+      "sha256": "c547043a670d27d8003232aa4a8cf6fa7c96742b06398594727bd3cc9b5ddb69",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0075-Fixed-bug-77831-Heap-buffer-overflow-in-exif_iif_add.patch",
+      "sha256": "689ef42e66b6ab759b0357ca5683ff804fb5cfaab08c785d9d4190003fd63000",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0076-Pointer-arithmetic-on-void-pointers-is-illegal.patch",
+      "sha256": "8b62fd817b659ddef27d41649652e76f625106959169d655ff4dfc80aaa816ea",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "compat/0077-Amend-C-11-for-intl-compilation-on-older-distributio.patch",
+      "sha256": "b715fb8facd65b99364f021bb8206bb37ed8292d600563252bdf9c52912b23f5",
+      "change": "原样提取"
+    },
+    {
+      "file": "security/0078-Skip-test-on-PostgreSQL-10.patch",
+      "sha256": "4f0611ec099a2df06b4e2912808f30fb65b89a9e116e26e3244a06a769397668",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0079-Fix-tests-wrt.-internationalization.patch",
+      "sha256": "22fb1acb8cfe507a02cc0ea39dfe81b475e526e8b2afc432de15d1f608e39325",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0080-Fix-bug-77950-Heap-buffer-overflow-in-_estrndup-via-.patch",
+      "sha256": "ecc77e5affcae34e6947e3d52f122b081cefad9affb30a56ebfbc6d9b5e11da5",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0081-Fix-potential-expanded-command-line-too-long-build-e.patch",
+      "sha256": "5147e40c266a9181747f6f7992d24c5a9fe2e430f4c64945c1afb2d9455af18e",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0082-Fix-77973-Uninitialized-read-in-gdImageCreateFromXbm.patch",
+      "sha256": "9f71e601c5415c117cb9023666502a8b0e73e09fb706b192db19d4aa8418de23",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0083-Fix-bug-78069-Out-of-bounds-read-in-iconv.c-_php_ico.patch",
+      "sha256": "8ab6264d9de6acbcc669486ff9a453c4fd96a04935006d60708230625ad2d035",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0084-fix-test-output.patch",
+      "sha256": "fde504bc308dfcf144a3d2b9270bef9d7306e9626daabfa058f13535cf389a0e",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0085-Fix-bug-77988-heap-buffer-overflow-on-php_jpg_get16.patch",
+      "sha256": "93f75c027de5e6f9a284f212d85c4b81295e6a95e28ad92f3e128cae31baf619",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0086-Fix-bug-77967-Bypassing-open_basedir-restrictions-vi.patch",
+      "sha256": "e3f09d75ede57bc3bd41c19f64df22ab662cbf6ca2a09f7174a6ae4ab35fa095",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0087-fix-tests.patch",
+      "sha256": "0d4c32591eb2614797b997970daa43373e342c9076a90cd7ba61d51d2dba1d7e",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0089-Add-support-for-xfail-to-phpt-SKIPIF-sections.patch",
+      "sha256": "362a03674771f9e736229df900312dfdf62ab8e63e7799f11afdb10ce686f0b4",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0090-xfail-phar-tests.patch",
+      "sha256": "52d0ee3f96bfd7b2574f8718efa51320db4266bf7b04f689263102a348294311",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0091-Fix-bug-78222-heap-buffer-overflow-on-exif_scan_thum.patch",
+      "sha256": "0d77fa70aeca2a78cb1d41c34a4ba8673f10dc55695396d17c60f28de10d8996",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0092-Fix-bug-78256-heap-buffer-overflow-on-exif_process_u.patch",
+      "sha256": "131c4445b6b48011285bef9ac8defd3349d3437fc8553256067bb87cebab2776",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0093-Fix-77919-Potential-UAF-in-Phar-RSHUTDOWN.patch",
+      "sha256": "fd369b23b4ddb61008c1cbfaff06bb7d5c54d8ee5504dfd7bab312ef0387e0e4",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "compat/0094-Make-use-of-pkg-config-for-libxml2.patch",
+      "sha256": "129ae27688cf91dd426484286ba78803ad55377561268f4a98c11ce62f360a2d",
+      "change": "原样提取"
+    },
+    {
+      "file": "security/0095-Fix-75457-heap-use-after-free-in-php7.0.25.patch",
+      "sha256": "e7c06a652fb83f78a1a23f6eba84bbf6fc253e07b6d5187e52e5ab249db61b4f",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0096-Fix-CVE-2019-13224-don-t-allow-different-encodings-f.patch",
+      "sha256": "a52075f7acb8daf156599f799436a907bc5b0aee5e4eca3406af7349d58d87b7",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0098-relax-test-offset-may-be-different-on-various-system.patch",
+      "sha256": "2c906afde1d2d29dd6176b6c96b6617dcf93e43a8cdbea4f80ada6c6803c85ce",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0099-Fix-erroneous-test-expectation.patch",
+      "sha256": "8d837447d26d276d079edf9204c10ae92d79deac8cac8e3df5ac5b4eefda3036",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0100-Fix-getColumnMeta-test.patch",
+      "sha256": "dc835b63da81d0819aaaed00ce13a924e57655d6c8fc2dbcef672f80775057db",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0101-test-fixes.patch",
+      "sha256": "200f77de0cf960f9c1a9abc77bf217e1d3580634aa4fac77698eb8f90192ba0b",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0102-Fixed-test-on-32-bit-systems.patch",
+      "sha256": "57308cc93138a73d7dccb35479560029ec6788d7628a98400b681f82befaa8aa",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0103-Prevent-test-case-failure.patch",
+      "sha256": "13aec4ed973a55eb96eac89c616fece4ec6c49c998d1ac1873e6889a951dfee0",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0104-Fix-bug-78599-env_path_info-underflow-can-lead-to-RC.patch",
+      "sha256": "5f690560f69c0580b39116a669d0ae6d8a0fd30e07ba5dbaa61b73bd6ead706b",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0106-Fix-78878-Buffer-underflow-in-bc_shift_addsub.patch",
+      "sha256": "d3c2f3a9e7cd419ca4c8374d1bb6e14ceb03660513abce91b4f80b4b4bce7b35",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0107-Fix-78862-link-silently-truncates-after-a-null-byte-.patch",
+      "sha256": "cdcf158a96f41b2e5af27332610d4f0582f0cabd97c5af06d5bf544f8c6cd2bd",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0108-Fix-78863-DirectoryIterator-class-silently-truncates.patch",
+      "sha256": "3730e181f76b70c03f9566ea54c33e4369ac3013e1a617466fc90333950d3656",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0109-Fix-bug-78793.patch",
+      "sha256": "95bbfa552f68b3acf90567e884c179dd0a8d3f8e3b6d8dd9dee98eee1214f557",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0110-Fixed-bug-78910.patch",
+      "sha256": "678b8d1f992a38c65bb93b68a57d56c272a5722bf7a087806f9e4996ecdb4b03",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0111-Fix-tests.patch",
+      "sha256": "5b8d1025bfc7ef07a7e127112f6f2394710e11f1e70e241edae12f857dd38b50",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0112-fork-tests.patch",
+      "sha256": "05d8eac2a5ab0cf52115926fd47124abfb16c4027ae5b2cb6e46c11743fdcb14",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0113-Fix-tests.patch",
+      "sha256": "0f903ba6200655e33b2a4c7188195b22cc19284fc347b0ccb2d88ec73cfcd7a1",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0114-fix-test.patch",
+      "sha256": "ba21a0337387634c584f632d57fd86ced47f65308df138f3f228f3f8890db934",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0115-Extend-test-latest-cURL-ships-also-with-smb-and-smbs.patch",
+      "sha256": "62d811449fd582792d1df338a3b012a7625604c1d3d751f04e728bb30759c199",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0116-Sync-test-for-libcurl-7.64.0.patch",
+      "sha256": "fcbad4383d0ff71601114e14f92aea0c3230b70a1712d31bb302242543cb2c9e",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0117-Sync-test-with-changes-in-libcurl-7.64.0.patch",
+      "sha256": "1d7809a940be00de52635345e2e64446b52b408bbb19c26322310388c805031f",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0118-Fix-ext-mysql-tests.patch",
+      "sha256": "56aa6f5c78b6f8d710c58cc84342adbc5196ebf0ce8adbd08636faf97512b1b7",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0119-Clean-up-server-tests.php-remains.patch",
+      "sha256": "63cd996150f4a8895755d92d8b4f1300792db9ad043593a5bea6a31651f36774",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0120-refix-test.patch",
+      "sha256": "6b2e5ef6899c442a0827e78d90157d45eb4ec94d5179bcdedb883b4aa8b9a57c",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0121-Fix-test-when-it-s-run-on-another-drive.patch",
+      "sha256": "3edaa92ed6c00dc6e28ebb568bb1fc816691c6d9e164765ccfe359da95658378",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0122-Fix-test.patch",
+      "sha256": "d98c92cc3fe533fda43c854e73b04e2919c0a166aa242d1d64e15b3ffd0acb44",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0123-fix-remaining-tests-for-Opcache-runs.patch",
+      "sha256": "56b443069e405e8923377c5800d3d78f56bc279e1f8946fe78f167e62bfab335",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0124-Fix-79099-OOB-read-in-php_strip_tags_ex.patch",
+      "sha256": "c149ccaf665283a8343fb9f2e5ec708c3ca89e4ff7ea6edcf86df410a6d24fb6",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0125-Fix-bug-79037-global-buffer-overflow-in-mbfl_filt_co.patch",
+      "sha256": "61a39c5b0b2a40d2395e070df84138a89ac51b57735b1dda4f6675fdeaaa74b7",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0127-Fix-MSVC-build.patch",
+      "sha256": "34bd5fd9b4ccc99d3b1b957ecfe108404a68459b073f1983a4c6374481aec6d5",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0128-More-checks-for-php_strip_tags_ex.patch",
+      "sha256": "ff5ba142831532bf83903f16b9c988508454b943e83d3735af690ac0de0329fc",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0129-Fix-test-cases.patch",
+      "sha256": "d1ee1a1b5fe7d9ff5b331980d9e3409efddcad769759ba64ddc1e8add6220ede",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0130-Fix-bug-79221-Null-Pointer-Dereference-in-PHP-Sessio.patch",
+      "sha256": "6795caa0ba2c704c631dd3428330ad6e2e4d737810953729eebe89711169d737",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0131-Fix-bug-79082-Files-added-to-tar-with-Phar-buildFrom.patch",
+      "sha256": "a09e6328bc4e1e0ee5bcae2e4df5250e8c9cdf448f17ad8983d4c62e972bd111",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0133-renew-certs-for-openssl-tests.patch",
+      "sha256": "77d8c8ec474ebf77042ff8dad27daf287cb6634ee9b9817db76dca9f6cef12b0",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "compat/0134-Use-pkg-config-for-PHP_SETUP_LIBXML.patch",
+      "sha256": "b7bed187e06fecf3e3085766f19d1a1b83dd858832cc62623b8cf3d73721f2fd",
+      "change": "原样提取"
+    },
+    {
+      "file": "security/0135-Fixed-bug-79282.patch",
+      "sha256": "e9f016b1825ae660dab50cf5f731bc946d7f8da2f2e1f7ee46a4fb29f554d10b",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0136-Fix-test.patch",
+      "sha256": "542150732e7ea0803699fdd672a497a8577f2e91997f5db382733a521e27beda",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0137-fix-test.patch",
+      "sha256": "8aa3f666dbeaeb95448455ab929e5869bdd6205daecbea37eca069ccf01b2ec4",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0138-Fix-bug-79329-get_headers-should-not-accept-0.patch",
+      "sha256": "ccd53282bf309aa18bb7dc7bd272f751ead59bac078035aed098a6d8c54366ed",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0140-Fix-bug-79330-make-all-execution-modes-consistent-in.patch",
+      "sha256": "7e4cac4c3cb7ded3d898a08c1cfebb0f9d86f6f2ef64a0fe85314708bd730fbe",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0141-Fix-bug-79465-use-unsigneds-as-indexes.patch",
+      "sha256": "08b8dbda6d524e6131509ba092fc2f17a6129f5a3e0f4efad21d6221d01f8ccd",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0143-ZTS.patch",
+      "sha256": "ad9eeed1fdb9fe08e80450d56918ee2a636757396b94ba1d8d6c41e5616f5916",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "compat/0144-Fix-bug-72333-fwrite-on-non-blocking-SSL-sockets-doe.patch",
+      "sha256": "63ccfe95e2438284887c827376b1fadc4b34719aec6edecb26e42770eaa7896b",
+      "change": "原样提取"
+    },
+    {
+      "file": "compat/0145-Backport-the-aarch64-ZEND_SIGNED_MULTIPLY_LONG-assem.patch",
+      "sha256": "c8b69e3c6393f62cd3654523ffe25fd7f6604a3be224428dc344b3d06be63550",
+      "change": "原样提取"
+    },
+    {
+      "file": "security/0146-Fix-Bug-79296-ZipArchive-open-fails-on-empty-file.patch",
+      "sha256": "99132ba9ef819586e3d6789dd227a18b65c1f84e5b947b2109217e07d788cb4f",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0147-Backports-from-7.2.31.patch",
+      "sha256": "627671a2f77f6119f4b4d5d3c3e5ef08451d685933123d71c48af279c82a4f64",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0149-Fix-79797-Use-of-freed-hash-key-in-the-phar_parse_zi.patch",
+      "sha256": "62e1fa0943bba803f86c1bc116904e438604cc1d661ee3683d649fbfd9bdc721",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0150-Fix-79877-getimagesize-function-silently-truncates-a.patch",
+      "sha256": "e4aa1f3996b1529f9aae1634e96017466dd8380c84253f2f6849936a908bf4b1",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0151-ZTS-fix.patch",
+      "sha256": "eee14040b8410c9375b65bced32e30589503638e03732b0692d84e7ea93de8aa",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0152-Fixed-phpdbg-build-broken-when-dtrace-enabled.patch",
+      "sha256": "dd9e5322f56e26cd5a57f8b1b61291a5ce77dd7e995f7e5c3fdb3a3932898e01",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0153-Do-not-decode-cookie-names-anymore.patch",
+      "sha256": "7a4fd8d699922611c2b8f7c4cbf594455022ced47be31d8554eb1687b7ae4856",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0157-Fix-77423-parse_url-will-deliver-a-wrong-host-to-use.patch",
+      "sha256": "9391a74ba53983534b3fe858ac6e1f8e0ed74fb2b24d238b1da89a7a4a06c828",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0159-Alternative-fix-for-bug-77423.patch",
+      "sha256": "73cbd7a29cc04a2666dd0a042577d55a2fe5abf4cd8ea77993156bcef8831ea2",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0160-Fix-bug-80672-Null-Dereference-in-SoapClient.patch",
+      "sha256": "66f946a18506b479d3a4b0e88958c285516ae14693f15a4ea5109423886c7dd9",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0161-Fix-build.patch",
+      "sha256": "0573ebac84142a489961b7d533b15bd9e53dcb02abfd93ed0877a666c3f94e9f",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0162-Use-libenchant-2-when-available.patch",
+      "sha256": "23c45cdb5da0c91b2ac08e1c7bfde6c793b456e3347a63348748b1721d6bc44b",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0163-remove-deprecated-call-and-deprecate-function-to-be-.patch",
+      "sha256": "a0e6e4b2b3e7d9073f565bbebca18908adab2a7a7dae45dae1583114d6163ead",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0164-Patch-mysql-with-utf8mb4-character-set.patch",
+      "sha256": "5d88544a55d57692f1d5a3cbdfdecc347d181cfe54df51b285cef674b1a7a4aa",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0167-Fix-80710-imap_mail_compose-header-injection.patch",
+      "sha256": "6f916b138ca447792b5a802b6d01586f69b98f0c21d2d8f7ff54d2efafd7fb0d",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0170-Fixed-bug-73512-Fails-to-find-firebird-headers.patch",
+      "sha256": "250b2ccbfb86fe1c3f7649c01d0f809c739047017b7022ccb8ea6f72aa2d1418",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0171-Fix-81122-SSRF-bypass-in-FILTER_VALIDATE_URL.patch",
+      "sha256": "c6fd00e987144fbd7685f0bfc2a337160053412460bddb0fd69d06bd75024000",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0172-Fix-warning.patch",
+      "sha256": "79141427b92712cda54ba089b6552c2f0681ab56918b3ead2bdb26570888808c",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0173-Fix-bug-76488-Memory-leak-when-fetching-a-BLOB-field.patch",
+      "sha256": "b9760f20dad75f12b17fd075f6bb0c67ed14796dace0179ea545a77667143672",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0174-Fix-76452-Crash-while-parsing-blob-data-in-firebird_.patch",
+      "sha256": "b7a0fb13944d5c71fa95ad34bc261ac54a518e4aa2130fe73e7b3cddc2542084",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0175-Fix-76450-SIGSEGV-in-firebird_stmt_execute.patch",
+      "sha256": "9b3f7dd06c9621a6587780406f53b258d66b7e55f6a34039ecc85de129cf1930",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0176-Fix-76449-SIGSEGV-in-firebird_handle_doer.patch",
+      "sha256": "0d575995f633953a42c24bc059120cefd69ba6af3e609068c0cc093808f81967",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0177-Fix-76448-Stack-buffer-overflow-in-firebird_info_cb.patch",
+      "sha256": "dc523369fe521da35312a22d7a90089ec57020a20e3f97890a90ef23395bd5a9",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0179-Fixes-65689.-PDO_Firebrid-exec-does-not-free-allocat.patch",
+      "sha256": "8461570370106198100bd2455b1b4a6909492082e27b082a026d2ce6f58fd2de",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0180-fix-ibase-handle-initialization-mostly-compiler-warn.patch",
+      "sha256": "f96c8fd9f827a829a76c05a21407adc6d15e6d256a56879e6dfe18efb6a44847",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0181-adapt-for-5.6-without-ZEND_ULONG_MAX.patch",
+      "sha256": "265d6046bc4d5ae15614c52ef6af450b0931bbb1d82cd64435a8fd1668bce1a1",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0182-Fix-81211-Symlinks-are-followed-when-creating-PHAR-a.patch",
+      "sha256": "941426be4173ed4c80c5d35052ee87c5e64b15775aefedc8376cb5ae92708f3e",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0183-Fix-test.patch",
+      "sha256": "072bf9d152ee150e14f3ba59a0c03de43dc2e00aadbe902cbce1cf74e5368a53",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0185-Fix-bug-81026-PHP-FPM-oob-R-W-in-root-process-leadin.patch",
+      "sha256": "5e0d63c4d8a59deaa2c0235a3f91d9927f6eae36161975c272b1646f442896a6",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0187-Fix-81420-ZipArchive-extractTo-extracts-outside-of-d.patch",
+      "sha256": "d44b73602c36440ea273510185a2c1021434d6fe1204e7f49fe0b8cd39f395b1",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0189-Fix-79971-special-character-is-breaking-the-path-in-.patch",
+      "sha256": "b16a1b555c3b1eb04ee28a35fd23cf5e5c2f8e8e22e8327c23fea4504d9ff4b2",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0190-fix-new-tests.patch",
+      "sha256": "7268196a8a9bae29dd38956aa2b451f521e62b25147e15603b92078c6d391c73",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0192-fix-ZTS.patch",
+      "sha256": "943163a43faa3d3166495e1d4c3322531526564cac3bb38e6d3dab399b24ef7c",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "compat/0193-Add-minimal-OpenSSL-3.0-patch.patch",
+      "sha256": "98cab1c2f8d22b86c14874048004c59f211f9a80038c85e8659522d4be826fe7",
+      "change": "原样提取"
+    },
+    {
+      "file": "compat/0194-Use-true-false-instead-of-TRUE-FALSE-in-intl.patch",
+      "sha256": "5d8d5ca7493835771dbb90eb481b49bd03ff57ca450e4129310018cd1e36ff0f",
+      "change": "原样提取"
+    },
+    {
+      "file": "compat/0195-Change-UBool-to-bool-for-equality-operators-in-ICU-7.patch",
+      "sha256": "49b4647b592d6c7597d7308416bd24f034dc6ed3ae200922dfde5250451556ed",
+      "change": "原样提取"
+    },
+    {
+      "file": "security/0196-Fix-81720-Uninitialized-array-in-pg_query_params-lea.patch",
+      "sha256": "7468d9418f56805aa2a2fb427767a17a6920c319cf22dd4ce52debd9f83ef8dd",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0197-Fix-bug-81719-mysqlnd-pdo-password-buffer-overflow.patch",
+      "sha256": "9be90a7f7a5353b9d9e718b18bd532ce2ccf853710b4e6a4c29a7acc23f93363",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "compat/0199-Fix-bug-79589-ssl3_read_n-unexpected-eof-while-readi.patch",
+      "sha256": "80e3dc79ff3f4ba338e6e54af57192bb8c8c93e2dc4c2afccff16924e6ec1213",
+      "change": "原样提取"
+    },
+    {
+      "file": "security/0200-Fix-81727-Don-t-mangle-HTTP-variable-names-that-clas.patch",
+      "sha256": "53af24ffe75589bdc35391852d540d232c2df406d5dadfeb5f6a3b2d3a638710",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0201-Fix-81726-phar-wrapper-DOS-when-using-quine-gzip-fil.patch",
+      "sha256": "9c1bffbe04ddb49102d4a71447036e601301698035c64f83efc85b26d27ae849",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0202-Fix-regression-introduced-by-fixing-bug-81726.patch",
+      "sha256": "930c73b80f3aff9f5e8f5f4496025081ef409ccd537a4f134d9c98d2ea4623cf",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0204-Fix-81740-PDO-quote-may-return-unquoted-string.patch",
+      "sha256": "29096ed528ca36ae01eb702b55f57b1b99b88863e8c4c5d07294ef6265ad872b",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0205-adapt-test-for-5.x.patch",
+      "sha256": "34554c88a1b591eaf953001c0ae8c5b939a9d3bcfd5fe9b5b7141c77a14b4567",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0207-crypt-Fix-validation-of-malformed-BCrypt-hashes.patch",
+      "sha256": "740bb8d5783eb708672b2c2dfd25411cf13759bcd33d16c1e526bcd2d44dd01b",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0208-crypt-Fix-possible-buffer-overread-in-php_crypt.patch",
+      "sha256": "4c50ea2d20da53b31d201572159575e11bf05265c111fe7fed1334803dc55d72",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0209-Fix-array-overrun-when-appending-slash-to-paths.patch",
+      "sha256": "414d8680725024e895497e16d02a3a1eaa9d92c1c2fe4468422f236953b8724a",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0211-Increase-random-bytes-in-HTTP-Digest-authentication-.patch",
+      "sha256": "fcaf289fa173b90bce455b536fd9dcf2942bb9a2722ceeb9729906ff4832bb9f",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0213-Fix-buffer-mismanagement-in-phar_dir_read.patch",
+      "sha256": "d0e548b695b138d01c0cb01b4b8badb7bfda14e86b654881abb6b4b7a70e340d",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0214-Sanitize-libxml2-globals-before-parsing.patch",
+      "sha256": "02f4585ded38450e9fe68f3137106a7c8bdcb69539ed5b08eed5bd16db7a20d9",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0216-fix-backport.patch",
+      "sha256": "dd31250d9501fda25ca4252f338057ab673dab927d94316f1f625544f14def94",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0217-Sanitize-libxml2-globals-before-parsing-VC11-compati.patch",
+      "sha256": "9f7063bcfe5f92a478909c58536635fd24edea3fa3c412713574e829dd4340ae",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0218-Fix-buffer-mismanagement-in-phar_dir_read-VC11-compa.patch",
+      "sha256": "6e0e2c913cca9f1d4cdca9abf74b4e392f048ba2568711161a6994c7832a9d18",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0219-Fix-GHSA-wpj3-hf5j-x4v4-__Host-__Secure-cookie-bypas.patch",
+      "sha256": "ee9b4b9de247477d3381eb396b93cc5305824e06f53825e1e66e4825840f838d",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0221-Fix-bug-GHSA-q6x7-frmf-grcw-password_verify-can-erro.patch",
+      "sha256": "6484e1fa574fbfceaaa5810447654d8b8aa96e66fd311c93c8b472ef77878d6e",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "compat/0223-Add-missing-declaration-of-mbfl_filt_put_invalid_cha.patch",
+      "sha256": "76b90401da66c161cb2b63bd7b6ad64c2d0e09a41fae14a4c9361b482a24deb3",
+      "change": "原样提取"
+    },
+    {
+      "file": "security/0224-Fix-GHSA-w8qr-v226-r27w.patch",
+      "sha256": "ac353fe3ae22b4103ba50b2a67650cdd146bc19785c1760d79b5cf1e99ec7fb4",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0226-Fix-GHSA-3qgc-jrrr-25jv.patch",
+      "sha256": "6bb4a4baf3ba77ee96a932bcbd37a2f75b93c1644c64a9f6d7f403c639138608",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0227-Fix-GHSA-3qgc-jrrr-25jv-VC11.patch",
+      "sha256": "9cafeb1f69e04b8dbce00f7c84339a94d18f559b5832c0e0db9575b4589604ff",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0229-Fix-GHSA-9pqp-7h25-4f32.patch",
+      "sha256": "2f2b149639e88303a373ccd9cafc193e092db0ae0e4ffaf6b056459518b33258",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0230-Fix-GHSA-p99j-rfp4-xqvq.patch",
+      "sha256": "dee14ff5d646fc668137bd5a32e4d56e51558513576ddc8519718aa91a59992a",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0231-Fix-GHSA-94p6-54jq-9mwp.patch",
+      "sha256": "5c985d4a32914855ec620ae3c9005b67e1020cbe0c65633e45d1247b1744b2b9",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0232-Skip-GHSA-9pqp-7h25-4f32-test-on-Windows.patch",
+      "sha256": "89806eb919880f76deac7db872b954a9fb0b582e0869e22e56f16e6ce7d77a46",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0234-adapt-GHSA-9pqp-7h25-4f32-test-for-7.x.patch",
+      "sha256": "68e7abc8bba34b317c67c4bf57e5e32ebbcb7bcae5ada65662e33c182d3e9288",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0235-Fix-GHSA-c5f2-jwm7-mmq2-stream-HTTP-fulluri-CRLF-inj.patch",
+      "sha256": "b94d063dc64e9f9e17069426b9d968b014e4712346a2de4f5a50b1680c99f7ff",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0236-Fix-GHSA-g665-fm4p-vhff-OOB-access-in-ldap_escape.patch",
+      "sha256": "843ad4ebd6d2d82da20530e0b24f0651b89686d5512c3633df7a63caa0fc0cf3",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0237-Fix-GHSA-r977-prxv-hc43.patch",
+      "sha256": "4b6e1e822696ffc9710eb02a76af92732ca010afc10d1baadc93a3714b9cb664",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0238-Fix-74267-segfault-with-streams-and-invalid-data.patch",
+      "sha256": "9d890be27753dd483092116401819fe3b6541239400989804ac97a4566aacb7e",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0239-Fix-GHSA-4w77-75f9-2c8w.patch",
+      "sha256": "bd8741f3a4266be2899e80237e98af86334b7f6bead60b16efc6afc28bb2d583",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "compat/0241-Force-POSIX-readdir_r-semantics.patch",
+      "sha256": "2bbf7fa924eecce3e2bbc4e4c576be314f22635009b40ee5555e648a1d729883",
+      "change": "原样提取"
+    },
+    {
+      "file": "compat/0242-Disable-the-GCC-major-version-check-in-configure.patch",
+      "sha256": "820de6324141eaad403a1cb5d943fd96700e0c2df1dbfd99f31e86d014c21fa0",
+      "change": "原样提取"
+    },
+    {
+      "file": "compat/0243-Force-using-POSIX-threads-on-Linux.patch",
+      "sha256": "b7170dd61fc1109ec93d85fc30e43b2e224b86aef9e6367c8604d7375e1a2484",
+      "change": "原样提取"
+    },
+    {
+      "file": "compat/0244-Add-ifdef-guards-to-main-php_config.h.in.patch",
+      "sha256": "13a8768ef60f81b23b8c6a043af4318a1a0ae0608be71829a8dc1563a1e8321f",
+      "change": "原样提取"
+    },
+    {
+      "file": "compat/0245-Actually-use-ICU_CXXFLAGS-when-compiling-ext-intl.patch",
+      "sha256": "d2ba42bc14ac2ea64479dab0ebf46649b2f5c82f50751392a2e7bef213621bba",
+      "change": "原样提取"
+    },
+    {
+      "file": "compat/0246-Fix-autoconf-errors.patch",
+      "sha256": "bdce21c4bf5f97bdd7bab350241fa9605588f71ea17b4faf57f4901e98205281",
+      "change": "原样提取"
+    },
+    {
+      "file": "compat/0247-Fix-AC_PROG_SED-error-and-other-autoconf-warnings.patch",
+      "sha256": "9b5791021b928f75fe4fc61d2acfcb26c2d4a66a26a9e223a420786b28d7e955",
+      "change": "原样提取"
+    },
+    {
+      "file": "compat/0252-Use-__attribute__-__unused__-directly-instead-of-ATT.patch",
+      "sha256": "c9af1a7be433090b25bb575028381626a94edc625251bf13419bcd0af9c99f7e",
+      "change": "原样提取"
+    },
+    {
+      "file": "security/0253-GHSA-m33r-qmcv-p97q-soap-Fix-use-after-free-after-he.patch",
+      "sha256": "eb8a64f3f4b89b235b1dfc15bd104e7b218d5b623e8e1802921d26b75ba32cbd",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0254-GHSA-hmxp-6pc4-f3vv-soap-Fix-broken-Apache-map-value.patch",
+      "sha256": "48e15e14f60202ad43f9638288995b16171cd0572734245a3976eee0dc9ac519",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0255-only-test-for-GHSA-96wq-48vp-hh57.patch",
+      "sha256": "725c3934d85acd72564afc72a3eb16b7a9375351589cf079e46b61f530b4ec75",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0257-GHSA-7qg2-v9fj-4mwv-fpm-XSS-within-status-endpoint.patch",
+      "sha256": "8baa00b763b6c2f79c2a3e1a2bddd1af70d33a2acfb609daeaa2edc69a129016",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0258-relax-test-may-fail-when-script-not-in-status-page.patch",
+      "sha256": "98415be7a4fcfcdcdff26ed92db1af3c83f7cbd9ff7ea4a1c47a1dbdbe7428e0",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0259-fix-test-name.patch",
+      "sha256": "ae60462657fd542462de94c0c199d217bdb458701bd3ccc1a3fcc937bc466bac",
+      "change": "去除 NEWS 段；修复代码与回归测试按 Surý PHP5.6 回补原样提取"
+    },
+    {
+      "file": "security/0260-ext-openssl-openssl_encrypt-zend-mm-heap-overflow-on.patch",
+      "sha256": "1c1113ea228a986e99bb58af54a69522626157022796adbd017a52208d96f4aa",
+      "change": "去除 NEWS 段，PHPT 改用 PHP5.6 可用常量和节格式；修复代码未改"
+    },
+    {
+      "file": "security/0261-Avoid-state-corruption-via-bailout.patch",
+      "sha256": "35b6472ae1b8f90498766811dfa2379d371906a090311962a1df9627677aa7f6",
+      "change": "原样提取"
+    },
+    {
+      "file": "compat/0300-libxml2-const-error-callback.patch",
+      "sha256": "43a0771c2912551abdc6ac52bab26a2f2c5dfc1b37d4f0af45a3efc70fa5fd57",
+      "change": "本项目适配 libxml2 2.12+ 的 const 错误回调签名"
+    },
+    {
+      "file": "compat/0301-zlib-use-standard-globals-callback.patch",
+      "sha256": "3cdd42cf8827ce713bf0e66653d62f2048461e71ccfb86155d8c4b1c1e0bcba7",
+      "change": "本项目修复 GCC 15 对 zlib globals_ctor 注册的类型检查"
+    },
+    {
+      "file": "compat/0302-mbfl-and-session-pointer-types.patch",
+      "sha256": "7d19686945f27baa9684947936e483b235bd343fb91390789e46a33a97f928f5",
+      "change": "本项目修复 GCC 15 对数组地址和双重指针类型的检查"
+    },
+    {
+      "file": "compat/0303-musl-cookie-seek-and-zip-getpid.patch",
+      "sha256": "794a13e01583d3558aa3cfb4452baef4b54c190ea33cb3428b868ce9935ccab5",
+      "change": "本项目适配 musl cookie_seek_function_t 并补全 ZIP getpid 声明"
+    },
+    {
+      "file": "security/0400-php56-modern-security-backports.patch",
+      "sha256": "11c19172112a87de19622a545f13b001b0ea3fa9bb56a12c553561322e4118e6",
+      "change": "根据 PHP 官方修复与已签名 Surý PHP7.4 回补移植到 Zend2；详细映射见 provenance/security-backports.json"
+    },
+    {
+      "file": "security/0401-external-gd-antialias-compat.patch",
+      "sha256": "f548bed3f21df860d4c1bb5e4a843f8e2bb3e5e68f3f22f189d08f08480fb58a"
+    },
+    {
+      "file": "security/0402-windows-full-device-classifier.patch",
+      "sha256": "d3de976c1b92cf59cab8eaf2a07b719567f617e1165087abab1994578d2d35e1"
+    },
+    {
+      "file": "security/0403-external-gd-flip-constants.patch",
+      "sha256": "868e8375292f04ddd3dbf865cf93646c265898cab40dbad343c33ac26e5523a8"
+    },
+    {
+      "file": "security/0404-mysqlnd-auth-switch-payload-boundaries.patch",
+      "sha256": "29e2a848453bf4a787323198879159f305e53e34d10481b5bf5b2beb7488e4ec"
+    },
+    {
+      "file": "security/0405-oniguruma-opaque-regex-api.patch",
+      "sha256": "17f49c903ee35d5da6cd7082c91a5ab402bdef2594776327eed2b0d05c497751"
+    }
+  ],
+  "patch_source": {
+    "url": "https://packages.sury.org/php/pool/main/p/php5.6/php5.6_5.6.40-104+0~20261021.134+debian12~1.gbp7401dd.debian.tar.xz",
+    "sha256": "0644457300f58a8042df227fc74cd6a8b72dfc03e2d674c54f082cbc25dd9aff",
+    "signature_verified": true,
+    "signing_fingerprint": "15058500A0235D97F5D10063B188E2B695BD4743",
+    "trust_origin": "公钥来自 packages.sury.org 官方 HTTPS，固定指纹；验证 InRelease→Sources→补丁包摘要链"
+  },
+  "reference_patch_sources": [
+    {
+      "package": "php7.4",
+      "url": "https://packages.sury.org/php/pool/main/p/php7.4/php7.4_7.4.33-31+0~20261021.121+debian12~1.gbpe9c428.debian.tar.xz",
+      "sha256": "4747b79a87b89a2591497704df4b80e68c7e78b64fbf23c205dca331ebf83496",
+      "size": 213716,
+      "purpose": "PHP 2025/2026 安全修复的公开移植参考；不使用 PHP7 二进制或第三方扩展"
+    }
+  ],
+  "binary_loaders": [
+    {
+      "name": "ionCube Loader",
+      "php": "5.6",
+      "version": "15.5.1",
+      "file": "ioncube_loader_lin_5.6.so",
+      "sha256": "565a721771faedcf777c2f0db60f4bd978bca54eb76ef8071fac00132516214e",
+      "platform": "linux/amd64",
+      "libc_mode": "gcompat-preload-when-enabled",
+      "license": "ioncube/LICENSE.txt",
+      "license_sha256": "8050ac3dea9472fc31eb53b4dbfb5dd7b4379491ed80d36666fdaa1ed31e90c9",
+      "dir": "ioncube"
+    },
+    {
+      "name": "SourceGuardian Loader",
+      "php": "5.6",
+      "version": "17.0.0",
+      "file": "ixed.5.6.lin",
+      "sha256": "bd4735d0f4bd6e9d193a8b2b87f12ba1d9a78ac8de6e4a920e08b3eb5e2d5f2b",
+      "platform": "linux/amd64",
+      "libc_mode": "gcompat-libc.so.6-and-libudev-zero",
+      "license": "sourceguardian/SourceGuardian Loader License.pdf",
+      "license_sha256": "3c6512267e5a21acd904e0e531442b573c43543b761ef2fa76da5d6392193c23",
+      "dir": "sourceguardian"
+    }
+  ]
+}

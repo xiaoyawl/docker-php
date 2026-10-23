@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "php": "5.6.40",
+  "native_modules": [
+    "bcmath",
+    "bz2",
+    "calendar",
+    "Core",
+    "ctype",
+    "curl",
+    "date",
+    "dba",
+    "dom",
+    "enchant",
+    "ereg",
+    "exif",
+    "fileinfo",
+    "filter",
+    "ftp",
+    "gd",
+    "gettext",
+    "gmp",
+    "hash",
+    "iconv",
+    "imap",
+    "intl",
+    "json",
+    "ldap",
+    "libxml",
+    "mbstring",
+    "mcrypt",
+    "mhash",
+    "mssql",
+    "mysql",
+    "mysqli",
+    "mysqlnd",
+    "odbc",
+    "openssl",
+    "pcntl",
+    "pcre",
+    "PDO",
+    "pdo_dblib",
+    "pdo_mysql",
+    "PDO_ODBC",
+    "pdo_pgsql",
+    "pdo_sqlite",
+    "pgsql",
+    "Phar",
+    "posix",
+    "pspell",
+    "readline",
+    "Reflection",
+    "session",
+    "shmop",
+    "SimpleXML",
+    "snmp",
+    "soap",
+    "sockets",
+    "SPL",
+    "sqlite3",
+    "standard",
+    "sybase_ct",
+    "sysvmsg",
+    "sysvsem",
+    "sysvshm",
+    "tidy",
+    "tokenizer",
+    "wddx",
+    "xml",
+    "xmlreader",
+    "xmlrpc",
+    "xmlwriter",
+    "xsl",
+    "zip",
+    "zlib"
+  ],
+  "comment": "本文件是分支的版本差异清单：扩展、开关、编译参数与 Loader 均在此定义，脚本不写死版本信息。",
+  "opcache": {
+    "builtin": false
+  },
+  "fpm": {
+    "oom_worker_exits": true,
+    "oom_reason": "Surý 补丁 0261（CVE-2026-109618/109619 的 EOL 缓解）在内存耗尽路径调用 _exit(1)，由 FPM master 补充新 worker"
+  },
+  "tools": {
+    "composer": "composer-2.2.30.phar",
+    "composer_reason": "Composer 2.2 LTS 最低支持 PHP 5.3；7.2 起的分支使用最新稳定版",
+    "packages": "git 与 ssh 客户端见 config/runtime-packages.txt"
+  },
+  "variants": [
+    {
+      "suffix": "",
+      "swoole": "swoole-2.0.11"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "memcache",
+      "package": "memcache-3.0.8",
+      "switch": "MEMCACHE",
+      "cflags": "-fgnu89-inline",
+      "configure": [],
+      "ini": [],
+      "reason": "memcache 3.0.8 使用 GNU89 inline 语义，C11 下函数符号不导出"
+    },
+    {
+      "name": "memcached",
+      "package": "memcached-2.2.0",
+      "switch": "MEMCACHE",
+      "configure": [
+        "--enable-memcached-sasl"
+      ],
+      "ini": [
+        "memcached.use_sasl=1"
+      ]
+    },
+    {
+      "name": "redis",
+      "package": "redis-4.3.0",
+      "switch": "REDIS",
+      "configure": [
+        "--enable-redis-session",
+        "--disable-redis-igbinary",
+        "--disable-redis-lzf"
+      ],
+      "ini": [],
+      "reason": "对齐现网 4.3.0 的 Session 支持和存储格式，不引入额外序列化扩展"
+    },
+    {
+      "name": "swoole",
+      "package": "variant",
+      "switch": "SWOOLE",
+      "configure": [],
+      "ini": []
+    },
+    {
+      "name": "xdebug",
+      "package": "xdebug-2.5.5",
+      "switch": "XDEBUG",
+      "zend": true,
+      "configure": [],
+      "ini": [],
+      "xdebug_ini": [
+        "xdebug.remote_enable=on",
+        "xdebug.remote_handler=dbgp",
+        "xdebug.remote_host={host}",
+        "xdebug.remote_port={port}",
+        "xdebug.remote_connect_back=0",
+        "xdebug.trace_output_dir=/tmp",
+        "xdebug.profiler_output_dir=/tmp"
+      ]
+    },
+    {
+      "name": "mongodb",
+      "package": "mongodb-1.7.5",
+      "switch": "MONGODB",
+      "configure": [
+        "--with-mongodb-system-libs=yes",
+        "--with-mongodb-client-side-encryption=no"
+      ],
+      "ini": [],
+      "reason": "使用维护中的系统 libmongoc/libbson，不编译扩展内捆绑的历史 C 驱动"
+    },
+    {
+      "name": "mongo",
+      "package": "mongo-1.6.16",
+      "switch": "MONGO",
+      "configure": [
+        "--enable-mongo"
+      ],
+      "ini": [],
+      "reason": "现网旧版驱动（MongoClient），只支持 PHP 5；对齐现网启用 SSL、不启用 SASL"
+    },
+    {
+      "name": "zstd",
+      "package": "zstd-0.11.0",
+      "switch": "ZSTD",
+      "configure": [
+        "--with-libzstd"
+      ],
+      "ini": []
+    },
+    {
+      "name": "event",
+      "package": "event-3.1.6",
+      "switch": "EVENT",
+      "configure": [
+        "--with-event-core",
+        "--with-event-extra",
+        "--with-event-openssl"
+      ],
+      "ini": []
+    },
+    {
+      "name": "apcu",
+      "package": "apcu-4.0.11",
+      "switch": "APCU",
+      "configure": [],
+      "ini": [],
+      "reason": "APCu 4.x 是支持 PHP 5.6 的最终版本"
+    },
+    {
+      "name": "imagick",
+      "package": "imagick-3.8.1",
+      "switch": "IMAGICK",
+      "configure": [
+        "--with-imagick"
+      ],
+      "ini": []
+    },
+    {
+      "name": "hprose",
+      "package": "hprose-1.8.0",
+      "switch": "HPROSE",
+      "configure": [],
+      "ini": []
+    }
+  ],
+  "loaders": [
+    {
+      "name": "ionCube Loader",
+      "module": "ionCube Loader",
+      "switch": "IONCUBE",
+      "zend": true,
+      "path": "/usr/local/ioncube/ioncube_loader_lin_5.6.so",
+      "preload": "/lib/libgcompat.so.0",
+      "conflicts": "XDEBUG",
+      "reason": "PHP 5.6 只有官方 glibc 版 Loader，启用时预加载 gcompat"
+    },
+    {
+      "name": "SourceGuardian Loader",
+      "module": "SourceGuardian",
+      "switch": "SOURCEGUARDIAN",
+      "zend": false,
+      "path": "/usr/local/sourceguardian/ixed.5.6.lin",
+      "preload": "",
+      "conflicts": "",
+      "reason": "官方 glibc 版 Loader，依赖 gcompat 提供的 libc.so.6 与 libudev-zero"
+    }
+  ]
+}

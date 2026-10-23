@@ -1,0 +1,56 @@
+From: LookBack
+Subject: 适配 libxml2 2.12+ 只读错误回调签名
+
+目标为 Alpine 3.24 的 libxml2 2.13；只读取错误对象，不去除 const。
+
+--- a/ext/libxml/libxml.c
++++ b/ext/libxml/libxml.c
+@@ -470,7 +470,7 @@
+ 	return 1;
+ }
+ 
+-static void _php_list_set_error_structure(xmlErrorPtr error, const char *msg)
++static void _php_list_set_error_structure(const xmlError *error, const char *msg)
+ {
+ 	xmlError error_copy;
+ 	int ret;
+@@ -728,7 +728,7 @@
+ 	va_end(args);
+ }
+ 
+-PHP_LIBXML_API void php_libxml_structured_error_handler(void *userData, xmlErrorPtr error)
++PHP_LIBXML_API void php_libxml_structured_error_handler(void *userData, const xmlError *error)
+ {
+ 	_php_list_set_error_structure(error, NULL);
+ 
+@@ -1001,7 +1001,7 @@
+    Retrieve last error from libxml */
+ static PHP_FUNCTION(libxml_get_last_error)
+ {
+-	xmlErrorPtr error;
++	const xmlError *error;
+ 
+ 	error = xmlGetLastError();
+ 	
+--- a/ext/soap/php_sdl.c
++++ b/ext/soap/php_sdl.c
+@@ -334,7 +334,7 @@
+ 	sdl_restore_uri_credentials(ctx TSRMLS_CC);
+ 	
+ 	if (!wsdl) {
+-		xmlErrorPtr xmlErrorPtr = xmlGetLastError();
++		const xmlError *xmlErrorPtr = xmlGetLastError();
+ 
+ 		if (xmlErrorPtr) {
+ 			soap_error2(E_ERROR, "Parsing WSDL: Couldn't load from '%s' : %s", struri, xmlErrorPtr->message);
+--- a/ext/dom/dom_iterators.c
++++ b/ext/dom/dom_iterators.c
+@@ -42,7 +42,7 @@
+ 	xmlNotation *notation;
+ };
+ 
+-static void itemHashScanner (void *payload, void *data, xmlChar *name) /* {{{ */
++static void itemHashScanner (void *payload, void *data, const xmlChar *name) /* {{{ */
+ {
+ 	nodeIterator *priv = (nodeIterator *)data;
+ 

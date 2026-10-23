@@ -1,0 +1,48 @@
+From: LookBack <mondeolove@gmail.com>
+Subject: [PATCH] event/php5: initialize callback references and release exception args once
+
+Port PHP7 createPair self/base ownership to PHP5, matching PHP5 constructor.
+Remove duplicate zval releases on callback exceptions; release once after branch.
+Regression: tests/additional-extensions.php validates callback objects and exceptions.
+
+--- a/php5/classes/buffer_event.c
++++ b/php5/classes/buffer_event.c
+@@ -93,7 +93,6 @@
+ 				PHP_EVENT_FETCH_BASE(b, bev->base);
+ 				event_base_loopbreak(b->base);
+ 
+-				zval_ptr_dtor(&arg_data);
+ 			} else {
+ 				php_error_docref(NULL TSRMLS_CC, E_WARNING,
+ 						"An error occurred while invoking the callback");
+@@ -169,7 +168,7 @@
+ 		} else {
+ 			ALLOC_INIT_ZVAL(arg_self);
+ 		}
+-		args[0] = &bev->self;
++		args[0] = &arg_self;
+ 
+ 		MAKE_STD_ZVAL(arg_events);
+ 		ZVAL_LONG(arg_events, events);
+@@ -196,8 +195,6 @@
+ 				PHP_EVENT_FETCH_BASE(b, bev->base);
+ 				event_base_loopbreak(b->base);
+ 
+-				zval_ptr_dtor(&arg_events);
+-				zval_ptr_dtor(&arg_data);
+ 			} else {
+ 				php_error_docref(NULL TSRMLS_CC, E_WARNING,
+ 						"An error occurred while invoking the callback");
+@@ -535,6 +532,12 @@
+ 
+ 		b[i]->bevent    = bevent_pair[i];
+ 
++		b[i]->self = zbev[i];
++		Z_ADDREF_P(zbev[i]);
++		b[i]->base = zbase;
++		Z_ADDREF_P(zbase);
++		TSRMLS_SET_CTX(b[i]->thread_ctx);
++
+ 		add_next_index_zval(return_value, zbev[i]);
+ 	}
+ }

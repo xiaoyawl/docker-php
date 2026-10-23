@@ -1,0 +1,21 @@
+--- a/ext/gd/gd.c
++++ b/ext/gd/gd.c
+@@ -66,12 +66,18 @@
+ static int le_ps_font, le_ps_enc;
+ static void php_free_ps_font(zend_rsrc_list_entry *rsrc TSRMLS_DC);
+ static void php_free_ps_enc(zend_rsrc_list_entry *rsrc TSRMLS_DC);
+ #endif
+ 
+ #include <gd.h>
++/* Preserve the historical PHP public image flip mode values. */
++#ifndef GD_FLIP_HORINZONTAL
++# define GD_FLIP_HORINZONTAL 1
++# define GD_FLIP_VERTICAL 2
++# define GD_FLIP_BOTH 3
++#endif
+ #ifndef HAVE_GD_BUNDLED
+ # include <gd_errors.h>
+ #endif
+ #include <gdfontt.h>  /* 1 Tiny font */
+ #include <gdfonts.h>  /* 2 Small font */
+ #include <gdfontmb.h> /* 3 Medium bold font */

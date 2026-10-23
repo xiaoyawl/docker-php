@@ -1,0 +1,35 @@
+From: LookBack
+Subject: 修正 mbfl 别名数组地址与 session 反序列化游标类型
+
+匹配既有结构和 API 声明，不改变数据布局或序列化行为。
+
+--- a/ext/mbstring/libmbfl/filters/mbfilter_iso2022jp_mobile.c
++++ b/ext/mbstring/libmbfl/filters/mbfilter_iso2022jp_mobile.c
+@@ -48,7 +48,7 @@
+ 	mbfl_no_encoding_2022jp_kddi,
+ 	"ISO-2022-JP-MOBILE#KDDI",
+ 	"ISO-2022-JP",
+-	mbfl_encoding_2022jp_kddi_aliases,
++	&mbfl_encoding_2022jp_kddi_aliases,
+ 	NULL,
+ 	MBFL_ENCTYPE_MBCS | MBFL_ENCTYPE_SHFTCODE | MBFL_ENCTYPE_GL_UNSAFE
+ };
+--- a/ext/session/session.c
++++ b/ext/session/session.c
+@@ -858,13 +858,14 @@
+ 
+ PS_SERIALIZER_DECODE_FUNC(php_serialize) /* {{{ */
+ {
+-	const char *endptr = val + vallen;
++	const unsigned char *cursor = (const unsigned char *) val;
++	const unsigned char *endptr = cursor + vallen;
+ 	zval *session_vars;
+ 	php_unserialize_data_t var_hash;
+ 
+ 	PHP_VAR_UNSERIALIZE_INIT(var_hash);
+ 	ALLOC_INIT_ZVAL(session_vars);
+-	if (php_var_unserialize(&session_vars, &val, endptr, &var_hash TSRMLS_CC)) {
++	if (php_var_unserialize(&session_vars, &cursor, endptr, &var_hash TSRMLS_CC)) {
+ 		var_push_dtor(&var_hash, &session_vars);
+ 	}
+ 

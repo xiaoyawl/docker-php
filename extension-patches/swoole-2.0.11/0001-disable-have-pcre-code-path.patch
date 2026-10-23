@@ -1,0 +1,25 @@
+Subject: [PATCH] PHP 5.6 使用系统 PCRE 时不启用 Swoole 的 HAVE_PCRE 代码路径
+
+PHP 5.6 仅在链接系统 PCRE 时定义 HAVE_PCRE。Swoole 2.0.11 在该条件下：
+1. 重复声明 swoole_server::$connections，内部类以 efree 释放常驻 zval，
+   改写 Zend 内存管理器 reserve_size，加载即报内存耗尽（上游 2.0.12 删除重复声明）；
+2. 事件循环内遍历 swoole_table 后退出段错误。
+现网 1.9.4 与已验收 rc2 均为内置 PCRE 构建，不含上述迭代器能力，取消该宏保持一致。
+
+diff --git php_swoole.h php_swoole.h
+index fb02d1b..96ad323 100644
+--- a/php_swoole.h
++++ b/php_swoole.h
+@@ -45,6 +45,12 @@
+ #include "php_config.h"
+ #endif
+ 
++/* LookBack: PHP 5.6 linked with system PCRE defines HAVE_PCRE. Swoole 2.0.11
++ * then compiles iterator code that double-declares swoole_server::$connections
++ * (heap corruption at MINIT) and segfaults when iterating swoole_table inside
++ * the event loop. Keep the same code path as bundled-PCRE builds. */
++#undef HAVE_PCRE
++
+ #include "swoole.h"
+ #include "Server.h"
+ #include "Client.h"

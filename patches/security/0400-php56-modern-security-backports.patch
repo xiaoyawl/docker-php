@@ -1,0 +1,2441 @@
+From: LookBack <mondeolove@gmail.com>
+Subject: PHP 5.6 adaptations of PHP upstream 2025/2026 security fixes
+
+Reference: signed Surý php7.4 7.4.33-31 package and PHP GHSA advisories.
+Adapt Zend 3 APIs to Zend 2; retain PHP5 string length and TSRMLS conventions.
+
+--- a/Zend/zend_alloc.c
++++ b/Zend/zend_alloc.c
+@@ -742,7 +742,7 @@
+ 			*p = mm_block;
+ 			mm_block->parent = p;
+ 			mm_block->prev_free_block = mm_block->next_free_block = mm_block;
+-			heap->large_free_bitmap |= (ZEND_MM_LONG_CONST(1) << index);
++			heap->large_free_bitmap |= (((size_t)1) << index);
+ 		} else {
+ 			size_t m;
+ 
+@@ -775,7 +775,7 @@
+ 
+ 		prev = ZEND_MM_SMALL_FREE_BUCKET(heap, index);
+ 		if (prev->prev_free_block == prev) {
+-			heap->free_bitmap |= (ZEND_MM_LONG_CONST(1) << index);
++			heap->free_bitmap |= (((size_t)1) << index);
+ 		}
+ 		next = prev->next_free_block;
+ 
+@@ -809,7 +809,7 @@
+ 			ZEND_MM_CHECK_TREE(mm_block);
+ 			*mm_block->parent = NULL;
+ 			if (mm_block->parent == &heap->large_free_buckets[index]) {
+-				heap->large_free_bitmap &= ~(ZEND_MM_LONG_CONST(1) << index);
++				heap->large_free_bitmap &= ~(((size_t)1) << index);
+ 		    }
+ 		} else {
+ 			while (*(cp = &(prev->child[prev->child[1] != NULL])) != NULL) {
+@@ -847,7 +847,7 @@
+ 				size_t index = ZEND_MM_BUCKET_INDEX(ZEND_MM_FREE_BLOCK_SIZE(mm_block));
+ 
+ 				if (EXPECTED(heap->free_buckets[index*2] == heap->free_buckets[index*2+1])) {
+-					heap->free_bitmap &= ~(ZEND_MM_LONG_CONST(1) << index);
++					heap->free_bitmap &= ~(((size_t)1) << index);
+ 				}
+ 			}
+ 		} else if (UNEXPECTED(mm_block->parent == ZEND_MM_REST_BLOCK)) {
+@@ -1823,7 +1823,7 @@
+ 				best_size = ZEND_MM_FREE_BLOCK_SIZE(p);
+ 				best_fit = p;
+ 			}
+-			if ((m & (ZEND_MM_LONG_CONST(1) << (ZEND_MM_NUM_BUCKETS-1))) == 0) {
++			if ((m & (((size_t)1) << (ZEND_MM_NUM_BUCKETS-1))) == 0) {
+ 				if (p->child[1]) {
+ 					rst = p->child[1];
+ 				}
+@@ -2114,7 +2114,7 @@
+ 
+ static void *_zend_mm_realloc_int(zend_mm_heap *heap, void *p, size_t size ZEND_FILE_LINE_DC ZEND_FILE_LINE_ORIG_DC)
+ {
+-	zend_mm_block *mm_block = ZEND_MM_HEADER_OF(p);
++	zend_mm_block *mm_block;
+ 	zend_mm_block *next_block;
+ 	size_t true_size;
+ 	size_t orig_size;
+--- a/Zend/zend_virtual_cwd.c
++++ b/Zend/zend_virtual_cwd.c
+@@ -1179,6 +1179,52 @@
+ 
+ /* Resolve path relatively to state and put the real path into state */
+ /* returns 0 for ok, 1 for error */
++#ifdef ZEND_WIN32
++/* PHP5 has no win32/ioutil layer. Use the same native device-name classifier
++ * as the upstream fix, at the existing virtual-path boundary instead. */
++static int virtual_reserved_device_path(const char *path, size_t len)
++{
++    typedef ULONG (WINAPI *device_name_fn)(PCWSTR);
++    device_name_fn is_device = (device_name_fn)GetProcAddress(GetModuleHandleA("ntdll.dll"), "RtlIsDosDeviceName_U");
++    wchar_t *wide;
++    int wide_len, i, start, skip = 0;
++    if (!len) return 0;
++    /* Preserve bare device names and explicit Win32 device namespaces. */
++    if (!strchr(path, '\\') && !strchr(path, '/') &&
++        (len == 3 || (len == 4 && path[len-1] == ':')) &&
++        (!_strnicmp(path,"NUL",3) || !_strnicmp(path,"CON",3) || !_strnicmp(path,"PRN",3) || !_strnicmp(path,"AUX",3))) return 0;
++    if (len >= 4 && path[3] == '\\' &&
++        ((path[0] == '\\' && path[1] == '\\' && (path[2] == '.' || path[2] == '?')) ||
++         (path[0] == '\\' && path[1] == '?' && path[2] == '?'))) return 0;
++    wide_len = MultiByteToWideChar(CP_ACP, 0, path, (int)len, NULL, 0);
++    if (wide_len <= 0) return 1;
++    wide = emalloc(((size_t)wide_len + 1) * sizeof(wchar_t));
++    MultiByteToWideChar(CP_ACP, 0, path, (int)len, wide, wide_len);
++    wide[wide_len] = 0;
++    i = 0;
++    if (wide_len >= 2 && (wide[0] == L'\\' || wide[0] == L'/') && (wide[1] == L'\\' || wide[1] == L'/')) skip = 2;
++    else if (wide_len >= 2 && wide[1] == L':') i = 2;
++    while (i < wide_len) {
++        wchar_t save;
++        while (i < wide_len && (wide[i] == L'\\' || wide[i] == L'/')) i++;
++        start = i;
++        while (i < wide_len && wide[i] != L'\\' && wide[i] != L'/') i++;
++        if (skip) { skip--; continue; }
++        save = wide[i]; wide[i] = 0;
++        if (is_device && is_device(wide + start)) { efree(wide); return 1; }
++        if (!is_device && (i-start >= 3) &&
++            (!_wcsnicmp(wide+start,L"NUL",3) || !_wcsnicmp(wide+start,L"CON",3) ||
++             !_wcsnicmp(wide+start,L"PRN",3) || !_wcsnicmp(wide+start,L"AUX",3) ||
++             !_wcsnicmp(wide+start,L"COM",3) || !_wcsnicmp(wide+start,L"LPT",3))) {
++            efree(wide); return 1;
++        }
++        wide[i] = save;
++    }
++    efree(wide);
++    return 0;
++}
++#endif
++
+ CWD_API int virtual_file_ex(cwd_state *state, const char *path, verify_path_func verify_path, int use_realpath TSRMLS_DC) /* {{{ */
+ {
+ 	int path_length = strlen(path);
+@@ -1205,6 +1251,13 @@
+ 
+ #if VIRTUAL_CWD_DEBUG
+ 	fprintf(stderr,"cwd = %s path = %s\n", state->cwd, path);
++#endif
++
++#ifdef ZEND_WIN32
++    if (virtual_reserved_device_path(path, path_length)) {
++        errno = EINVAL;
++        return 1;
++    }
+ #endif
+ 
+ 	/* cwd_length can be 0 when getcwd() fails.
+--- a/ext/fileinfo/libmagic/funcs.c
++++ b/ext/fileinfo/libmagic/funcs.c
+@@ -437,6 +437,7 @@
+ 	return ms->o.buf == NULL ? 0 : strlen(ms->o.buf);
+ }
+ 
++protected int
+ file_replace(struct magic_set *ms, const char *pat, const char *rep)
+ {
+ 	zval *patt;
+--- a/ext/filter/sanitizing_filters.c
++++ b/ext/filter/sanitizing_filters.c
+@@ -71,7 +71,7 @@
+ 	unsigned char *s = (unsigned char *)chars;
+ 	unsigned char *e = s + char_len;
+ 
+-	memset(tmp, 1, sizeof(tmp)-1);
++	memset(tmp, 1, sizeof(tmp));
+ 
+ 	while (s < e) {
+ 		tmp[*s++] = 0;
+--- a/ext/gd/libgd/gd_gif_in.c
++++ b/ext/gd/libgd/gd_gif_in.c
+@@ -449,7 +449,7 @@
+ 			sd->table[1][i] = i;
+ 		}
+ 		for (; i < (1<<MAX_LWZ_BITS); ++i)
+-			sd->table[0][i] = sd->table[1][0] = 0;
++			sd->table[0][i] = sd->table[1][i] = 0;
+ 
+ 		sd->sp = sd->stack;
+ 
+@@ -493,6 +493,8 @@
+ 
+ 			if (count != 0)
+ 				return -2;
++
++			return -2;
+ 		}
+ 
+ 		incode = code;
+@@ -559,7 +561,7 @@
+ 	int             v;
+ 	int             xpos = 0, ypos = 0, pass = 0;
+ 	int i;
+-	LZW_STATIC_DATA sd;
++	LZW_STATIC_DATA sd = {0};
+ 
+ 
+ 	/*
+--- a/ext/mssql/php_mssql.c
++++ b/ext/mssql/php_mssql.c
+@@ -1042,7 +1042,11 @@
+ 					}
+ 			
+ 					res_length = 19;
+-					spprintf(&res_buf, 0, "%d-%02d-%02d %02d:%02d:%02d" , dateinfo.year, dateinfo.month, dateinfo.day, dateinfo.hour, dateinfo.minute, dateinfo.second);
++					{
++                char *date_buf;
++                spprintf(&date_buf, 0, "%d-%02d-%02d %02d:%02d:%02d", dateinfo.year, dateinfo.month, dateinfo.day, dateinfo.hour, dateinfo.minute, dateinfo.second);
++                res_buf = (unsigned char *)date_buf;
++            }
+ 				}
+ 		
+ 				ZVAL_STRINGL(result, res_buf, res_length, 0);
+@@ -1122,7 +1126,11 @@
+ 			}
+ 			
+ 			res_length = 19;
+-			spprintf(&res_buf, 0, "%d-%02d-%02d %02d:%02d:%02d" , dateinfo.year, dateinfo.month, dateinfo.day, dateinfo.hour, dateinfo.minute, dateinfo.second);
++			{
++                char *date_buf;
++                spprintf(&date_buf, 0, "%d-%02d-%02d %02d:%02d:%02d", dateinfo.year, dateinfo.month, dateinfo.day, dateinfo.hour, dateinfo.minute, dateinfo.second);
++                res_buf = (unsigned char *)date_buf;
++            }
+ 		}
+ 
+ 		ZVAL_STRINGL(result, res_buf, res_length, 0);
+--- a/ext/mysqlnd/mysqlnd_ps_codec.c
++++ b/ext/mysqlnd/mysqlnd_ps_codec.c
+@@ -53,6 +53,21 @@
+ #define MYSQLND_PS_SKIP_RESULT_W_LEN	-1
+ #define MYSQLND_PS_SKIP_RESULT_STR		-2
+ 
++#define MYSQLND_PS_BAIL() do { \
++    php_error_docref(NULL TSRMLS_CC, E_WARNING, "Malformed prepared statement row packet"); \
++    *row = NULL; \
++    return; \
++} while (0)
++#define MYSQLND_PS_REQUIRE(n) do { if ((size_t)(n) > pack_len) MYSQLND_PS_BAIL(); } while (0)
++#define MYSQLND_PS_READ_LENGTH(target) do { \
++    zend_uchar *start = *row; \
++    uint64_t value; \
++    if (!mysqlnd_read_field_length_checked(row, start + pack_len, &value) || \
++        value == MYSQLND_NULL_LENGTH || value > pack_len - (size_t)(*row - start) || value > INT_MAX) MYSQLND_PS_BAIL(); \
++    target = (unsigned long)value; \
++    pack_len -= (size_t)(*row - start); \
++} while (0)
++
+ /* {{{ ps_fetch_from_1_to_8_bytes */
+ void
+ ps_fetch_from_1_to_8_bytes(zval * zv, const MYSQLND_FIELD * const field, unsigned int pack_len,
+@@ -61,6 +76,7 @@
+ 	char tmp[22];
+ 	size_t tmp_len = 0;
+ 	zend_bool is_bit = field->type == MYSQL_TYPE_BIT;
++	MYSQLND_PS_REQUIRE(byte_count);
+ 	DBG_ENTER("ps_fetch_from_1_to_8_bytes");
+ 	DBG_INF_FMT("zv=%p byte_count=%u", zv, byte_count);
+ 	if (field->flags & UNSIGNED_FLAG) {
+@@ -178,6 +194,7 @@
+ 	float fval;
+ 	double dval;
+ 	DBG_ENTER("ps_fetch_float");
++	MYSQLND_PS_REQUIRE(4);
+ 	float4get(fval, *row);
+ 	(*row)+= 4;
+ 	DBG_INF_FMT("value=%f", fval);
+@@ -200,6 +217,7 @@
+ {
+ 	double value;
+ 	DBG_ENTER("ps_fetch_double");
++	MYSQLND_PS_REQUIRE(8);
+ 	float8get(value, *row);
+ 	ZVAL_DOUBLE(zv, value);
+ 	(*row)+= 8;
+@@ -218,7 +236,9 @@
+ 	char * value;
+ 	DBG_ENTER("ps_fetch_time");
+ 
+-	if ((length = php_mysqlnd_net_field_length(row))) {
++	MYSQLND_PS_READ_LENGTH(length);
++	if (length != 0 && length != 8 && length != 12) MYSQLND_PS_BAIL();
++	if (length) {
+ 		zend_uchar * to= *row;
+ 
+ 		t.time_type = MYSQLND_TIMESTAMP_TIME;
+@@ -261,7 +281,9 @@
+ 	char * value;
+ 	DBG_ENTER("ps_fetch_date");
+ 
+-	if ((length = php_mysqlnd_net_field_length(row))) {
++	MYSQLND_PS_READ_LENGTH(length);
++	if (length != 0 && length != 4) MYSQLND_PS_BAIL();
++	if (length) {
+ 		zend_uchar *to= *row;
+ 
+ 		t.time_type= MYSQLND_TIMESTAMP_DATE;
+@@ -298,7 +320,9 @@
+ 	char * value;
+ 	DBG_ENTER("ps_fetch_datetime");
+ 
+-	if ((length = php_mysqlnd_net_field_length(row))) {
++	MYSQLND_PS_READ_LENGTH(length);
++	if (length != 0 && length != 4 && length != 7 && length != 11) MYSQLND_PS_BAIL();
++	if (length) {
+ 		zend_uchar * to = *row;
+ 
+ 		t.time_type = MYSQLND_TIMESTAMP_DATETIME;
+@@ -341,7 +365,8 @@
+ 	  For now just copy, before we make it possible
+ 	  to write \0 to the row buffer
+ 	*/
+-	const unsigned long length = php_mysqlnd_net_field_length(row);
++	unsigned long length;
++	MYSQLND_PS_READ_LENGTH(length);
+ 	DBG_ENTER("ps_fetch_string");
+ 	DBG_INF_FMT("len = %lu", length);
+ 	DBG_INF("copying from the row buffer");
+@@ -357,7 +382,9 @@
+ static void
+ ps_fetch_bit(zval * zv, const MYSQLND_FIELD * const field, unsigned int pack_len, zend_uchar ** row TSRMLS_DC)
+ {
+-	unsigned long length = php_mysqlnd_net_field_length(row);
++	unsigned long length;
++	MYSQLND_PS_READ_LENGTH(length);
++	if (length > 8) MYSQLND_PS_BAIL();
+ 	ps_fetch_from_1_to_8_bytes(zv, field, pack_len, row, length TSRMLS_CC);
+ }
+ /* }}} */
+--- a/ext/mysqlnd/mysqlnd_result.c
++++ b/ext/mysqlnd/mysqlnd_result.c
+@@ -1461,7 +1461,18 @@
+ 			ret = FAIL;
+ 			goto end;
+ 		}
+-		*row_buffers = mnd_perealloc(*row_buffers, (size_t) (set->row_count * sizeof(MYSQLND_MEMORY_POOL_CHUNK *)), 0);
++		if (set->row_count == 0) {
++            mnd_pefree(*row_buffers, 0);
++            *row_buffers = NULL;
++        } else {
++            *row_buffers = mnd_perealloc(*row_buffers,
++                (size_t)(set->row_count * sizeof(MYSQLND_MEMORY_POOL_CHUNK *)), 0);
++            if (!*row_buffers) {
++                SET_OOM_ERROR(*conn->error_info);
++                ret = FAIL;
++                goto end;
++            }
++        }
+ 	}
+ 
+ 	if (conn->upsert_status->server_status & SERVER_MORE_RESULTS_EXISTS) {
+--- a/ext/mysqlnd/mysqlnd_wireprotocol.c
++++ b/ext/mysqlnd/mysqlnd_wireprotocol.c
+@@ -61,12 +61,23 @@
+ 	}
+ 
+ 
+-#define BAIL_IF_NO_MORE_DATA \
+-	if ((size_t)(p - begin) > packet->header.size) { \
+-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Premature end of data (mysqlnd_wireprotocol.c:%u)", __LINE__); \
+-		goto premature_end; \
+-	} \
+-
++#define BAIL_IF_NOT_ENOUGH_DATA(n) do { \
++    if (!p || p < begin || (size_t)(p - begin) > packet->header.size || \
++        (size_t)(n) > packet->header.size - (size_t)(p - begin)) { \
++        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Malformed server packet: premature end of data"); \
++        goto premature_end; \
++    } \
++} while (0)
++#define BAIL_IF_NO_MORE_DATA BAIL_IF_NOT_ENOUGH_DATA(0)
++#define MYSQLND_READ_FIELD_LENGTH(target) do { \
++    uint64_t value; \
++    BAIL_IF_NO_MORE_DATA; \
++    if (!mysqlnd_read_field_length_checked(&p, begin + packet->header.size, &value)) { \
++        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Malformed server packet: invalid field length"); \
++        goto premature_end; \
++    } \
++    target = value; \
++} while (0)
+ 
+ static const char *unknown_sqlstate= "HY000";
+ 
+@@ -344,6 +355,7 @@
+ 		buf[packet->header.size] = '\0'; 
+ 	}
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->protocol_version = uint1korr(p);
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -364,14 +376,21 @@
+ 		DBG_RETURN(PASS);
+ 	}
+ 
+-	packet->server_version = estrdup((char *)p);
++	{
++        char *end = memchr(p, '\0', packet->header.size - (size_t)(p-begin));
++        if (!end) goto premature_end;
++        packet->server_version = estrndup((char *)p, end - (char *)p);
++    }
+ 	p+= strlen(packet->server_version) + 1; /* eat the '\0' */
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(4);
+ 	packet->thread_id = uint4korr(p);
+ 	p+=4;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(SCRAMBLE_LENGTH_323);
++
+ 	memcpy(packet->auth_plugin_data, p, SCRAMBLE_LENGTH_323);
+ 	p+= SCRAMBLE_LENGTH_323;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -380,25 +399,30 @@
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	packet->server_capabilities = uint2korr(p);
+ 	p+= 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->charset_no = uint1korr(p);
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	packet->server_status = uint2korr(p);
+ 	p+= 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* pad2 */
+ 	pad_start = p;
++    BAIL_IF_NOT_ENOUGH_DATA(13);
+ 	p+= 13;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	if ((size_t) (p - buf) < packet->header.size) {
+ 		/* auth_plugin_data is split into two parts */
++		BAIL_IF_NOT_ENOUGH_DATA(SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323 + 1);
+ 		memcpy(packet->auth_plugin_data + SCRAMBLE_LENGTH_323, p, SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323);
+ 		p+= SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323;
+ 		p++; /* 0x0 at the end of the scramble and thus last byte in the packet in 5.1 and previous */
+@@ -417,7 +441,9 @@
+ 		packet->auth_plugin_data_len = uint1korr(pad_start + 2);
+ 		if (packet->auth_plugin_data_len > SCRAMBLE_LENGTH) {
+ 			/* more data*/
+-			zend_uchar * new_auth_plugin_data = emalloc(packet->auth_plugin_data_len);
++			zend_uchar *new_auth_plugin_data;
++            BAIL_IF_NOT_ENOUGH_DATA(packet->auth_plugin_data_len - SCRAMBLE_LENGTH);
++            new_auth_plugin_data = emalloc(packet->auth_plugin_data_len);
+ 			if (!new_auth_plugin_data) {
+ 				goto premature_end;
+ 			}
+@@ -433,8 +459,13 @@
+ 	if (packet->server_capabilities & CLIENT_PLUGIN_AUTH) {
+ 		BAIL_IF_NO_MORE_DATA;
+ 		/* The server is 5.5.x and supports authentication plugins */
+-		packet->auth_protocol = estrdup((char *)p);
+-		p+= strlen(packet->auth_protocol) + 1; /* eat the '\0' */
++		{
++            size_t remaining = packet->header.size - (size_t)(p-begin);
++            char *end = memchr(p, '\0', remaining);
++            size_t length = end ? (size_t)(end-(char *)p) : remaining;
++            packet->auth_protocol = estrndup((char *)p, length);
++            p += length + (end != NULL);
++        }
+ 	}
+ 
+ 	DBG_INF_FMT("proto=%u server=%s thread_id=%u",
+@@ -664,6 +695,7 @@
+ 	buf[packet->header.size] = '\0';
+ 	
+ 	/* Should be always 0x0 or ERROR_MARKER for error */
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->response_code = uint1korr(p);
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -685,6 +717,7 @@
+ 			packet->new_auth_protocol_data_len = packet->header.size - (size_t) (p - buf);
+ 			if (packet->new_auth_protocol_data_len) {
+ 				packet->new_auth_protocol_data = mnd_emalloc(packet->new_auth_protocol_data_len);
++				BAIL_IF_NOT_ENOUGH_DATA(packet->new_auth_protocol_data_len);
+ 				memcpy(packet->new_auth_protocol_data, p, packet->new_auth_protocol_data_len);
+ 			}
+ 			DBG_INF_FMT("The server requested switching auth plugin to : %s", packet->new_auth_protocol);
+@@ -692,25 +725,30 @@
+ 		}
+ 	} else {
+ 		/* Everything was fine! */
+-		packet->affected_rows  = php_mysqlnd_net_field_length_ll(&p);
++		MYSQLND_READ_FIELD_LENGTH(packet->affected_rows);
+ 		BAIL_IF_NO_MORE_DATA;
+ 
+-		packet->last_insert_id = php_mysqlnd_net_field_length_ll(&p);
++		MYSQLND_READ_FIELD_LENGTH(packet->last_insert_id);
+ 		BAIL_IF_NO_MORE_DATA;
+ 
++		BAIL_IF_NOT_ENOUGH_DATA(2);
+ 		packet->server_status = uint2korr(p);
+ 		p+= 2;
+ 		BAIL_IF_NO_MORE_DATA;
+ 
++		BAIL_IF_NOT_ENOUGH_DATA(2);
+ 		packet->warning_count = uint2korr(p);
+ 		p+= 2;
+ 		BAIL_IF_NO_MORE_DATA;
+ 
+ 		/* There is a message */
+-		if (packet->header.size > (size_t) (p - buf) && (i = php_mysqlnd_net_field_length(&p))) {
++		if (packet->header.size > (size_t) (p - buf)) {
++        MYSQLND_READ_FIELD_LENGTH(i);
++        if (i) {
+ 			packet->message_len = MIN(i, buf_len - (p - begin));
+ 			packet->message = mnd_pestrndup((char *)p, packet->message_len, FALSE);
+-		} else {
++		}
++    } else {
+ 			packet->message = NULL;
+ 			packet->message_len = 0;
+ 		}
+@@ -820,6 +858,7 @@
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* Should be always 0x0 or ERROR_MARKER for error */
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->field_count = uint1korr(p);
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -833,25 +872,30 @@
+ 		DBG_RETURN(PASS);
+ 	}
+ 	/* Everything was fine! */
+-	packet->affected_rows  = php_mysqlnd_net_field_length_ll(&p);
+-	BAIL_IF_NO_MORE_DATA;
+-
+-	packet->last_insert_id = php_mysqlnd_net_field_length_ll(&p);
+-	BAIL_IF_NO_MORE_DATA;
+-
++	MYSQLND_READ_FIELD_LENGTH(packet->affected_rows);
++	BAIL_IF_NO_MORE_DATA;
++
++	MYSQLND_READ_FIELD_LENGTH(packet->last_insert_id);
++	BAIL_IF_NO_MORE_DATA;
++
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	packet->server_status = uint2korr(p);
+ 	p+= 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	packet->warning_count = uint2korr(p);
+ 	p+= 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* There is a message */
+-	if (packet->header.size > (size_t) (p - buf) && (i = php_mysqlnd_net_field_length(&p))) {
++	if (packet->header.size > (size_t) (p - buf)) {
++        MYSQLND_READ_FIELD_LENGTH(i);
++        if (i) {
+ 		packet->message_len = MIN(i, buf_len - (p - begin));
+ 		packet->message = mnd_pestrndup((char *)p, packet->message_len, FALSE);
+-	} else {
++	}
++    } else {
+ 		packet->message = NULL;
+ 		packet->message_len = 0;
+ 	}
+@@ -910,6 +954,7 @@
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* Should be always EODATA_MARKER */
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->field_count = uint1korr(p);
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -928,10 +973,12 @@
+ 		according to the Docs@Forge!!!
+ 	*/
+ 	if (packet->header.size > 1) {
++		BAIL_IF_NOT_ENOUGH_DATA(2);
+ 		packet->warning_count = uint2korr(p);
+ 		p+= 2;
+ 		BAIL_IF_NO_MORE_DATA;
+ 
++		BAIL_IF_NOT_ENOUGH_DATA(2);
+ 		packet->server_status = uint2korr(p);
+ 		p+= 2;
+ 		BAIL_IF_NO_MORE_DATA;
+@@ -1064,6 +1111,7 @@
+ 	  Don't increment. First byte is ERROR_MARKER on error, but otherwise is starting byte
+ 	  of encoded sequence for length.
+ 	*/
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	if (ERROR_MARKER == *p) {
+ 		/* Error */
+ 		p++;
+@@ -1076,7 +1124,7 @@
+ 		DBG_RETURN(PASS);
+ 	}
+ 
+-	packet->field_count = php_mysqlnd_net_field_length(&p);
++	MYSQLND_READ_FIELD_LENGTH(packet->field_count);
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	switch (packet->field_count) {
+@@ -1092,6 +1140,7 @@
+ 			len = packet->header.size - 1;
+ 			packet->info_or_local_file = mnd_emalloc(len + 1);
+ 			if (packet->info_or_local_file) {
++				BAIL_IF_NOT_ENOUGH_DATA(len);
+ 				memcpy(packet->info_or_local_file, p, len);
+ 				packet->info_or_local_file[len] = '\0';
+ 				packet->info_or_local_file_len = len;
+@@ -1102,23 +1151,28 @@
+ 			break;
+ 		case 0x00:
+ 			DBG_INF("UPSERT");
+-			packet->affected_rows = php_mysqlnd_net_field_length_ll(&p);
++			MYSQLND_READ_FIELD_LENGTH(packet->affected_rows);
+ 			BAIL_IF_NO_MORE_DATA;
+ 
+-			packet->last_insert_id = php_mysqlnd_net_field_length_ll(&p);
++			MYSQLND_READ_FIELD_LENGTH(packet->last_insert_id);
+ 			BAIL_IF_NO_MORE_DATA;
+ 
++			BAIL_IF_NOT_ENOUGH_DATA(2);
+ 			packet->server_status = uint2korr(p);
+ 			p+=2;
+ 			BAIL_IF_NO_MORE_DATA;
+ 
++			BAIL_IF_NOT_ENOUGH_DATA(2);
+ 			packet->warning_count = uint2korr(p);
+ 			p+=2;
+ 			BAIL_IF_NO_MORE_DATA;
+ 			/* Check for additional textual data */
+-			if (packet->header.size  > (size_t) (p - buf) && (len = php_mysqlnd_net_field_length(&p))) {
++			if (packet->header.size  > (size_t) (p - buf)) {
++        MYSQLND_READ_FIELD_LENGTH(len);
++        if (len) {
+ 				packet->info_or_local_file = mnd_emalloc(len + 1);
+ 				if (packet->info_or_local_file) {
++					BAIL_IF_NOT_ENOUGH_DATA(len);
+ 					memcpy(packet->info_or_local_file, p, len);
+ 					packet->info_or_local_file[len] = '\0';
+ 					packet->info_or_local_file_len = len;
+@@ -1127,6 +1181,7 @@
+ 					ret = FAIL;
+ 				}
+ 			}
++    }
+ 			DBG_INF_FMT("affected_rows=%llu last_insert_id=%llu server_status=%u warning_count=%u",
+ 						packet->affected_rows, packet->last_insert_id,
+ 						packet->server_status, packet->warning_count);
+@@ -1206,6 +1261,7 @@
+ 	}
+ 
+ 	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	if (ERROR_MARKER == *p) {
+ 		/* Error */
+ 		p++;
+@@ -1216,6 +1272,7 @@
+ 										 TSRMLS_CC);
+ 		DBG_ERR_FMT("Server error : (%u) %s", packet->error_info.error_no, packet->error_info.error);
+ 		DBG_RETURN(PASS);
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	} else if (EODATA_MARKER == *p && packet->header.size < 8) {
+ 		/* Premature EOF. That should be COM_FIELD_LIST */
+ 		DBG_INF("Premature EOF. That should be COM_FIELD_LIST");
+@@ -1226,8 +1283,9 @@
+ 	meta = packet->metadata;
+ 
+ 	for (i = 0; i < field_count; i += 2) {
+-		len = php_mysqlnd_net_field_length(&p);
++		MYSQLND_READ_FIELD_LENGTH(len);
+ 		BAIL_IF_NO_MORE_DATA;
++		if (len != MYSQLND_NULL_LENGTH) { BAIL_IF_NOT_ENOUGH_DATA(len); }
+ 		switch ((len)) {
+ 			case 0:
+ 				*(const char **)(((char*)meta) + rset_field_offsets[i]) = mysqlnd_empty_string;
+@@ -1246,6 +1304,7 @@
+ 	}
+ 
+ 	/* 1 byte length */
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	if (12 != *p) {
+ 		DBG_ERR_FMT("Protocol error. Server sent false length. Expected 12 got %d", (int) *p);
+ 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Protocol error. Server sent false length. Expected 12");
+@@ -1253,22 +1312,27 @@
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	meta->charsetnr = uint2korr(p);
+ 	p += 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(4);
+ 	meta->length = uint4korr(p);
+ 	p += 4;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	meta->type = uint1korr(p);
+ 	p += 1;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	meta->flags = uint2korr(p);
+ 	p += 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	meta->decimals = uint1korr(p);
+ 	p += 1;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -1292,17 +1356,22 @@
+ 	  NULL_LENGTH (0xFB) comes from COM_FIELD_LIST when the default value is NULL.
+ 	  Otherwise the string is length encoded.
+ 	*/
+-	if (packet->header.size > (size_t) (p - buf) &&
+-		(len = php_mysqlnd_net_field_length(&p)) &&
+-		len != MYSQLND_NULL_LENGTH)
++	if (packet->header.size > (size_t)(p - buf)) {
++        MYSQLND_READ_FIELD_LENGTH(len);
++    } else {
++        len = MYSQLND_NULL_LENGTH;
++    }
++    if (len && len != MYSQLND_NULL_LENGTH)
+ 	{
+ 		BAIL_IF_NO_MORE_DATA;
+ 		DBG_INF_FMT("Def found, length %lu, persistent=%u", len, packet->persistent_alloc);
++		BAIL_IF_NOT_ENOUGH_DATA(len);
+ 		meta->def = mnd_pemalloc(len + 1, packet->persistent_alloc);
+ 		if (!meta->def) {
+ 			SET_OOM_ERROR(*conn->error_info);
+ 			DBG_RETURN(FAIL);		
+ 		}
++		BAIL_IF_NOT_ENOUGH_DATA(len);
+ 		memcpy(meta->def, p, len);
+ 		meta->def[len] = '\0';
+ 		meta->def_length = len;
+@@ -1495,6 +1564,10 @@
+ 
+ 	end_field = (start_field = fields) + field_count;
+ 
++    if (row_buffer->app < 1 + (field_count + 9)/8) {
++        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Malformed binary row null bitmap");
++        DBG_RETURN(FAIL);
++    }
+ 	/* skip the first byte, not EODATA_MARKER -> 0x0, status */
+ 	p++;
+ 	null_ptr= p;
+@@ -1507,6 +1580,7 @@
+ 		if (!*current_field) {
+ 			DBG_RETURN(FAIL);
+ 		}
++		ZVAL_NULL(*current_field);
+ 	}
+ 
+ 	for (i = 0, current_field = start_field; current_field < end_field; current_field++, i++) {
+@@ -1523,7 +1597,13 @@
+ 			statistic = STAT_BINARY_TYPE_FETCHED_NULL;
+ 		} else {
+ 			enum_mysqlnd_field_types type = fields_metadata[i].type;
+-			mysqlnd_ps_fetch_functions[type].func(*current_field, &fields_metadata[i], 0, &p TSRMLS_CC);
++			if (type >= MYSQL_TYPE_LAST || !mysqlnd_ps_fetch_functions[type].func ||
++                (size_t)(p - (zend_uchar *)row_buffer->ptr) > row_buffer->app) {
++                DBG_RETURN(FAIL);
++            }
++            mysqlnd_ps_fetch_functions[type].func(*current_field, &fields_metadata[i],
++                row_buffer->app - (size_t)(p - (zend_uchar *)row_buffer->ptr), &p TSRMLS_CC);
++            if (!p) DBG_RETURN(FAIL);
+ 
+ 			if (MYSQLND_G(collect_statistics)) {
+ 				switch (fields_metadata[i].type) {
+@@ -1602,13 +1682,19 @@
+ 		if (!*current_field) {
+ 			DBG_RETURN(FAIL);
+ 		}
++		ZVAL_NULL(*current_field);
+ 	}
+ 
+ 	for (i = 0, current_field = start_field; current_field < end_field; current_field++, i++) {
+ 		/* Don't reverse the order. It is significant!*/
+ 		zend_uchar *this_field_len_pos = p;
+ 		/* php_mysqlnd_net_field_length() call should be after *this_field_len_pos = p; */
+-		const unsigned long len = php_mysqlnd_net_field_length(&p);
++		uint64_t len;
++        if (!mysqlnd_read_field_length_checked(&p, packet_end, &len) ||
++            (len != MYSQLND_NULL_LENGTH && len > (uint64_t)(packet_end - p))) {
++            php_error_docref(NULL TSRMLS_CC, E_WARNING, "Malformed server row packet");
++            DBG_RETURN(FAIL);
++        }
+ 
+ 		if (len != MYSQLND_NULL_LENGTH && ((p + len) > packet_end)) {
+ 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Malformed server packet. Field length pointing "MYSQLND_SZ_T_SPEC
+@@ -1832,7 +1918,11 @@
+ 	packet->header.size = data_size;
+ 	packet->row_buffer->app = data_size;
+ 
+-	if (ERROR_MARKER == (*(p = packet->row_buffer->ptr))) {
++	if (data_size == 0) {
++        ret = FAIL;
++        goto end;
++    }
++    if (ERROR_MARKER == (*(p = packet->row_buffer->ptr))) {
+ 		/*
+ 		   Error message as part of the result set,
+ 		   not good but we should not hang. See:
+@@ -1848,6 +1938,10 @@
+ 	} else if (EODATA_MARKER == *p && data_size < 8) { /* EOF */
+ 		packet->eof = TRUE;
+ 		p++;
++        if (data_size > 1 && data_size < 5) {
++            ret = FAIL;
++            goto end;
++        }
+ 		if (data_size > 1) {
+ 			packet->warning_count = uint2korr(p);
+ 			p += 2;
+@@ -1980,6 +2074,7 @@
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	data_size = packet->header.size;
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->error_code = uint1korr(p);
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -2002,15 +2097,18 @@
+ 		DBG_RETURN(FAIL);
+ 	}
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(4);
+ 	packet->stmt_id = uint4korr(p);
+ 	p += 4;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* Number of columns in result set */
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	packet->field_count = uint2korr(p);
+ 	p += 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	packet->param_count = uint2korr(p);
+ 	p += 2;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -2020,6 +2118,7 @@
+ 		p++;
+ 		BAIL_IF_NO_MORE_DATA;
+ 
++		BAIL_IF_NOT_ENOUGH_DATA(2);
+ 		packet->warning_count = uint2korr(p);
+ 	}
+ 
+@@ -2072,6 +2171,7 @@
+ 	*/
+ 
+ 	/* Should be always 0x0 or ERROR_MARKER for error */
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->response_code = uint1korr(p);
+ 	p++;
+ 
+@@ -2097,6 +2197,7 @@
+ 		packet->new_auth_protocol_data_len = packet->header.size - (size_t) (p - buf);
+ 		if (packet->new_auth_protocol_data_len) {
+ 			packet->new_auth_protocol_data = mnd_emalloc(packet->new_auth_protocol_data_len);
++			BAIL_IF_NOT_ENOUGH_DATA(packet->new_auth_protocol_data_len);
+ 			memcpy(packet->new_auth_protocol_data, p, packet->new_auth_protocol_data_len);
+ 		}
+ 		DBG_INF_FMT("The server requested switching auth plugin to : %s", packet->new_auth_protocol);
+@@ -2189,6 +2290,7 @@
+ 
+ 	packet->public_key_len = packet->header.size - (p - buf);
+ 	packet->public_key = mnd_emalloc(packet->public_key_len + 1);
++	BAIL_IF_NOT_ENOUGH_DATA(packet->public_key_len);
+ 	memcpy(packet->public_key, p, packet->public_key_len);
+ 	packet->public_key[packet->public_key_len] = '\0';
+ 
+--- a/ext/mysqlnd/mysqlnd_wireprotocol.h
++++ b/ext/mysqlnd/mysqlnd_wireprotocol.h
+@@ -29,6 +29,27 @@
+ #define COMPRESSED_HEADER_SIZE 3
+ 
+ #define MYSQLND_NULL_LENGTH	(unsigned long) ~0
++
++/* Bounded length-encoded integer reader. It never dereferences a truncated
++ * prefix or advances beyond the received packet. */
++static inline zend_bool mysqlnd_read_field_length_checked(zend_uchar **cursor,
++        const zend_uchar *end, uint64_t *value)
++{
++    zend_uchar *p = *cursor;
++    size_t need;
++    if (!p || p >= end) return 0;
++    need = *p < 252 ? 1 : (*p == 252 ? 3 : (*p == 253 ? 4 : (*p == 254 ? 9 : 0)));
++    if (!need || need > (size_t)(end - p)) return 0;
++    if (*p < 251) *value = *p;
++    else if (*p == 251) *value = MYSQLND_NULL_LENGTH;
++    else if (*p == 252) *value = uint2korr(p+1);
++    else if (*p == 253) *value = uint3korr(p+1);
++    else *value = uint8korr(p+1);
++    if (*p >= 252 && *value == MYSQLND_NULL_LENGTH) return 0;
++    *cursor += need;
++    return 1;
++}
++
+ 
+ /* Used in mysqlnd_debug.c */
+ PHPAPI extern const char mysqlnd_read_header_name[];
+--- a/ext/openssl/openssl.c
++++ b/ext/openssl/openssl.c
+@@ -4008,6 +4008,9 @@
+ 
+ 	if (PHP_SSL_REQ_PARSE(&req, args) == SUCCESS) {
+ 		bio_out = BIO_new_file(filename, "w");
++		if (bio_out == NULL) {
++			goto export_cleanup;
++		}
+ 
+ 		if (passphrase && req.priv_key_encrypt) {
+ 			if (req.priv_key_encrypt_cipher) {
+@@ -4036,6 +4039,7 @@
+ 			RETVAL_TRUE;
+ 		}
+ 	}
++export_cleanup:
+ 	PHP_SSL_REQ_DISPOSE(&req);
+ 
+ 	if (key_resource == -1 && key) {
+@@ -4077,6 +4081,9 @@
+ 
+ 	if (PHP_SSL_REQ_PARSE(&req, args) == SUCCESS) {
+ 		bio_out = BIO_new(BIO_s_mem());
++		if (bio_out == NULL) {
++			goto export_cleanup;
++		}
+ 
+ 		if (passphrase && req.priv_key_encrypt) {
+ 			if (req.priv_key_encrypt_cipher) {
+@@ -4112,6 +4119,7 @@
+ 			ZVAL_STRINGL(out, bio_mem_ptr, bio_mem_len, 1);
+ 		}
+ 	}
++export_cleanup:
+ 	PHP_SSL_REQ_DISPOSE(&req);
+ 
+ 	if (key_resource == -1 && key) {
+--- a/ext/openssl/xp_ssl.c
++++ b/ext/openssl/xp_ssl.c
+@@ -339,7 +339,7 @@
+ static zend_bool matches_wildcard_name(const char *subjectname, const char *certname) /* {{{ */
+ {
+ 	char *wildcard = NULL;
+-	int prefix_len, suffix_len, subject_len;
++	size_t prefix_len, suffix_len, subject_len;
+ 
+ 	if (strcasecmp(subjectname, certname) == 0) {
+ 		return 1;
+@@ -358,7 +358,7 @@
+ 
+ 	suffix_len = strlen(wildcard + 1);
+ 	subject_len = strlen(subjectname);
+-	if (suffix_len <= subject_len) {
++	if (suffix_len + prefix_len <= subject_len) {
+ 		/* 2) suffix must match
+ 		 * 3) no . between prefix and suffix
+ 		 **/
+@@ -370,7 +370,7 @@
+ }
+ /* }}} */
+ 
+-static zend_bool matches_san_list(X509 *peer, const char *subject_name) /* {{{ */
++static zend_bool matches_san_list(X509 *peer, const char *subject_name, zend_bool *has_service_id) /* {{{ */
+ {
+ 	int i, len;
+ 	unsigned char *cert_name = NULL;
+@@ -378,11 +378,13 @@
+ 
+ 	GENERAL_NAMES *alt_names = X509_get_ext_d2i(peer, NID_subject_alt_name, 0, 0);
+ 	int alt_name_count = sk_GENERAL_NAME_num(alt_names);
++	*has_service_id = 0;
+ 
+ 	for (i = 0; i < alt_name_count; i++) {
+ 		GENERAL_NAME *san = sk_GENERAL_NAME_value(alt_names, i);
+ 
+ 		if (san->type == GEN_DNS) {
++			*has_service_id = 1;
+ 			ASN1_STRING_to_UTF8(&cert_name, san->d.dNSName);
+ 			if (ASN1_STRING_length(san->d.dNSName) != strlen((const char*)cert_name)) {
+ 				OPENSSL_free(cert_name);
+@@ -401,7 +403,14 @@
+ 				return 1;
+ 			}
+ 			OPENSSL_free(cert_name);
+-		} else if (san->type == GEN_IPADD) {
++		 } else if (san->type == GEN_URI) {
++            *has_service_id = 1;
++        } else if (san->type == GEN_OTHERNAME) {
++            char oid[32];
++            if (OBJ_obj2txt(oid, sizeof(oid), san->d.otherName->type_id, 1) > 0 && strcmp(oid, "1.3.6.1.5.5.7.8.7") == 0) {
++                *has_service_id = 1;
++            }
++        } else if (san->type == GEN_IPADD) {
+ 			if (san->d.iPAddress->length == 4) {
+ 				sprintf(ipbuffer, "%d.%d.%d.%d",
+ 					san->d.iPAddress->data[0],
+@@ -532,8 +541,12 @@
+ 		}
+ 
+ 		if (peer_name) {
+-			if (matches_san_list(peer, peer_name)) {
++			zend_bool has_service_id = 0;
++			if (matches_san_list(peer, peer_name, &has_service_id)) {
+ 				return SUCCESS;
++			} else if (has_service_id) {
++				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Peer certificate subjectAltName did not match expected name `%s'", peer_name);
++				return FAILURE;
+ 			} else if (matches_common_name(peer, peer_name TSRMLS_CC)) {
+ 				return SUCCESS;
+ 			} else {
+--- a/ext/pdo_dblib/dblib_driver.c
++++ b/ext/pdo_dblib/dblib_driver.c
+@@ -143,6 +143,10 @@
+ 
+ static int dblib_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, int unquotedlen, char **quoted, int *quotedlen, enum pdo_param_type paramtype TSRMLS_DC)
+ {
++    if (unquotedlen < 0 || unquotedlen > (INT_MAX - 3) / 2 || memchr(unquoted, '\0', unquotedlen)) {
++        return 0;
++    }
++
+ 	pdo_dblib_db_handle *H = (pdo_dblib_db_handle *)dbh->driver_data;
+ 	char *q;
+ 	int l = 1;
+--- a/ext/pdo_dblib/pdo_dblib.c
++++ b/ext/pdo_dblib/pdo_dblib.c
+@@ -138,7 +138,7 @@
+ }
+ 
+ int msg_handler(DBPROCESS *dbproc, DBINT msgno, int msgstate,
+-	int severity, char *msgtext, char *srvname, char *procname, DBUSMALLINT line)
++	int severity, char *msgtext, char *srvname, char *procname, php_dblib_msg_line line)
+ {
+ 	pdo_dblib_err *einfo;
+ 	TSRMLS_FETCH();
+--- a/ext/pdo_dblib/php_pdo_dblib_int.h
++++ b/ext/pdo_dblib/php_pdo_dblib_int.h
+@@ -92,8 +92,14 @@
+ int error_handler(DBPROCESS *dbproc, int severity, int dberr,
+ 	int oserr, char *dberrstr, char *oserrstr);
+ 
++#if PHP_DBLIB_IS_MSSQL
++typedef DBUSMALLINT php_dblib_msg_line;
++#else
++typedef int php_dblib_msg_line;
++#endif
++
+ int msg_handler(DBPROCESS *dbproc, DBINT msgno, int msgstate,
+-	int severity, char *msgtext, char *srvname, char *procname, DBUSMALLINT line);
++	int severity, char *msgtext, char *srvname, char *procname, php_dblib_msg_line line);
+ 
+ extern pdo_driver_t pdo_dblib_driver;
+ extern struct pdo_stmt_methods dblib_stmt_methods;
+--- a/ext/pdo_firebird/firebird_driver.c
++++ b/ext/pdo_firebird/firebird_driver.c
+@@ -289,7 +289,11 @@
+ /* }}} */
+ 
+ /* called by the PDO SQL parser to add quotes to values that are copied into SQL */
+-static int firebird_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, int unquotedlen, /* {{{ */
++static int firebird_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, int unquotedlen, /* {
++    if (unquotedlen < 0 || unquotedlen > (INT_MAX - 3) / 2 || memchr(unquoted, '\0', unquotedlen)) {
++        return 0;
++    }
++{{ */
+ 	char **quoted, int *quotedlen, enum pdo_param_type paramtype TSRMLS_DC)
+ {
+ 	int qcount = 0;
+--- a/ext/pdo_pgsql/pgsql_driver.c
++++ b/ext/pdo_pgsql/pgsql_driver.c
+@@ -332,12 +332,18 @@
+ 	unsigned char *escaped;
+ 	pdo_pgsql_db_handle *H = (pdo_pgsql_db_handle *)dbh->driver_data;
+ 	size_t tmp_len;
++	int escape_error = 0;
+ 
+ 	switch (paramtype) {
+ 		case PDO_PARAM_LOB:
+ 			/* escapedlen returned by PQescapeBytea() accounts for trailing 0 */
+ 			escaped = PQescapeByteaConn(H->server, (unsigned char *)unquoted, (size_t)unquotedlen, &tmp_len);
+-			*quotedlen = (int)tmp_len + 1;
++			if (!escaped || tmp_len > INT_MAX - 2) {
++                if (escaped) PQfreemem(escaped);
++                pdo_pgsql_error(dbh, PGRES_FATAL_ERROR, NULL);
++                return 0;
++            }
++            *quotedlen = (int)tmp_len + 1;
+ 			*quoted = emalloc(*quotedlen + 1);
+ 			memcpy((*quoted)+1, escaped, *quotedlen-2);
+ 			(*quoted)[0] = '\'';
+@@ -348,7 +354,12 @@
+ 		default:
+ 			*quoted = safe_emalloc(2, unquotedlen, 3);
+ 			(*quoted)[0] = '\'';
+-			*quotedlen = PQescapeStringConn(H->server, *quoted + 1, unquoted, (size_t)unquotedlen, NULL);
++			*quotedlen = PQescapeStringConn(H->server, *quoted + 1, unquoted, (size_t)unquotedlen, &escape_error);
++            if (escape_error) {
++                efree(*quoted); *quoted = NULL; *quotedlen = 0;
++                pdo_pgsql_error(dbh, PGRES_FATAL_ERROR, NULL);
++                return 0;
++            }
+ 			(*quoted)[*quotedlen + 1] = '\'';
+ 			(*quoted)[*quotedlen + 2] = '\0';
+ 			*quotedlen += 2;
+--- a/ext/pgsql/pgsql.c
++++ b/ext/pgsql/pgsql.c
+@@ -4306,7 +4306,7 @@
+ #ifdef HAVE_PQESCAPE_CONN
+ 	PGconn *pgsql;
+ #endif
+-	int to_len;
++	int to_len, escape_error = 0;
+ 	int from_len;
+ 	int id = -1;
+ 
+@@ -4330,7 +4330,8 @@
+ #ifdef HAVE_PQESCAPE_CONN
+ 	if (pgsql_link != NULL || id != -1) {
+ 		ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
+-		to_len = (int) PQescapeStringConn(pgsql, to, from, (size_t)from_len, NULL);
++		to_len = (int) PQescapeStringConn(pgsql, to, from, (size_t)from_len, &escape_error);
++        if (escape_error) { efree(to); php_error_docref(NULL TSRMLS_CC, E_WARNING, "PostgreSQL string escaping failed"); RETURN_FALSE; }
+ 	} else
+ #endif
+ 		to_len = (int) PQescapeString(to, from, (size_t)from_len);
+@@ -5470,7 +5471,7 @@
+ 	char *escaped;
+ 	smart_str querystr = {0};
+ 	size_t new_len;
+-	int i, num_rows;
++	int i, num_rows, escape_error = 0;
+ 	zval *elem;
+ 
+ 	if (!*table_name) {
+@@ -5511,7 +5512,8 @@
+ 						  "WHERE a.attnum > 0 AND c.relname = '");
+ 	}
+ 	escaped = (char *)safe_emalloc(strlen(tmp_name2), 2, 1);
+-	new_len = PQescapeStringConn(pg_link, escaped, tmp_name2, strlen(tmp_name2), NULL);
++	new_len = PQescapeStringConn(pg_link, escaped, tmp_name2, strlen(tmp_name2), &escape_error);
++    if (escape_error) { efree(escaped); efree(src); smart_str_free(&querystr); return FAILURE; }
+ 	if (new_len) {
+ 		smart_str_appendl(&querystr, escaped, new_len);
+ 	}
+@@ -5519,7 +5521,8 @@
+ 
+ 	smart_str_appends(&querystr, "' AND n.nspname = '");
+ 	escaped = (char *)safe_emalloc(strlen(tmp_name), 2, 1);
+-	new_len = PQescapeStringConn(pg_link, escaped, tmp_name, strlen(tmp_name), NULL);
++	new_len = PQescapeStringConn(pg_link, escaped, tmp_name, strlen(tmp_name), &escape_error);
++    if (escape_error) { efree(escaped); efree(src); smart_str_free(&querystr); return FAILURE; }
+ 	if (new_len) {
+ 		smart_str_appendl(&querystr, escaped, new_len);
+ 	}
+@@ -5750,7 +5753,6 @@
+ 	assert(Z_TYPE_P(src) == IS_STRING);
+ 	assert(should_free == 1 || should_free == 0);
+ 
+-	smart_str_appendc(&str, 'E');
+ 	smart_str_appendc(&str, '\'');
+ 	smart_str_appendl(&str, Z_STRVAL_P(src), Z_STRLEN_P(src));
+ 	smart_str_appendc(&str, '\'');
+@@ -6039,11 +6041,10 @@
+ 							char *tmp;
+ 							/* PostgreSQL ignores \0 */
+ 							Z_TYPE_P(new_val) = IS_STRING;
+-							tmp = (char *)safe_emalloc(Z_STRLEN_PP(val), 2, 1);
+-							/* better to use PGSQLescapeLiteral since PGescapeStringConn does not handle special \ */
+-							Z_STRLEN_P(new_val) = (int)PQescapeStringConn(pg_link, tmp, Z_STRVAL_PP(val), Z_STRLEN_PP(val), NULL);
+-							Z_STRVAL_P(new_val) = tmp;
+-							php_pgsql_add_quotes(new_val, 1 TSRMLS_CC);
++                            tmp = PGSQLescapeLiteral(pg_link, Z_STRVAL_PP(val), Z_STRLEN_PP(val));
++                            if (!tmp) { ZVAL_NULL(new_val); err = 1; break; }
++                            ZVAL_STRING(new_val, tmp, 1);
++                            PGSQLfree(tmp);
+ 						}
+ 						break;
+ 
+@@ -6422,6 +6423,7 @@
+ 				add_assoc_zval(result, field, new_val);
+ 			} else {
+ 				escaped = PGSQLescapeIdentifier(pg_link, field, field_len);
++                if (!escaped) { zval_ptr_dtor(&new_val); err = 1; break; }
+ 				add_assoc_zval(result, escaped, new_val);
+ 				PGSQLfree(escaped);
+ 			}
+@@ -6499,7 +6501,7 @@
+ 	return -1;
+ }
+ 
+-static inline void build_tablename(smart_str *querystr, PGconn *pg_link, const char *table)
++static inline int build_tablename(smart_str *querystr, PGconn *pg_link, const char *table)
+ {
+ 	char *table_copy, *escaped, *tmp;
+ 	const char *token;
+@@ -6516,6 +6518,7 @@
+ 		smart_str_appendl(querystr, token, len);
+ 	} else {
+ 		escaped = PGSQLescapeIdentifier(pg_link, token, len);
++        if (!escaped) { efree(table_copy); return FAILURE; }
+ 		smart_str_appends(querystr, escaped);
+ 		PGSQLfree(escaped);
+ 	}
+@@ -6527,12 +6530,14 @@
+ 			smart_str_appendl(querystr, tmp, len);
+ 		} else {
+ 			escaped = PGSQLescapeIdentifier(pg_link, tmp, len);
++            if (!escaped) { efree(table_copy); return FAILURE; }
+ 			smart_str_appendc(querystr, '.');
+ 			smart_str_appends(querystr, escaped);
+ 			PGSQLfree(escaped);
+ 		}
+ 	}
+ 	efree(table_copy);
++    return SUCCESS;
+ }
+ 
+ /* {{{ php_pgsql_insert
+@@ -6554,7 +6559,7 @@
+ 
+ 	if (zend_hash_num_elements(Z_ARRVAL_P(var_array)) == 0) {
+ 		smart_str_appends(&querystr, "INSERT INTO ");
+-		build_tablename(&querystr, pg_link, table);
++		if (build_tablename(&querystr, pg_link, table) == FAILURE) { goto cleanup; }
+ 		smart_str_appends(&querystr, " DEFAULT VALUES");
+ 
+ 		goto no_values;
+@@ -6571,7 +6576,7 @@
+ 	}
+ 
+ 	smart_str_appends(&querystr, "INSERT INTO ");
+-	build_tablename(&querystr, pg_link, table);
++	if (build_tablename(&querystr, pg_link, table) == FAILURE) { goto cleanup; }
+ 	smart_str_appends(&querystr, " (");
+ 
+ 	zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(var_array), &pos);
+@@ -6583,6 +6588,7 @@
+ 		}
+ 		if (opt & PGSQL_DML_ESCAPE) {
+ 			tmp = PGSQLescapeIdentifier(pg_link, fld, fld_len);
++            if (!tmp) { goto cleanup; }
+ 			smart_str_appends(&querystr, tmp);
+ 			PGSQLfree(tmp);
+ 		} else {
+@@ -6605,12 +6611,10 @@
+ 				if (opt & PGSQL_DML_ESCAPE) {
+ 					size_t new_len;
+ 					char *tmp;
+-					tmp = (char *)safe_emalloc(Z_STRLEN_PP(val), 2, 1);
+-					new_len = PQescapeStringConn(pg_link, tmp, Z_STRVAL_PP(val), Z_STRLEN_PP(val), NULL);
+-					smart_str_appendc(&querystr, '\'');
+-					smart_str_appendl(&querystr, tmp, new_len);
+-					smart_str_appendc(&querystr, '\'');
+-					efree(tmp);
++					tmp = PGSQLescapeLiteral(pg_link, Z_STRVAL_PP(val), Z_STRLEN_PP(val));
++					if (!tmp) { goto cleanup; }
++					smart_str_appends(&querystr, tmp);
++					PGSQLfree(tmp);
+ 				} else {
+ 					smart_str_appendl(&querystr, Z_STRVAL_PP(val), Z_STRLEN_PP(val));
+ 				}
+@@ -6765,6 +6769,7 @@
+ 		}
+ 		if (opt & PGSQL_DML_ESCAPE) {
+ 			tmp = PGSQLescapeIdentifier(pg_link, fld, fld_len);
++            if (!tmp) { return -1; }
+ 			smart_str_appends(querystr, tmp);
+ 			PGSQLfree(tmp);
+ 		} else {
+@@ -6780,12 +6785,10 @@
+ 			case IS_STRING:
+ 				if (opt & PGSQL_DML_ESCAPE) {
+ 					size_t new_len;
+-					tmp = (char *)safe_emalloc(Z_STRLEN_PP(val), 2, 1);
+-					new_len = PQescapeStringConn(pg_link, tmp, Z_STRVAL_PP(val), Z_STRLEN_PP(val), NULL);
+-					smart_str_appendc(querystr, '\'');
+-					smart_str_appendl(querystr, tmp, new_len);
+-					smart_str_appendc(querystr, '\'');
+-					efree(tmp);
++					tmp = PGSQLescapeLiteral(pg_link, Z_STRVAL_PP(val), Z_STRLEN_PP(val));
++					if (!tmp) { return -1; }
++					smart_str_appends(querystr, tmp);
++					PGSQLfree(tmp);
+ 				} else {
+ 					smart_str_appendl(querystr, Z_STRVAL_PP(val), Z_STRLEN_PP(val));
+ 				}
+@@ -6845,7 +6848,7 @@
+ 	}
+ 
+ 	smart_str_appends(&querystr, "UPDATE ");
+-	build_tablename(&querystr, pg_link, table);
++	if (build_tablename(&querystr, pg_link, table) == FAILURE) { goto cleanup; }
+ 	smart_str_appends(&querystr, " SET ");
+ 
+ 	if (build_assignment_string(pg_link, &querystr, Z_ARRVAL_P(var_array), 0, ",", 1, opt TSRMLS_CC))
+@@ -6946,7 +6949,7 @@
+ 	}
+ 
+ 	smart_str_appends(&querystr, "DELETE FROM ");
+-	build_tablename(&querystr, pg_link, table);
++	if (build_tablename(&querystr, pg_link, table) == FAILURE) { goto cleanup; }
+ 	smart_str_appends(&querystr, " WHERE ");
+ 
+ 	if (build_assignment_string(pg_link, &querystr, Z_ARRVAL_P(ids_array), 1, " AND ", sizeof(" AND ")-1, opt TSRMLS_CC))
+@@ -7082,7 +7085,7 @@
+ 	}
+ 
+ 	smart_str_appends(&querystr, "SELECT * FROM ");
+-	build_tablename(&querystr, pg_link, table);
++	if (build_tablename(&querystr, pg_link, table) == FAILURE) { goto cleanup; }
+ 	smart_str_appends(&querystr, " WHERE ");
+ 
+ 	if (build_assignment_string(pg_link, &querystr, Z_ARRVAL_P(ids_array), 1, " AND ", sizeof(" AND ")-1, opt TSRMLS_CC))
+--- a/ext/phar/phar_internal.h
++++ b/ext/phar/phar_internal.h
+@@ -122,8 +122,13 @@
+ #define TAR_FILE    '0'
+ #define TAR_LINK    '1'
+ #define TAR_SYMLINK '2'
++#define TAR_CHAR    '3'
++#define TAR_BLOCK   '4'
+ #define TAR_DIR     '5'
++#define TAR_FIFO    '6'
+ #define TAR_NEW     '8'
++#define TAR_LONGLINK 'K'
++#define TAR_LONGNAME 'L'
+ #define TAR_GLOBAL_HDR 'g'
+ #define TAR_FILE_HDR   'x'
+ 
+--- a/ext/phar/tar.c
++++ b/ext/phar/tar.c
+@@ -36,6 +36,52 @@
+ 	return num;
+ }
+ /* }}} */
++
++static zend_bool phar_tar_type_has_data(char typeflag)
++{
++	switch (typeflag) {
++		case TAR_LINK:
++		case TAR_SYMLINK:
++		case TAR_CHAR:
++		case TAR_BLOCK:
++		case TAR_DIR:
++		case TAR_FIFO:
++			return 0;
++		default:
++			return 1;
++	}
++}
++
++static zend_bool phar_tar_size(const char *buf, size_t len, uint32_t *result)
++{
++	uint64_t num = 0;
++	size_t i = 0;
++
++	while (i < len && buf[i] == ' ') {
++		++i;
++	}
++
++	/* GNU base-256 encoding is only used for sizes that do not fit the octal field */
++	if (i < len && (((unsigned char) buf[i]) & 0x80)) {
++		return 0;
++	}
++
++	while (i < len && buf[i] >= '0' && buf[i] <= '7') {
++		num = num * 8 + (buf[i] - '0');
++		++i;
++	}
++
++	while (i < len && (buf[i] == ' ' || buf[i] == '\0')) {
++		++i;
++	}
++
++	if (i != len || num > UINT32_MAX - 511) {
++		return 0;
++	}
++
++	*result = (uint32_t) num;
++	return 1;
++}
+ 
+ /* adapted from format_octal() in libarchive
+  *
+@@ -263,8 +309,32 @@
+ 		memset(hdr->checksum, ' ', sizeof(hdr->checksum));
+ 		sum2 = phar_tar_checksum(buf, old?sizeof(old_tar_header):sizeof(tar_header));
+ 
+-		size = entry.uncompressed_filesize = entry.compressed_filesize =
+-			phar_tar_number(hdr->size, sizeof(hdr->size));
++		if (!phar_tar_size(hdr->size, sizeof(hdr->size), &size)) {
++			if (error) {
++				spprintf(error, 4096, "phar error: \"%s\" is a corrupted tar file (invalid entry size)", fname);
++			}
++			if (last_was_longlink) {
++				pefree(entry.filename, myphar->is_persistent);
++			}
++			php_stream_close(fp);
++			phar_destroy_phar_data(myphar TSRMLS_CC);
++			return FAILURE;
++		}
++		entry.uncompressed_filesize = entry.compressed_filesize = size;
++
++		/* GNU long link names are not supported, so refuse the record instead of
++		 * registering it as an entry and dropping the link target of the entry that follows */
++		if (hdr->typeflag == TAR_LONGLINK) {
++			if (error) {
++				spprintf(error, 4096, "phar error: \"%s\" is a tar file with an unsupported GNU long link entry", fname);
++			}
++			if (last_was_longlink) {
++				pefree(entry.filename, myphar->is_persistent);
++			}
++			php_stream_close(fp);
++			phar_destroy_phar_data(myphar TSRMLS_CC);
++			return FAILURE;
++		}
+ 
+ 		/* skip global/file headers (pax) */
+ 		if (!old && (hdr->typeflag == TAR_GLOBAL_HDR || hdr->typeflag == TAR_FILE_HDR)) {
+@@ -350,13 +420,13 @@
+ 			goto bail;
+ 		}
+ 
+-		if (!last_was_longlink && hdr->typeflag == 'L') {
++		if (!last_was_longlink && hdr->typeflag == TAR_LONGNAME) {
+ 			last_was_longlink = 1;
+ 			/* support the ././@LongLink system for storing long filenames */
+ 			entry.filename_len = entry.uncompressed_filesize;
+ 
+ 			/* Check for overflow - bug 61065 */
+-			if (entry.filename_len == UINT_MAX || entry.filename_len == 0) {
++			if (entry.filename_len == 0 || entry.filename_len > totalsize) {
+ 				if (error) {
+ 					spprintf(error, 4096, "phar error: \"%s\" is a corrupted tar file (invalid entry size)", fname);
+ 				}
+@@ -568,7 +638,7 @@
+ 
+ 		size = (size+511)&~511;
+ 
+-		if (((hdr->typeflag == '\0') || (hdr->typeflag == TAR_FILE)) && size > 0) {
++		if (phar_tar_type_has_data(hdr->typeflag) && size > 0) {
+ next:
+ 			/* this is not good enough - seek succeeds even on truncated tars */
+ 			php_stream_seek(fp, size, SEEK_CUR);
+--- a/ext/phar/util.c
++++ b/ext/phar/util.c
+@@ -61,30 +61,30 @@
+ }
+ /* }}} */
+ 
+-phar_entry_info *phar_get_link_source(phar_entry_info *entry TSRMLS_DC) /* {{{ */
+-{
+-	phar_entry_info *link_entry;
+-	char *link;
+-
+-	if (!entry->link) {
+-		return entry;
+-	}
+-
+-	link = phar_get_link_location(entry TSRMLS_CC);
+-	if (SUCCESS == zend_hash_find(&(entry->phar->manifest), entry->link, strlen(entry->link), (void **)&link_entry) ||
+-		SUCCESS == zend_hash_find(&(entry->phar->manifest), link, strlen(link), (void **)&link_entry)) {
+-		if (link != entry->link) {
+-			efree(link);
+-		}
+-		return phar_get_link_source(link_entry TSRMLS_CC);
+-	} else {
+-		if (link != entry->link) {
+-			efree(link);
+-		}
+-		return NULL;
+-	}
+-}
+-/* }}} */
++static phar_entry_info *phar_follow_one_link(phar_entry_info *entry TSRMLS_DC)
++{
++    phar_entry_info *link_entry = NULL;
++    char *link = phar_get_link_location(entry TSRMLS_CC);
++    if (SUCCESS != zend_hash_find(&(entry->phar->manifest), entry->link, strlen(entry->link), (void **)&link_entry)) {
++        if (SUCCESS != zend_hash_find(&(entry->phar->manifest), link, strlen(link), (void **)&link_entry)) link_entry = NULL;
++    }
++    if (link != entry->link) efree(link);
++    return link_entry;
++}
++
++phar_entry_info *phar_get_link_source(phar_entry_info *entry TSRMLS_DC)
++{
++    phar_entry_info *slow = entry, *fast = entry;
++    if (!entry->link) return entry;
++    while (1) {
++        fast = phar_follow_one_link(fast TSRMLS_CC);
++        if (!fast || !fast->link) return fast;
++        fast = phar_follow_one_link(fast TSRMLS_CC);
++        if (!fast || !fast->link) return fast;
++        slow = phar_follow_one_link(slow TSRMLS_CC);
++        if (slow == fast) return NULL;
++    }
++}
+ 
+ /* retrieve a phar_entry_info's current file pointer for reading contents */
+ php_stream *phar_get_efp(phar_entry_info *entry, int follow_links TSRMLS_DC) /* {{{ */
+--- a/ext/soap/php_encoding.c
++++ b/ext/soap/php_encoding.c
+@@ -383,6 +383,7 @@
+ 				return 1;
+ 			}
+ 		} else {
++			Z_ADDREF_PP(data);
+ 			zend_hash_index_update(SOAP_GLOBAL(ref_map), (ulong)node, (void**)data, sizeof(zval*), NULL);
+ 		}
+ 	}
+@@ -583,7 +584,12 @@
+ 		}
+ 	}
+ 	if (encode->to_zval) {
++		if (SOAP_GLOBAL(decode_depth) >= SOAP_MAX_DECODE_DEPTH) {
++			soap_error0(E_ERROR, "Encoding: Nesting level too deep");
++		}
++		SOAP_GLOBAL(decode_depth)++;
+ 		ret = encode->to_zval(&encode->details, data TSRMLS_CC);
++		SOAP_GLOBAL(decode_depth)--;
+ 	}
+ 	return ret;
+ }
+@@ -3569,12 +3575,13 @@
+ 	TSRMLS_FETCH();
+ 	SOAP_GLOBAL(cur_uniq_ns) = 0;
+ 	SOAP_GLOBAL(cur_uniq_ref) = 0;
++	SOAP_GLOBAL(decode_depth) = 0;
+ 	if (SOAP_GLOBAL(ref_map)) {
+ 		zend_hash_destroy(SOAP_GLOBAL(ref_map));
+ 	} else {
+ 		SOAP_GLOBAL(ref_map) = emalloc(sizeof(HashTable));
+ 	}
+-	zend_hash_init(SOAP_GLOBAL(ref_map), 0, NULL, NULL, 0);
++	zend_hash_init(SOAP_GLOBAL(ref_map), 0, NULL, ZVAL_PTR_DTOR, 0);
+ }
+ 
+ void encode_finish()
+@@ -3582,6 +3589,7 @@
+ 	TSRMLS_FETCH();
+ 	SOAP_GLOBAL(cur_uniq_ns) = 0;
+ 	SOAP_GLOBAL(cur_uniq_ref) = 0;
++	SOAP_GLOBAL(decode_depth) = 0;
+ 	if (SOAP_GLOBAL(ref_map)) {
+ 		zend_hash_destroy(SOAP_GLOBAL(ref_map));
+ 		efree(SOAP_GLOBAL(ref_map));
+--- a/ext/soap/php_http.c
++++ b/ext/soap/php_http.c
+@@ -1416,7 +1416,7 @@
+ 				if (buf_size > 0) {
+ 					int len_size = 0;
+ 
+-					if (http_buf_size + buf_size + 1 < 0) {
++					if (buf_size < 0 || http_buf_size > INT_MAX - buf_size - 1) {
+ 						efree(http_buf);
+ 						return FALSE;
+ 					}
+@@ -1490,7 +1490,11 @@
+ 	} else if (header_close) {
+ 		do {
+ 			int len_read;
+-			http_buf = erealloc(http_buf, http_buf_size + 4096 + 1);
++			if (http_buf_size > INT_MAX - 4097) {
++				if (http_buf) efree(http_buf);
++				return FALSE;
++			}
++			http_buf = erealloc(http_buf, (size_t)http_buf_size + 4097);
+ 			len_read = php_stream_read(stream, http_buf + http_buf_size, 4096);
+ 			if (len_read > 0) {
+ 				http_buf_size += len_read;
+--- a/ext/soap/php_soap.h
++++ b/ext/soap/php_soap.h
+@@ -155,6 +155,8 @@
+ #define SOAP_SSL_METHOD_SSLv3   2
+ #define SOAP_SSL_METHOD_SSLv23  3
+ 
++#define SOAP_MAX_XML_DEPTH 2048
++#define SOAP_MAX_DECODE_DEPTH (SOAP_MAX_XML_DEPTH * 2)
+ 
+ ZEND_BEGIN_MODULE_GLOBALS(soap)
+ 	HashTable  defEncNs;     /* mapping of default namespaces to prefixes */
+@@ -180,6 +182,7 @@
+ 	HashTable  wsdl_cache;
+ 	int        cur_uniq_ref;
+ 	HashTable *ref_map;
++	unsigned int decode_depth;
+ ZEND_END_MODULE_GLOBALS(soap)
+ 
+ #ifdef ZTS
+--- a/ext/soap/php_xml.c
++++ b/ext/soap/php_xml.c
+@@ -38,36 +38,72 @@
+ 	return 1;
+ }
+ 
+-/* removes all empty text, comments and other insignoficant nodes */
++/* removes all empty text, comments and other insignoficant nodes.
++ * Iterative because recursion overflows the stack on a deep document. */
+ static void cleanup_xml_node(xmlNodePtr node)
+ {
+-	xmlNodePtr trav;
+-	xmlNodePtr del = NULL;
+-
+-	trav = node->children;
++	xmlNodePtr parent = node;
++	xmlNodePtr trav = node->children;
++
+ 	while (trav != NULL) {
+-		if (del != NULL) {
+-			xmlUnlinkNode(del);
+-			xmlFreeNode(del);
+-			del = NULL;
+-		}
++		xmlNodePtr next = trav->next;
++
+ 		if (trav->type == XML_TEXT_NODE) {
+ 			if (is_blank(trav->content)) {
+-				del = trav;
++				xmlUnlinkNode(trav);
++				xmlFreeNode(trav);
+ 			}
+ 		} else if ((trav->type != XML_ELEMENT_NODE) &&
+ 		           (trav->type != XML_CDATA_SECTION_NODE)) {
+-			del = trav;
++			xmlUnlinkNode(trav);
++			xmlFreeNode(trav);
+ 		} else if (trav->children != NULL) {
+-			cleanup_xml_node(trav);
++			parent = trav;
++			trav = trav->children;
++			continue;
++		}
++
++		while (next == NULL) {
++			if (parent == node) {
++				return;
++			}
++			next = parent->next;
++			parent = parent->parent;
++		}
++		trav = next;
++	}
++}
++
++#if LIBXML_VERSION < 21300
++static int is_nesting_too_deep(xmlNodePtr node)
++{
++	xmlNodePtr trav = node->children;
++	unsigned int depth = 0;
++
++	while (trav != NULL) {
++		/* An entity reference borrows its declaration as child list, and that
++		 * declaration hangs off the DTD, so descending leaves the document. */
++		if (trav->children != NULL &&
++		    trav->type != XML_ENTITY_REF_NODE &&
++		    trav->type != XML_DTD_NODE) {
++			if (++depth > SOAP_MAX_XML_DEPTH) {
++				return TRUE;
++			}
++			trav = trav->children;
++			continue;
++		}
++		while (trav->next == NULL) {
++			trav = trav->parent;
++			if (trav == node) {
++				return FALSE;
++			}
++			depth--;
+ 		}
+ 		trav = trav->next;
+ 	}
+-	if (del != NULL) {
+-		xmlUnlinkNode(del);
+-		xmlFreeNode(del);
+-	}
+-}
++	return FALSE;
++}
++#endif
+ 
+ static void soap_ignorableWhitespace(void *ctx, const xmlChar *ch, int len)
+ {
+@@ -127,6 +163,15 @@
+ */
+ 
+ 	if (ret) {
++#if LIBXML_VERSION < 21300
++		if (is_nesting_too_deep((xmlNodePtr)ret)) {
++			/* php_sdl.c reports xmlGetLastError() as the reason, and libxml2 did
++			 * not fail here, so drop the error an earlier parse left behind. */
++			xmlResetLastError();
++			xmlFreeDoc(ret);
++			return NULL;
++		}
++#endif
+ 		cleanup_xml_node((xmlNodePtr)ret);
+ 	}
+ 	return ret;
+@@ -177,6 +222,13 @@
+ 	xmlCleanupParser();
+ */
+ 
++#if LIBXML_VERSION < 21300
++	if (ret && is_nesting_too_deep((xmlNodePtr)ret)) {
++		xmlFreeDoc(ret);
++		ret = NULL;
++	}
++#endif
++
+ /*
+ 	if (ret) {
+ 		cleanup_xml_node((xmlNodePtr)ret);
+@@ -299,6 +351,8 @@
+ 
+ xmlNodePtr get_node_with_attribute_recursive_ex(xmlNodePtr node, char *name, char *name_ns, char *attribute, char *value, char *attr_ns)
+ {
++	unsigned int depth = 0;
++
+ 	while (node != NULL) {
+ 		if (node_is_equal_ex(node, name, name_ns)) {
+ 			xmlAttrPtr attr = get_attribute_ex(node->properties, attribute, attr_ns);
+@@ -306,11 +360,19 @@
+ 				return node;
+ 			}
+ 		}
+-		if (node->children != NULL) {
+-			xmlNodePtr tmp = get_node_with_attribute_recursive_ex(node->children, name, name_ns, attribute, value, attr_ns);
+-			if (tmp) {
+-				return tmp;
+-			}
++		if (node->children != NULL &&
++		    node->type != XML_ENTITY_REF_NODE &&
++		    node->type != XML_DTD_NODE) {
++			node = node->children;
++			depth++;
++			continue;
++		}
++		while (node->next == NULL) {
++			if (depth == 0) {
++				return NULL;
++			}
++			node = node->parent;
++			depth--;
+ 		}
+ 		node = node->next;
+ 	}
+--- a/ext/soap/soap.c
++++ b/ext/soap/soap.c
+@@ -584,6 +584,7 @@
+ 	soap_globals->soap_version = SOAP_1_1;
+ 	soap_globals->mem_cache = NULL;
+ 	soap_globals->ref_map = NULL;
++	soap_globals->decode_depth = 0;
+ }
+ 
+ PHP_MSHUTDOWN_FUNCTION(soap)
+--- a/ext/standard/basic_functions.c
++++ b/ext/standard/basic_functions.c
+@@ -3885,7 +3885,7 @@
+ 	int address_len;
+ 	char buffer[17];
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &address, &address_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p", &address, &address_len) == FAILURE) {
+ 		RETURN_FALSE;
+ 	}
+ 
+@@ -3925,7 +3925,7 @@
+ 	unsigned long int ip;
+ #endif
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &addr, &addr_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p", &addr, &addr_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -5596,7 +5596,7 @@
+ 	int name_len, proto_len;
+ 	struct servent *serv;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &name, &name_len, &proto, &proto_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "pp", &name, &name_len, &proto, &proto_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -5630,7 +5630,7 @@
+ 	long port;
+ 	struct servent *serv;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ls", &port, &proto, &proto_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lp", &port, &proto, &proto_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -5654,7 +5654,7 @@
+ 	int name_len;
+ 	struct protoent *ent;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &name, &name_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p", &name, &name_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+--- a/ext/standard/dns.c
++++ b/ext/standard/dns.c
+@@ -218,7 +218,7 @@
+ 	int hostname_len;
+ 	char *addr;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &hostname, &hostname_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p", &hostname, &hostname_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -243,7 +243,7 @@
+ 	struct in_addr in;
+ 	int i;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &hostname, &hostname_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p", &hostname, &hostname_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -368,7 +368,7 @@
+ 	struct __res_state *handle = &state;
+ #endif
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|s", &hostname, &hostname_len, &rectype, &rectype_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p|s", &hostname, &hostname_len, &rectype, &rectype_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -784,7 +784,7 @@
+ 	int type, first_query = 1, store_results = 1;
+ 	zend_bool raw = 0;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|lz!z!b",
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p|lz!z!b",
+ 			&hostname, &hostname_len, &type_param, &authns, &addtl, &raw) == FAILURE) {
+ 		return;
+ 	}
+@@ -1012,7 +1012,7 @@
+ 	struct __res_state *handle = &state;
+ #endif
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|z", &hostname, &hostname_len, &mx_list, &weight_list) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "pz|z", &hostname, &hostname_len, &mx_list, &weight_list) == FAILURE) {
+ 		return;
+ 	}
+ 
+--- a/ext/standard/dns_win32.c
++++ b/ext/standard/dns_win32.c
+@@ -50,7 +50,7 @@
+ 	DNS_STATUS      status;                 /* Return value of DnsQuery_A() function */
+ 	PDNS_RECORD     pResult, pRec;          /* Pointer to DNS_RECORD structure */
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|z", &hostname, &hostname_len, &mx_list, &weight_list) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "pz|z", &hostname, &hostname_len, &mx_list, &weight_list) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -99,7 +99,7 @@
+ 	DNS_STATUS      status;                 /* Return value of DnsQuery_A() function */
+ 	PDNS_RECORD     pResult;          /* Pointer to DNS_RECORD structure */
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|s", &hostname, &hostname_len, &rectype, &rectype_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p|s", &hostname, &hostname_len, &rectype, &rectype_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -354,7 +354,7 @@
+ 	int type, type_to_fetch, first_query = 1, store_results = 1;
+ 	zend_bool raw = 0;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|lz!z!b",
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p|lz!z!b",
+ 			&hostname, &hostname_len, &type_param, &authns, &addtl, &raw) == FAILURE) {
+ 		return;
+ 	}
+--- a/ext/standard/filters.c
++++ b/ext/standard/filters.c
+@@ -372,7 +372,7 @@
+ 	inst->line_ccnt = line_len;
+ 	inst->line_len = line_len;
+ 	if (lbchars != NULL) {
+-		inst->lbchars = (lbchars_dup ? pestrdup(lbchars, persistent) : lbchars);
++		inst->lbchars = (lbchars_dup ? pestrndup(lbchars, lbchars_len, persistent) : lbchars);
+ 		inst->lbchars_len = lbchars_len;
+ 	} else {
+ 		inst->lbchars = NULL;
+@@ -980,7 +980,7 @@
+ 	inst->line_ccnt = line_len;
+ 	inst->line_len = line_len;
+ 	if (lbchars != NULL) {
+-		inst->lbchars = (lbchars_dup ? pestrdup(lbchars, persistent) : lbchars);
++		inst->lbchars = (lbchars_dup ? pestrndup(lbchars, lbchars_len, persistent) : lbchars);
+ 		inst->lbchars_len = lbchars_len;
+ 	} else {
+ 		inst->lbchars = NULL;
+@@ -1193,7 +1193,7 @@
+ 	inst->next_char = 0;
+ 	inst->lb_ptr = inst->lb_cnt = 0;
+ 	if (lbchars != NULL) {
+-		inst->lbchars = (lbchars_dup ? pestrdup(lbchars, persistent) : lbchars);
++		inst->lbchars = (lbchars_dup ? pestrndup(lbchars, lbchars_len, persistent) : lbchars);
+ 		inst->lbchars_len = lbchars_len;
+ 	} else {
+ 		inst->lbchars = NULL;
+--- a/ext/standard/fsock.c
++++ b/ext/standard/fsock.c
+@@ -47,7 +47,7 @@
+ 
+ 	RETVAL_FALSE;
+ 	
+-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|lzzd", &host, &host_len, &port, &zerrno, &zerrstr, &timeout) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p|lzzd", &host, &host_len, &port, &zerrno, &zerrstr, &timeout) == FAILURE) {
+ 		RETURN_FALSE;
+ 	}
+ 
+--- a/ext/standard/http_fopen_wrapper.c
++++ b/ext/standard/http_fopen_wrapper.c
+@@ -85,28 +85,42 @@
+ #define HTTP_WRAPPER_HEADER_INIT    1
+ #define HTTP_WRAPPER_REDIRECTED     2
+ 
+-static inline void strip_header(char *header_bag, char *lc_header_bag,
+-		const char *lc_header_name)
++/* Header names must start at an actual CRLF-delimited field boundary. */
++static zend_bool check_has_header(const char *headers, const char *name)
+ {
+-	char *lc_header_start = strstr(lc_header_bag, lc_header_name);
+-	char *header_start = header_bag + (lc_header_start - lc_header_bag);
+-
+-	if (lc_header_start
+-	&& (lc_header_start == lc_header_bag || *(lc_header_start-1) == '\n')
+-	) {
+-		char *lc_eol = strchr(lc_header_start, '\n');
+-		char *eol = header_start + (lc_eol - lc_header_start);
+-
+-		if (lc_eol) {
+-			size_t eollen = strlen(lc_eol);
+-
+-			memmove(lc_header_start, lc_eol+1, eollen);
+-			memmove(header_start, eol+1, eollen);
+-		} else {
+-			*lc_header_start = '\0';
+-			*header_start = '\0';
+-		}
+-	}
++    const char *line = headers;
++    size_t n = strlen(name);
++    while (*line) {
++        if (!strncasecmp(line, name, n)) return 1;
++        line = strstr(line, "\r\n");
++        if (!line) break;
++        line += 2;
++    }
++    return 0;
++}
++
++/* Remove every matching header and its folded continuation, including the
++ * separator before the last field. Never match a field name inside a value. */
++static void strip_header(char *header_bag, char *lc_header_bag, const char *name)
++{
++    char *in = header_bag, *out = header_bag;
++    int removed = 0;
++    size_t n = strlen(name);
++    while (*in) {
++        char *end = strchr(in, '\n');
++        size_t len = end ? (size_t)(end - in) : strlen(in);
++        if (len && in[len - 1] == '\r') len--;
++        if (*in != ' ' && *in != '\t') removed = len >= n && !strncasecmp(in, name, n);
++        if (!removed && len) {
++            if (out != header_bag) { *out++ = '\r'; *out++ = '\n'; }
++            memmove(out, in, len); out += len;
++        }
++        if (!end) break;
++        in = end + 1;
++    }
++    *out = '\0';
++    memcpy(lc_header_bag, header_bag, out - header_bag + 1);
++    php_strtolower(lc_header_bag, out - header_bag);
+ }
+ 
+ php_stream *php_stream_url_wrap_http_ex(php_stream_wrapper *wrapper, 
+@@ -122,8 +136,11 @@
+ 	char *ua_str = NULL;
+ 	zval **ua_zval = NULL, **tmpzval = NULL, *ssl_proxy_peer_name = NULL;
+ 	int scratch_len = 0;
+-	int body = 0;
+-	char location[HTTP_HEADER_BLOCK_SIZE];
++		char *location = NULL, *new_path = NULL;
++	size_t location_len = 0;
++	zval *normalized_headers = NULL;
++	HashPosition header_pos;
++	zval **normalized_header;
+ 	zval *response_header = NULL;
+ 	int reqok = 0;
+ 	char *http_header_line = NULL;
+@@ -141,6 +158,7 @@
+ 	int follow_location = 1;
+ 	php_stream_filter *transfer_encoding = NULL;
+ 	int response_code;
++	int keep_method = (flags & 8);
+ 
+ 	tmp_line[0] = '\0';
+ 
+@@ -375,7 +393,7 @@
+ 		if (Z_TYPE_PP(tmpzval) == IS_STRING && Z_STRLEN_PP(tmpzval) > 0) {
+ 			/* As per the RFC, automatically redirected requests MUST NOT use other methods than
+ 			 * GET and HEAD unless it can be confirmed by the user */
+-			if (!redirected
++			if (!redirected || keep_method
+ 				|| (Z_STRLEN_PP(tmpzval) == 3 && memcmp("GET", Z_STRVAL_PP(tmpzval), 3) == 0)
+ 				|| (Z_STRLEN_PP(tmpzval) == 4 && memcmp("HEAD",Z_STRVAL_PP(tmpzval), 4) == 0)
+ 			) {
+@@ -467,47 +485,24 @@
+ 			/* Make lowercase for easy comparison against 'standard' headers */
+ 			php_strtolower(tmp, strlen(tmp));
+ 
+-			if (!header_init) {
+-				/* strip POST headers on redirect */
++			if (!header_init && !keep_method) {
++				/* strip POST headers only when the redirect discards the body */
+ 				strip_header(user_headers, tmp, "content-length:");
+ 				strip_header(user_headers, tmp, "content-type:");
+ 			}
+ 
+-			if ((s = strstr(tmp, "user-agent:")) &&
+-			    (s == tmp || *(s-1) == '\r' || *(s-1) == '\n' ||
+-			                 *(s-1) == '\t' || *(s-1) == ' ')) {
+-				 have_header |= HTTP_HEADER_USER_AGENT;
+-			}
+-			if ((s = strstr(tmp, "host:")) &&
+-			    (s == tmp || *(s-1) == '\r' || *(s-1) == '\n' ||
+-			                 *(s-1) == '\t' || *(s-1) == ' ')) {
+-				 have_header |= HTTP_HEADER_HOST;
+-			}
+-			if ((s = strstr(tmp, "from:")) &&
+-			    (s == tmp || *(s-1) == '\r' || *(s-1) == '\n' ||
+-			                 *(s-1) == '\t' || *(s-1) == ' ')) {
+-				 have_header |= HTTP_HEADER_FROM;
+-				}
+-			if ((s = strstr(tmp, "authorization:")) &&
+-			    (s == tmp || *(s-1) == '\r' || *(s-1) == '\n' ||
+-			                 *(s-1) == '\t' || *(s-1) == ' ')) {
+-				 have_header |= HTTP_HEADER_AUTH;
+-			}
+-			if ((s = strstr(tmp, "content-length:")) &&
+-			    (s == tmp || *(s-1) == '\r' || *(s-1) == '\n' ||
+-			                 *(s-1) == '\t' || *(s-1) == ' ')) {
+-				 have_header |= HTTP_HEADER_CONTENT_LENGTH;
+-			}
+-			if ((s = strstr(tmp, "content-type:")) &&
+-			    (s == tmp || *(s-1) == '\r' || *(s-1) == '\n' ||
+-			                 *(s-1) == '\t' || *(s-1) == ' ')) {
+-				 have_header |= HTTP_HEADER_TYPE;
+-			}
+-			if ((s = strstr(tmp, "connection:")) &&
+-			    (s == tmp || *(s-1) == '\r' || *(s-1) == '\n' || 
+-			                 *(s-1) == '\t' || *(s-1) == ' ')) {
+-				 have_header |= HTTP_HEADER_CONNECTION;
+-			}
++            if (flags & 4) {
++                strip_header(user_headers, tmp, "authorization:");
++                strip_header(user_headers, tmp, "cookie:");
++                strip_header(user_headers, tmp, "proxy-authorization:");
++            }
++			if (check_has_header(tmp, "user-agent:")) { have_header |= HTTP_HEADER_USER_AGENT; }
++			if (check_has_header(tmp, "host:")) { have_header |= HTTP_HEADER_HOST; }
++			if (check_has_header(tmp, "from:")) { have_header |= HTTP_HEADER_FROM; }
++			if (check_has_header(tmp, "authorization:")) { have_header |= HTTP_HEADER_AUTH; }
++			if (check_has_header(tmp, "content-length:")) { have_header |= HTTP_HEADER_CONTENT_LENGTH; }
++			if (check_has_header(tmp, "content-type:")) { have_header |= HTTP_HEADER_TYPE; }
++			if (check_has_header(tmp, "connection:")) { have_header |= HTTP_HEADER_CONNECTION; }
+ 			/* remove Proxy-Authorization header */
+ 			if (use_proxy && use_ssl && (s = strstr(tmp, "proxy-authorization:")) &&
+ 			    (s == tmp || *(s-1) == '\r' || *(s-1) == '\n' ||
+@@ -530,6 +525,10 @@
+ 				}
+ 			}
+ 
++            if (user_headers && user_headers[0] == '\0') {
++                efree(user_headers);
++                user_headers = NULL;
++            }
+ 		}
+ 		if (tmp) {
+ 			efree(tmp);
+@@ -627,7 +626,7 @@
+ 		 * see bug #44603 for details. Since Content-Type maybe part of user's headers we need to do this check first.
+ 		 */
+ 		if (
+-				header_init &&
++				(!redirected || keep_method) &&
+ 				context &&
+ 				!(have_header & HTTP_HEADER_CONTENT_LENGTH) &&
+ 				php_stream_context_get_option(context, "http", "content", &tmpzval) == SUCCESS &&
+@@ -644,7 +643,7 @@
+ 	}
+ 
+ 	/* Request content, such as for POST requests */
+-	if (header_init && context &&
++	if ((!redirected || keep_method) && context &&
+ 		php_stream_context_get_option(context, "http", "content", &tmpzval) == SUCCESS &&
+ 		Z_TYPE_PP(tmpzval) == IS_STRING && Z_STRLEN_PP(tmpzval) > 0) {
+ 		if (!(have_header & HTTP_HEADER_CONTENT_LENGTH)) {
+@@ -662,7 +661,6 @@
+ 		php_stream_write(stream, "\r\n", sizeof("\r\n")-1);
+ 	}
+ 
+-	location[0] = '\0';
+ 
+ 	if (!EG(active_symbol_table)) {
+ 		zend_rebuild_symbol_table(TSRMLS_C);
+@@ -757,146 +755,145 @@
+ 		goto out;
+ 	}
+ 
+-	/* read past HTTP headers */
+-
+-	http_header_line = emalloc(HTTP_HEADER_BLOCK_SIZE);
+-
+-	while (!body && !php_stream_eof(stream)) {
+-		size_t http_header_line_length;
+-		if (php_stream_get_line(stream, http_header_line, HTTP_HEADER_BLOCK_SIZE, &http_header_line_length) && *http_header_line != '\n' && *http_header_line != '\r') {
+-			char *e = http_header_line + http_header_line_length - 1;
+-			if (*e != '\n') {
+-				do { /* partial header */
+-					if (php_stream_get_line(stream, http_header_line, HTTP_HEADER_BLOCK_SIZE, &http_header_line_length) == NULL) {
+-						php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "Failed to read HTTP headers");
+-						goto out;
+-					}
+-					e = http_header_line + http_header_line_length - 1;
+-				} while (*e != '\n');
+-				continue;
+-			}
+-			while (*e == '\n' || *e == '\r') {
+-				e--;
+-			}
+-			http_header_line_length = e - http_header_line + 1;
+-			http_header_line[http_header_line_length] = '\0';
+-
+-			if (!strncasecmp(http_header_line, "Location: ", 10)) {
+-				if (context && php_stream_context_get_option(context, "http", "follow_location", &tmpzval) == SUCCESS) {
+-					SEPARATE_ZVAL(tmpzval);
+-					convert_to_long_ex(tmpzval);
+-					follow_location = Z_LVAL_PP(tmpzval);
+-				} else if (!(response_code >= 300 && response_code < 304 || 307 == response_code || 308 == response_code)) {
+-					/* we shouldn't redirect automatically
+-					if follow_location isn't set and response_code not in (300, 301, 302, 303 and 307)
+-					see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.1
+-					RFC 7238 defines 308: http://tools.ietf.org/html/rfc7238 */
+-					follow_location = 0;
+-				}
+-				strlcpy(location, http_header_line + 10, sizeof(location));
+-			} else if (!strncasecmp(http_header_line, "Content-Type: ", 14)) {
+-				php_stream_notify_info(context, PHP_STREAM_NOTIFY_MIME_TYPE_IS, http_header_line + 14, 0);
+-			} else if (!strncasecmp(http_header_line, "Content-Length: ", 16)) {
+-				file_size = atoi(http_header_line + 16);
+-				php_stream_notify_file_size(context, file_size, http_header_line, 0);
+-			} else if (!strncasecmp(http_header_line, "Transfer-Encoding: chunked", sizeof("Transfer-Encoding: chunked"))) {
+-
+-				/* create filter to decode response body */
+-				if (!(options & STREAM_ONLY_GET_HEADERS)) {
+-					long decode = 1;
+-
+-					if (context && php_stream_context_get_option(context, "http", "auto_decode", &tmpzval) == SUCCESS) {
+-						SEPARATE_ZVAL(tmpzval);
+-						convert_to_boolean(*tmpzval);
+-						decode = Z_LVAL_PP(tmpzval);
+-					}
+-					if (decode) {
+-						transfer_encoding = php_stream_filter_create("dechunk", NULL, php_stream_is_persistent(stream) TSRMLS_CC);
+-						if (transfer_encoding) {
+-							/* don't store transfer-encodeing header */
+-							continue;
+-						}
+-					}
+-				}
+-			}
+-
+-			if (http_header_line[0] == '\0') {
+-				body = 1;
+-			} else {
+-				zval *http_header;
+-
+-				MAKE_STD_ZVAL(http_header);
+-
+-				ZVAL_STRINGL(http_header, http_header_line, http_header_line_length, 1);
+-
+-				zend_hash_next_index_insert(Z_ARRVAL_P(response_header), &http_header, sizeof(zval *), NULL);
+-			}
+-		} else {
+-			break;
+-		}
+-	}
+-
+-	if (!reqok || (location[0] != '\0' && follow_location)) {
++    /* Normalize obs-fold first; validate complete names before interpreting any
++     * field. Dynamic lines and Location prevent silent 1024-byte truncation. */
++    MAKE_STD_ZVAL(normalized_headers);
++    array_init(normalized_headers);
++    while (!php_stream_eof(stream)) {
++        size_t len = 0;
++        char *line = php_stream_get_line(stream, NULL, 0, &len);
++        if (!line) break;
++        if (len > INT_MAX || memchr(line, '\0', len)) {
++            efree(line);
++            php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "Invalid NUL in HTTP response header");
++            goto header_error;
++        }
++        while (len && (line[len-1] == '\r' || line[len-1] == '\n')) len--;
++        if (!len) { efree(line); break; }
++        line[len] = '\0';
++        if (line[0] == ' ' || line[0] == '\t') {
++            zval **last;
++            unsigned int count = zend_hash_num_elements(Z_ARRVAL_P(normalized_headers));
++            size_t start = 0;
++            if (!count || zend_hash_index_find(Z_ARRVAL_P(normalized_headers), count-1, (void **)&last) == FAILURE) {
++                efree(line); goto header_error;
++            }
++            while (start < len && (line[start] == ' ' || line[start] == '\t')) start++;
++            while (len > start && (line[len-1] == ' ' || line[len-1] == '\t')) len--;
++            if (len > start) {
++                size_t old_len = Z_STRLEN_PP(last), add = len - start;
++                if (add > INT_MAX - old_len - 1) { efree(line); goto header_error; }
++                Z_STRVAL_PP(last) = erealloc(Z_STRVAL_PP(last), old_len + add + 2);
++                Z_STRVAL_PP(last)[old_len] = ' ';
++                memcpy(Z_STRVAL_PP(last)+old_len+1, line+start, add);
++                Z_STRLEN_PP(last) = old_len + add + 1;
++                Z_STRVAL_PP(last)[Z_STRLEN_PP(last)] = '\0';
++            }
++            efree(line);
++            continue;
++        }
++        {
++            char *colon = strchr(line, ':');
++            char *ch;
++            if (!colon || colon == line) { efree(line); goto header_error; }
++            for (ch = line; ch < colon; ch++) {
++                if (!isalnum((unsigned char)*ch) && !strchr("!#$%&'*+-.^_`|~", *ch)) {
++                    efree(line); goto header_error;
++                }
++            }
++        }
++        while (len && (line[len-1] == ' ' || line[len-1] == '\t')) len--;
++        line[len] = '\0';
++        add_next_index_stringl(normalized_headers, line, len, 0);
++    }
++    for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(normalized_headers), &header_pos);
++         zend_hash_get_current_data_ex(Z_ARRVAL_P(normalized_headers), (void **)&normalized_header, &header_pos) == SUCCESS;
++         zend_hash_move_forward_ex(Z_ARRVAL_P(normalized_headers), &header_pos)) {
++        char *line = Z_STRVAL_PP(normalized_header);
++        char *value = strchr(line, ':') + 1;
++        while (*value == ' ' || *value == '\t') value++;
++        if (!strncasecmp(line, "Location:", 9)) {
++            if (context && php_stream_context_get_option(context, "http", "follow_location", &tmpzval) == SUCCESS) {
++                follow_location = zend_is_true(*tmpzval);
++            } else if (!((response_code >= 300 && response_code < 304) || response_code == 307 || response_code == 308)) {
++                follow_location = 0;
++            }
++            if (location) efree(location);
++            location_len = strlen(value);
++            location = location_len ? estrndup(value, location_len) : NULL;
++        } else if (!strncasecmp(line, "Content-Type:", 13)) {
++            php_stream_notify_info(context, PHP_STREAM_NOTIFY_MIME_TYPE_IS, value, 0);
++        } else if (!strncasecmp(line, "Content-Length:", 15)) {
++            file_size = strtoul(value, NULL, 10);
++            php_stream_notify_file_size(context, file_size, line, 0);
++        } else if (!strncasecmp(line, "Transfer-Encoding:", 18) && !strcasecmp(value, "chunked")) {
++            long decode = 1;
++            if (context && php_stream_context_get_option(context, "http", "auto_decode", &tmpzval) == SUCCESS) decode = zend_is_true(*tmpzval);
++            if (decode && !(options & STREAM_ONLY_GET_HEADERS)) {
++                if (transfer_encoding) php_stream_filter_free(transfer_encoding TSRMLS_CC);
++                transfer_encoding = php_stream_filter_create("dechunk", NULL, php_stream_is_persistent(stream) TSRMLS_CC);
++                if (transfer_encoding) continue;
++            }
++        }
++        add_next_index_stringl(response_header, line, Z_STRLEN_PP(normalized_header), 1);
++    }
++    goto headers_done;
++header_error:
++    php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "Invalid HTTP response header");
++    php_stream_close(stream);
++    stream = NULL;
++    goto out;
++headers_done:
++
++	if (!reqok || (location != NULL && follow_location)) {
+ 		if (!follow_location || (((options & STREAM_ONLY_GET_HEADERS) || ignore_errors) && redirect_max <= 1)) {
+ 			goto out;
+ 		}
+ 
+-		if (location[0] != '\0')
++		if (location != NULL)
+ 			php_stream_notify_info(context, PHP_STREAM_NOTIFY_REDIRECTED, location, 0);
+ 
+ 		php_stream_close(stream);
+ 		stream = NULL;
+ 
+-		if (location[0] != '\0') {
+-
+-			char new_path[HTTP_HEADER_BLOCK_SIZE];
+-			char loc_path[HTTP_HEADER_BLOCK_SIZE];
+-
+-			*new_path='\0';
+-			if (strlen(location)<8 || (strncasecmp(location, "http://", sizeof("http://")-1) &&
+-							strncasecmp(location, "https://", sizeof("https://")-1) &&
+-							strncasecmp(location, "ftp://", sizeof("ftp://")-1) &&
+-							strncasecmp(location, "ftps://", sizeof("ftps://")-1)))
+-			{
+-				if (*location != '/') {
+-					if (*(location+1) != '\0' && resource->path) {
+-						char *s = strrchr(resource->path, '/');
+-						if (!s) {
+-							s = resource->path;
+-							if (!s[0]) {
+-								efree(s);
+-								s = resource->path = estrdup("/");
+-							} else {
+-								*s = '/';
+-							}
+-						}
+-						s[1] = '\0';
+-						if (resource->path && *(resource->path) == '/' && *(resource->path + 1) == '\0') {
+-							snprintf(loc_path, sizeof(loc_path) - 1, "%s%s", resource->path, location);
+-						} else {
+-							snprintf(loc_path, sizeof(loc_path) - 1, "%s/%s", resource->path, location);
+-						}
+-					} else {
+-						snprintf(loc_path, sizeof(loc_path) - 1, "/%s", location);
+-					}
+-				} else {
+-					strlcpy(loc_path, location, sizeof(loc_path));
+-				}
+-				if ((use_ssl && resource->port != 443) || (!use_ssl && resource->port != 80)) {
+-					snprintf(new_path, sizeof(new_path) - 1, "%s://%s:%d%s", resource->scheme, resource->host, resource->port, loc_path);
+-				} else {
+-					snprintf(new_path, sizeof(new_path) - 1, "%s://%s%s", resource->scheme, resource->host, loc_path);
+-				}
+-			} else {
+-				strlcpy(new_path, location, sizeof(new_path));
+-			}
+-
+-			php_url_free(resource);
+-			/* check for invalid redirection URLs */
+-			if ((resource = php_url_parse(new_path)) == NULL) {
+-				php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "Invalid redirect URL! %s", new_path);
+-				goto out;
+-			}
++		if (location != NULL) {
++
++            char *loc_path = NULL;
++            php_url *next_resource;
++            int next_flags = HTTP_WRAPPER_REDIRECTED | (flags & 4);
++            if (response_code == 307 || response_code == 308) next_flags |= 8;
++            if (location_len >= 2 && location[0] == '/' && location[1] == '/') {
++                spprintf(&new_path, 0, "%s:%s", resource->scheme, location);
++            } else if (location_len < 8 || (strncasecmp(location, "http://", 7) && strncasecmp(location, "https://", 8) && strncasecmp(location, "ftp://", 6) && strncasecmp(location, "ftps://", 7))) {
++                if (location[0] == '/') {
++                    loc_path = estrdup(location);
++                } else if (resource->path) {
++                    char *slash = strrchr(resource->path, '/');
++                    size_t dirlen = slash ? (size_t)(slash - resource->path + 1) : 0;
++                    spprintf(&loc_path, 0, "%.*s%s%s", (int)dirlen, resource->path, dirlen ? "" : "/", location);
++                } else {
++                    spprintf(&loc_path, 0, "/%s", location);
++                }
++                if (resource->port) spprintf(&new_path, 0, "%s://%s:%d%s", resource->scheme, resource->host, resource->port, loc_path);
++                else spprintf(&new_path, 0, "%s://%s%s", resource->scheme, resource->host, loc_path);
++                efree(loc_path);
++            } else {
++                new_path = estrdup(location);
++            }
++            next_resource = php_url_parse(new_path);
++            if (!next_resource || !next_resource->scheme || !next_resource->host) {
++                if (next_resource) php_url_free(next_resource);
++                php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "Invalid redirect URL");
++                goto out;
++            }
++            if (strcasecmp(resource->scheme, next_resource->scheme) ||
++                strcasecmp(resource->host, next_resource->host) ||
++                (resource->port ? resource->port : (use_ssl ? 443 : 80)) !=
++                (next_resource->port ? next_resource->port : (!strcasecmp(next_resource->scheme, "https") ? 443 : 80))) {
++                next_flags |= 4;
++            }
++            php_url_free(resource);
++            resource = next_resource;
+ 
+ #define CHECK_FOR_CNTRL_CHARS(val) { \
+ 	if (val) { \
+@@ -919,12 +916,15 @@
+ 				CHECK_FOR_CNTRL_CHARS(resource->pass)
+ 				CHECK_FOR_CNTRL_CHARS(resource->path)
+ 			}
+-			stream = php_stream_url_wrap_http_ex(wrapper, new_path, mode, options, opened_path, context, --redirect_max, HTTP_WRAPPER_REDIRECTED STREAMS_CC TSRMLS_CC);
++			stream = php_stream_url_wrap_http_ex(wrapper, new_path, mode, options, opened_path, context, --redirect_max, next_flags STREAMS_CC TSRMLS_CC);
+ 		} else {
+ 			php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "HTTP request failed! %s", tmp_line);
+ 		}
+ 	}
+ out:
++    if (normalized_headers) zval_ptr_dtor(&normalized_headers);
++    if (location) efree(location);
++    if (new_path) efree(new_path);
+ 	if (protocol_version) {
+ 		efree(protocol_version);
+ 	}
+--- a/ext/standard/image.c
++++ b/ext/standard/image.c
+@@ -440,7 +440,7 @@
+ 
+ 	buffer = emalloc(length);
+ 
+-	if (php_stream_read(stream, buffer, (long) length) <= 0) {
++	if (php_stream_read(stream, buffer, (long) length) != length) {
+ 		efree(buffer);
+ 		return 0;
+ 	}
+--- a/ext/wddx/wddx.c
++++ b/ext/wddx/wddx.c
+@@ -467,7 +467,7 @@
+ /* OBJECTS_FIXME */
+ 	zval **ent, *fname, **varname;
+ 	zval *retval = NULL;
+-	const char *key;
++	char *key;
+ 	ulong idx;
+ 	char tmp_buf[WDDX_BUF_LEN];
+ 	HashTable *objhash, *sleephash;
+--- a/main/streams/xp_socket.c
++++ b/main/streams/xp_socket.c
+@@ -544,6 +544,11 @@
+ 
+ static inline char *parse_ip_address_ex(const char *str, size_t str_len, int *portno, int get_err, char **err TSRMLS_DC)
+ {
++    if (memchr(str, '\0', str_len)) {
++        if (get_err) spprintf(err, 0, "Host name must not contain NUL bytes");
++        return NULL;
++    }
++
+ 	char *colon;
+ 	char *host = NULL;
+ 

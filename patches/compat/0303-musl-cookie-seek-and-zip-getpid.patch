@@ -1,0 +1,41 @@
+From: LookBack
+Subject: 适配 musl fopencookie 的偏移指针并补全 getpid 声明
+
+与目标 libc 头文件保持一致，seek 成功后返回实际偏移。
+
+--- a/ext/zip/lib/mkstemp.c
++++ b/ext/zip/lib/mkstemp.c
+@@ -43,6 +43,9 @@
+ #endif
+ #include <stdio.h>
+ #include <stdlib.h>
++#ifndef _WIN32
++#include <unistd.h>
++#endif
+ 
+ #ifndef O_BINARY
+ #define O_BINARY 0
+--- a/main/streams/cast.c
++++ b/main/streams/cast.c
+@@ -122,11 +122,16 @@
+ 	return 0;
+ }
+ # else
+-static int stream_cookie_seeker(void *cookie, off_t position, int whence)
+-{
+-	TSRMLS_FETCH();
+-
+-	return php_stream_seek((php_stream *)cookie, position, whence);
++static int stream_cookie_seeker(void *cookie, off_t *position, int whence)
++{
++	int result;
++	TSRMLS_FETCH();
++
++	result = php_stream_seek((php_stream *)cookie, *position, whence);
++	if (result == 0) {
++		*position = php_stream_tell((php_stream *)cookie);
++	}
++	return result;
+ }
+ # endif
+ 
