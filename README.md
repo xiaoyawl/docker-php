@@ -205,12 +205,14 @@ printf '%s' "$令牌" | DOCKERHUB_USER=benyoo bash scripts/push-image.sh   # 原
 
 | 镜像标签（已推送） | 索引摘要（仓库端与归档一致） | amd64 清单 | arm64 清单 | 压缩层 amd64 / arm64 | OCI 归档 SHA-256 |
 |---|---|---|---|---|---|
-| `benyoo/php-alpine:8.2.35.20261023-swoole5` | `sha256:5f640857d133a6f1903c57b3deae84fcde09792f7c8d486ae3c23865dd950b5e` | `sha256:3aecbcb30521614d8cd5a3b9ada29488dc02a091e7ddfda48ef12a1f2ecfccd2` | `sha256:d03860219b5a50537591bffe4fa69f179cd056f4402d85219cc0901bb8e2fe46` | 约 122 / 121 MB | `955403833d7da052ea7842931100df6c3afcb4a06f5e14b3369810b625021585` |
-| `benyoo/php-alpine:8.2.35.20261023-swoole6` | `sha256:f9511f195a4fbfe133e6195ba35a899a4d2c4c066b0aa03d5db3c48ef32bb918` | `sha256:8fe6b79f86377334556af37983efa2bff22f1597a3260a12123b749277c4b81e` | `sha256:e93ec3c8dabbb3b335e0237072747f8277d3963aee456f53e8cc5e64026c3758` | 约 122 / 121 MB | `d616019f3b497333ff3e5a9c247066dd8e8436e74e2c2805b59e4a70876e6214` |
+| `benyoo/php-alpine:8.2.35.20261023-swoole5` | `sha256:28dd586314410d3f224a1649d8dc7bbd12a2e0adae65ec2698f60f35333b7237` | `sha256:39e9c619415309a4021826a7c0261c1f83c6ed2787a3e8b9f52e3a3b0ee5d023` | `sha256:856db5df37353143cbd84534b39bb82ef7ed18fdba96a0996fcffa0ad11d5a4b` | 约 122 / 121 MB | `fd9cdb53608b9254815e7d3cc3c8e47d716fe035b8f27b52d4314d821d61ac21` |
+| `benyoo/php-alpine:8.2.35.20261023-swoole6` | `sha256:d875abb1e49788d34869e25d720604639d3f841a95c070498b1016ef1207aaa1` | `sha256:23d04bd270641473e822c7b60dda33e774c62280892e208df46e7852d9f7d624` | `sha256:e0541b4656488bb3adf1e4e6f67bb7af162e548bb56d1ffeb971c44d5f4ce1f6` | 约 122 / 121 MB | `910c6d8e0cf0fd988324414e4745ec1fa704f886748607ca3a5fa77a53858b90` |
 
 无后缀标签 `benyoo/php-alpine:8.2.35.20261023` 是 swoole6 标签的别名，指向同一索引摘要。
 
 Trivy 扫描（每个变体与架构）：swoole5、swoole6 的 amd64 与 arm64 均为 0 项。
+
+2026-10-24 以相同构建日重建并覆盖上述标签：只把维护者标签改为 Manta（`org.opencontainers.image.authors`、`maintainer`），编译阶段复用缓存；两种架构重新完成全套功能验收与 Trivy 扫描（0 项），上游 PHPT 未重跑（编译阶段未变，沿用上述结果）。
 
 - **全套验收通过（每个变体）**：PHP 版本与 65 个原生模块；扩展与 Loader 版本逐项核对；默认关闭与开关加载、不支持的开关报错；libgd 旋转回归 210 组且链接 `/opt/libgd`、未安装系统 libgd；可选扩展离线功能（含 FFI、Imagick、APCu、zstd、Event）；git 与 Composer（默认禁用函数下执行成功，业务禁用保持）；Swoole TCP 服务与客户端收发、Xdebug 3 覆盖率与跟踪；MySQL / PostgreSQL / Redis / Memcache / Memcached 真实读写；MongoDB 8.0 认证与读写；Redis 公开接口与基线一致；安全冒烟、31 项 MySQL 协议回归、HTTP 凭据 / 重定向 / 响应头、SOAP、CGI；TLS 与 CA（新增 CA 后信任、错误主机名与 SAN 不匹配拒绝、wildcard 边界）；FPM 同 worker 请求、内存耗尽后恢复、重启与退出；Trivy 扫描 0 项（扫描器无法识别自编译 PHP 与闭源 Loader，0 项不等于没有漏洞）。
 - **上游 PHPT**（官方 `run-tests.php`，nobody 用户、断网，`swoole5` 变体的构建阶段）：linux/amd64 与 linux/arm64 结果相同、失败清单一致，没有 arm64 独有失败；共 572 个用例（补丁附带 1 个 + 上游安全回归、FPM 安全、mysqlnd GHSA-r6x9、PCRE、GD 全套），通过 497、失败 8、跳过 67、XFAIL 0。**安全回归用例 0 失败**。失败项逐项核实，均为外部 libgd 2.3.3 / FreeType 与 PHP 内置 GD 的数值差异，没有崩溃：`bug43073.phpt`、`bug48732-mb.phpt`、`bug48732.phpt`、`bug48801-mb.phpt`、`bug48801.phpt`、`bug53504.phpt`、`bug65148.phpt`、`bug73272.phpt`。跳过原因：requires bundled GD library 22 项；test requires GD 2.3.2 or older 20 项；Run only on Windows 6 项；upstream bugfix has not been released 3 项；resource-heavy test 3 项；slow test 3 项；setlocale() is broken /w musl 2 项；IPv6 is not supported. 2 项；only for external libgd < 2.2.4 1 项；windows only test 1 项；function only available in bundled, external GD detected 1 项；windows only 1 项；Required extension missing: zend_test 1 项；Windows only 1 项。
