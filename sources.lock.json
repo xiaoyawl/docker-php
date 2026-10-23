@@ -1,0 +1,139 @@
+{
+  "sources": [
+    {
+      "file": "php-8.4.27.tar.xz",
+      "url": "https://www.php.net/distributions/php-8.4.27.tar.xz",
+      "sha256": "dcf93923b0e38e0d5252b25b796520b5a47761a08b3488b6d0b5d1115764d3f0"
+    },
+    {
+      "file": "libiconv-1.18.tar.gz",
+      "url": "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.18.tar.gz",
+      "sha256": "3b08f5f4f9b4eb82f151a7040bfd6fe6c6fb922efe4b1659c66ea933276965e8"
+    },
+    {
+      "file": "redis-6.3.0.tgz",
+      "url": "https://pecl.php.net/get/redis-6.3.0.tgz",
+      "sha256": "0d5141f634bd1db6c1ddcda053d25ecf2c4fc1c395430d534fd3f8d51dd7f0b5"
+    },
+    {
+      "file": "memcache-8.2.tgz",
+      "url": "https://pecl.php.net/get/memcache-8.2.tgz",
+      "sha256": "b3f0640eacdeb9046c6c86a1546d7fb8a4e9f219e5d9a36a287e59b2dd8208e5"
+    },
+    {
+      "file": "memcached-3.4.0.tgz",
+      "url": "https://pecl.php.net/get/memcached-3.4.0.tgz",
+      "sha256": "c163434eb0da97c8f45c7ad41d979d381f8b81c49402b1b90b063987fb37972e"
+    },
+    {
+      "file": "xdebug-3.5.3.tgz",
+      "url": "https://pecl.php.net/get/xdebug-3.5.3.tgz",
+      "sha256": "f073de91bea046106abf4d6071c963ea71e58571df6ce58948ceca89d121cb2d"
+    },
+    {
+      "file": "mongodb-2.5.5.tgz",
+      "url": "https://pecl.php.net/get/mongodb-2.5.5.tgz",
+      "sha256": "0eaf84ff709f73183d80597f31ff02937f6aefde01eb895a0aa19334a290cec0"
+    },
+    {
+      "file": "zstd-0.18.0.tgz",
+      "url": "https://pecl.php.net/get/zstd-0.18.0.tgz",
+      "sha256": "223d0f77eb5a5e73cf5e7a0652dd8fde7ffdcc843e7f30eeb3998283dec847b9"
+    },
+    {
+      "file": "event-3.1.6.tgz",
+      "url": "https://pecl.php.net/get/event-3.1.6.tgz",
+      "sha256": "5b74554c6370aae8c284c8110fe27e071d3f663953c3eb762ffc429b0a3c83a2"
+    },
+    {
+      "file": "swoole-6.2.3.tgz",
+      "url": "https://pecl.php.net/get/swoole-6.2.3.tgz",
+      "sha256": "21dfa1c4a4a09f4d1cb4b154f7defdc91fbabafc8d44a77f8f618b9742c67304"
+    },
+    {
+      "file": "ioncube_loaders_lin_musl_x86-64.tar.gz",
+      "url": "https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin-musl_x86-64.tar.gz",
+      "sha256": "5c7d7913ceca745253d4bf99df3e7d11b16db34fca4fd6dc16feccd642ecdf8b"
+    },
+    {
+      "file": "imagick-3.8.1.tgz",
+      "url": "https://pecl.php.net/get/imagick-3.8.1.tgz",
+      "sha256": "3a3587c0a524c17d0dad9673a160b90cd776e836838474e173b549ed864352ee"
+    },
+    {
+      "file": "loaders.linux-x86_64.tar.gz",
+      "url": "https://www.sourceguardian.com/loaders/download/loaders.linux-x86_64.tar.gz",
+      "sha256": "aeaf6b5cf8f27ff01fd05affebdec490e6f7a01284c000a63ae3ceb6dcb6e419",
+      "extract_dir": "sourceguardian",
+      "note": "官方下载地址不含版本号；厂商更新后摘要校验会失败并中止构建，需重新审查后更新锁定"
+    },
+    {
+      "file": "composer-2.10.3.phar",
+      "url": "https://getcomposer.org/download/2.10.3/composer.phar",
+      "sha256": "7a2d379d5b8ffdaa028580ef26494c36d2feef4b178d3dd1473a4dbc5e17c8d6",
+      "extract": false,
+      "note": "Composer 最新稳定版；官方摘要见同目录 composer.phar.sha256sum"
+    },
+    {
+      "file": "apcu-5.1.28.tgz",
+      "url": "https://pecl.php.net/get/apcu-5.1.28.tgz",
+      "sha256": "ca9c1820810a168786f8048a4c3f8c9e3fd941407ad1553259fb2e30b5f057bf"
+    }
+  ],
+  "patches": [
+    {
+      "file": "compat/0045-Add-missing-header-includes.patch",
+      "sha256": "43e5c9f23d8e764355d784896ecea02adf02a46746ccf0f299c464e367698994",
+      "change": "原样提取自 Surý php8.4 打包（8.4.27-1+0~20261021.57+debian12~1.gbp7636b9）；补齐缺失的头文件声明，适配现代编译器"
+    },
+    {
+      "file": "security/9001-mysqlnd-ok-payload-and-length-prefix.patch",
+      "sha256": "8a821678f9a7d084786bc6845f181c4b86617bc5100eb8badaee03538e41ed28",
+      "change": "本地 mysqlnd 加固：OK 消息按实际包边界校验，两个长度解码器拒绝非法 0xff 前缀（协议回归实测复现）"
+    },
+    {
+      "file": "compat/9002-system-gd-bicubic.patch",
+      "sha256": "5668274a71c5c015b61e0e423a5006a7793835cd43dc6ec327c43d42d61c397a",
+      "change": "外部 libgd 2.3.3 缺少上游 a5f5698 双三次插值设置修复；仅在 libgd setter 拒绝这两个模式时按官方相同字段语义补齐"
+    },
+    {
+      "file": "security/9003-mysqlnd-preserve-high-length-bits.patch",
+      "sha256": "5d3ee0ef36191923b1981c16a95984cab28c8ebf4108a31613dac7c33c1b8516",
+      "change": "本地 mysqlnd 加固：0xfe 长度完整读取 64 位；不小于非法长度哨兵的值钳制为哨兵减一，避开 NULL/非法哨兵并由各调用处边界检查拒绝"
+    }
+  ],
+  "patch_source": {
+    "url": "https://packages.sury.org/php/pool/main/p/php8.4/php8.4_8.4.27-1+0~20261021.57+debian12~1.gbp7636b9.debian.tar.xz",
+    "sha256": "f574fd71fd163acdfc2f9342935dd7bc8a96181574b3e5ff19ba55f18175b7b0",
+    "signature_verified": true,
+    "signing_fingerprint": "15058500A0235D97F5D10063B188E2B695BD4743",
+    "trust_origin": "公钥来自 packages.sury.org 官方 HTTPS，固定指纹；验证 InRelease→Sources→补丁包摘要链"
+  },
+  "reference_patch_sources": [],
+  "binary_loaders": [
+    {
+      "name": "ionCube Loader",
+      "php": "8.4",
+      "version": "15.5.1",
+      "file": "ioncube_loader_lin-musl_8.4.so",
+      "sha256": "1cba73464a3e142bdc358aabf9290216f1bac9e84977b0ccf53b872c505e5f4c",
+      "platform": "linux/amd64",
+      "libc_mode": "musl",
+      "license": "ioncube/LICENSE.txt",
+      "license_sha256": "8050ac3dea9472fc31eb53b4dbfb5dd7b4379491ed80d36666fdaa1ed31e90c9",
+      "dir": "ioncube"
+    },
+    {
+      "name": "SourceGuardian Loader",
+      "php": "8.4",
+      "version": "17.0.0",
+      "file": "ixed.8.4.lin",
+      "sha256": "ef5d3d86cfc8f4df65aba3da1ed564e233c5776592b5cad155330fc7c614bd48",
+      "platform": "linux/amd64",
+      "libc_mode": "gcompat-libc.so.6-and-libudev-zero",
+      "license": "sourceguardian/SourceGuardian Loader License.pdf",
+      "license_sha256": "3c6512267e5a21acd904e0e531442b573c43543b761ef2fa76da5d6392193c23",
+      "dir": "sourceguardian"
+    }
+  ]
+}

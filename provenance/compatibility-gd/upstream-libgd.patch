@@ -1,0 +1,79 @@
+From a5f5698a6832fc1f8179a9257f0b91c9a8ef496b Mon Sep 17 00:00:00 2001
+From: Cyprien Nicolas <cyprien@octopuce.fr>
+Date: Thu, 27 Oct 2022 14:36:33 +0200
+Subject: [PATCH] Fix #847: enable back GD_BICUBIC* interpolation methods
+
+(cherry picked from commit 39abd7238cea2ba8baa4bcac1d6fc01c6cb8afab)
+---
+ src/gd_interpolation.c                               |  5 +++++
+ tests/gdimagesetinterpolationmethod/.gitignore       |  1 +
+ tests/gdimagesetinterpolationmethod/CMakeLists.txt   |  1 +
+ tests/gdimagesetinterpolationmethod/Makemodule.am    |  3 ++-
+ .../gdimagesetinterpolationmethod/github_bug_00847.c | 12 ++++++++++++
+ 5 files changed, 21 insertions(+), 1 deletion(-)
+ create mode 100644 tests/gdimagesetinterpolationmethod/github_bug_00847.c
+
+diff --git a/src/gd_interpolation.c b/src/gd_interpolation.c
+index 1f625dd22..cf77da7c8 100644
+--- a/src/gd_interpolation.c
++++ b/src/gd_interpolation.c
+@@ -2257,6 +2257,11 @@ BGD_DECLARE(int) gdImageSetInterpolationMethod(gdImagePtr im, gdInterpolationMet
+ 		case GD_BESSEL:
+ 			im->interpolation = filter_bessel;
+ 			break;
++		case GD_BICUBIC_FIXED:
++		case GD_BICUBIC:
++			/* no interpolation as gdImageScale calls a dedicated function */
++			im->interpolation = NULL;
++			break;
+ 		case GD_BLACKMAN:
+ 			im->interpolation = filter_blackman;
+ 			break;
+diff --git a/tests/gdimagesetinterpolationmethod/.gitignore b/tests/gdimagesetinterpolationmethod/.gitignore
+index db7b3af16..4bf2924d2 100644
+--- a/tests/gdimagesetinterpolationmethod/.gitignore
++++ b/tests/gdimagesetinterpolationmethod/.gitignore
+@@ -1 +1,2 @@
+ /github_bug_00584
++/github_bug_00847
+diff --git a/tests/gdimagesetinterpolationmethod/CMakeLists.txt b/tests/gdimagesetinterpolationmethod/CMakeLists.txt
+index 655106266..bbed558a0 100644
+--- a/tests/gdimagesetinterpolationmethod/CMakeLists.txt
++++ b/tests/gdimagesetinterpolationmethod/CMakeLists.txt
+@@ -1,5 +1,6 @@
+ LIST(APPEND TESTS_FILES
+ 	github_bug_00584
++	github_bug_00847
+ )
+ 
+ ADD_GD_TESTS()
+diff --git a/tests/gdimagesetinterpolationmethod/Makemodule.am b/tests/gdimagesetinterpolationmethod/Makemodule.am
+index 1b833367e..77d928d67 100644
+--- a/tests/gdimagesetinterpolationmethod/Makemodule.am
++++ b/tests/gdimagesetinterpolationmethod/Makemodule.am
+@@ -1,5 +1,6 @@
+ libgd_test_programs += \
+-	gdimagesetinterpolationmethod/github_bug_00584
++	gdimagesetinterpolationmethod/github_bug_00584 \
++	gdimagesetinterpolationmethod/github_bug_00847
+ 
+ EXTRA_DIST += \
+ 	gdimagesetinterpolationmethod/CMakeLists.txt
+diff --git a/tests/gdimagesetinterpolationmethod/github_bug_00847.c b/tests/gdimagesetinterpolationmethod/github_bug_00847.c
+new file mode 100644
+index 000000000..bd852161d
+--- /dev/null
++++ b/tests/gdimagesetinterpolationmethod/github_bug_00847.c
+@@ -0,0 +1,12 @@
++#include "gd.h"
++#include "gdtest.h"
++
++int main()
++{
++  gdImagePtr im;
++  im = gdImageCreate(1, 1);
++  gdTestAssert(gdImageSetInterpolationMethod(im, GD_BICUBIC_FIXED) != 0);
++  gdTestAssert(gdImageGetInterpolationMethod(im) == GD_BICUBIC_FIXED);
++  gdImageDestroy(im);
++  return gdNumFailures();
++}

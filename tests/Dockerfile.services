@@ -1,0 +1,11 @@
+# 项目：LookBack PHP 镜像隔离集成测试配套服务
+# 维护者：LookBack <mondeolove@gmail.com>
+# 用途：提供一次性 MariaDB、Redis、Memcached，不作为 PHP 发布镜像。
+# 使用限制：仅接入测试脚本创建的内部网络，不映射宿主端口，不挂载业务数据。
+FROM benyoo/alpine:3.24.20260615@sha256:7b08066d86153fff7c557beb57cbe20f07539f36b19cced8907d8d453ac45d9d
+# 覆盖基础镜像登录 Shell，确保 COPY 与启动路径保持一致。
+SHELL ["/bin/bash", "-c"]
+RUN apk add --no-cache mariadb mariadb-client redis memcached postgresql18 postgresql18-client
+# 入口创建临时库和测试账号；容器退出后由验证脚本删除测试资源。
+COPY tests/start-services.sh /start-services.sh
+ENTRYPOINT ["/bin/bash", "/start-services.sh"]
