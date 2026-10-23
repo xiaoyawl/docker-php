@@ -1,0 +1,12 @@
+{
+  "patches": [
+    {
+      "package": "memcache-8.2",
+      "file": "extension-patches/memcache-8.2/0001-use-zend-smart-string-a743dc8.patch",
+      "sha256": "9220467b5490cbce147b6c3c5612850dfff1063d25e85bef152bb6ac81cde5a6",
+      "reason": "PHP 8.5 移除 ext/standard/php_smart_string.h 与 php_smart_string_public.h，PECL memcache 8.2 编译失败；改为引用 Zend/zend_smart_string.h",
+      "reference": "https://github.com/websupport-sk/pecl-memcache/commit/a743dc843bb487513386d31eb9481bd6a6825087",
+      "regression": "构建：git apply --check 后应用并编译 memcache 8.2；tests/verify.py：MEMCACHE=enable 加载及 memcache 版本 8.2；tests/verify-services.py：Memcache/Memcached 真实读写"
+    }
+  ]
+}

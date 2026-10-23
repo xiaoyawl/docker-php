@@ -1,0 +1,16 @@
+--- a/ext/mysqlnd/mysqlnd_wireprotocol.c
++++ b/ext/mysqlnd/mysqlnd_wireprotocol.c
+@@ -129,8 +129,12 @@
+ 			return MYSQLND_INVALID_NET_FIELD_LENGTH;
+ 		case 254:
+ 			if (EXPECTED(remaining_size >= 9)) {
++				const uint64_t length = uint8korr(p+1);
+ 				(*packet) += 9;
+-				return (zend_ulong) uint4korr(p+1);
++				if (UNEXPECTED(length >= (uint64_t) MYSQLND_INVALID_NET_FIELD_LENGTH)) {
++					return MYSQLND_INVALID_NET_FIELD_LENGTH - 1;
++				}
++				return (zend_ulong) length;
+ 			}
+ 			return MYSQLND_INVALID_NET_FIELD_LENGTH;
+ 		default:
