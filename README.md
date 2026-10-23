@@ -2,7 +2,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.2.35-777BB4)
 ![Alpine](https://img.shields.io/badge/Alpine-3.24-0D597F)
-![架构](https://img.shields.io/badge/架构-amd64-blue)
+![架构](https://img.shields.io/badge/架构-amd64%20%7C%20arm64-blue)
 ![维护状态](https://img.shields.io/badge/上游-安全支持至%202026--12--31-F28D1A)
 
 本分支 `php-8.2.35` 构建 `benyoo/php-alpine:8.2.35.<构建日>-<变体>`：基于 Alpine 3.24 从源码编译 PHP 8.2.35，包含官方安全修复与本地加固补丁、现代依赖适配、常用数据库与缓存扩展、官方 Loader，并在构建时更新 CA 信任库。
@@ -82,8 +82,8 @@ PDO 驱动：dblib / mysql / odbc / pgsql / sqlite；DBA 处理器：gdbm / cdb 
 | zstd | 0.18.0 | `ZSTD` | 链接系统 libzstd |
 | imagick | 3.8.1 | `IMAGICK` | 运行镜像含 imagemagick 格式模块 |
 | FFI | 8.2.35 | `FFI` | PHP 内置，以共享模块编译；开启时同时设置 `ffi.enable=1` |
-| ionCube Loader | 15.5.1 | `IONCUBE` | 官方 musl 版，无需 gcompat 预加载；与 Xdebug 互斥 |
-| SourceGuardian Loader | 17.0.0 | `SOURCEGUARDIAN` | 官方 glibc 版，依赖 gcompat 与 libudev-zero |
+| ionCube Loader | 15.5.1 | `IONCUBE` | 官方 musl 版，无需 gcompat 预加载；与 Xdebug 互斥；arm64 使用官方 aarch64 glibc 版，启用时预加载 gcompat |
+| SourceGuardian Loader | 17.0.0 | `SOURCEGUARDIAN` | 官方 glibc 版，依赖 gcompat 与 libudev-zero；arm64 使用官方 aarch64 版 |
 
 扩展的版本、编译参数与开关统一定义在 [`config/extensions.json`](config/extensions.json)，源码摘要见 [`sources.lock.json`](sources.lock.json)。
 
@@ -168,9 +168,10 @@ PDO 驱动：dblib / mysql / odbc / pgsql / sqlite；DBA 处理器：gdbm / cdb 
 | `libgd/` | 补丁版 libgd 的源码锁与补丁 |
 
 ```bash
-# 在指定的远程 Linux 构建节点执行（只构建 amd64，不推送）
-bash scripts/build-image.sh       # 产物：artifacts/<变体>/php-8.2.35-amd64.oci.tar
-bash scripts/verify-artifact.sh   # 全套验收：功能、扩展、数据库与缓存真实读写、TLS/CA、FPM 生命周期、扫描、上游 PHPT
+# 在指定的远程 Linux 构建节点执行（默认 linux/amd64,linux/arm64，不推送；PLATFORMS 可只构建部分架构）
+bash scripts/build-image.sh       # 产物：artifacts/<变体>/php-8.2.35.oci.tar（多架构 OCI 索引）
+bash scripts/verify-artifact.sh   # 按架构全套验收：功能、扩展、数据库与缓存真实读写、TLS/CA、FPM 生命周期、扫描、上游 PHPT
+printf '%s' "$令牌" | DOCKERHUB_USER=benyoo bash scripts/push-image.sh   # 原样推送已验收归档并核对仓库端摘要
 ```
 
 ## 目录与维护说明
@@ -200,14 +201,16 @@ bash scripts/verify-artifact.sh   # 全套验收：功能、扩展、数据库�
 
 ## 验收结果
 
-最近一次构建（2026-10-23，amd64）：
+最近一次构建（2026-10-23，linux/amd64 与 linux/arm64，两种架构分别验收）：
 
-| 镜像 | OCI SHA-256 | 清单摘要 | 大小 | Trivy |
-|---|---|---|---|---|
-| `benyoo/php-alpine:8.2.35.20261023-swoole5` | `d36f09f2c81fe28743b34866977f91caa0b6b9f5792f9e80f585f13de1e1b504` | `sha256:9310bfa2315848895636eb64fa08980e6b29ef17bf93558fc55a57e0357313a9` | 约 122 MB | 0 |
-| `benyoo/php-alpine:8.2.35.20261023-swoole6` | `fd16f03bed60dcfdbd5ef26aa0c782f97b92fee2d4cdc69aa1c1618ae92086c4` | `sha256:737eec5df8ed42c8026e1949921c24aca7e70c5c75c46a2cfb2d8f21e99d7daa` | 约 122 MB | 0 |
+| 镜像标签（已推送） | 索引摘要（仓库端与归档一致） | amd64 清单 | arm64 清单 | 压缩层 amd64 / arm64 | OCI 归档 SHA-256 |
+|---|---|---|---|---|---|
+| `benyoo/php-alpine:8.2.35.20261023-swoole5` | `sha256:5f640857d133a6f1903c57b3deae84fcde09792f7c8d486ae3c23865dd950b5e` | `sha256:3aecbcb30521614d8cd5a3b9ada29488dc02a091e7ddfda48ef12a1f2ecfccd2` | `sha256:d03860219b5a50537591bffe4fa69f179cd056f4402d85219cc0901bb8e2fe46` | 约 122 / 121 MB | `955403833d7da052ea7842931100df6c3afcb4a06f5e14b3369810b625021585` |
+| `benyoo/php-alpine:8.2.35.20261023-swoole6` | `sha256:f9511f195a4fbfe133e6195ba35a899a4d2c4c066b0aa03d5db3c48ef32bb918` | `sha256:8fe6b79f86377334556af37983efa2bff22f1597a3260a12123b749277c4b81e` | `sha256:e93ec3c8dabbb3b335e0237072747f8277d3963aee456f53e8cc5e64026c3758` | 约 122 / 121 MB | `d616019f3b497333ff3e5a9c247066dd8e8436e74e2c2805b59e4a70876e6214` |
+
+无后缀标签 `benyoo/php-alpine:8.2.35.20261023` 是 swoole6 标签的别名，指向同一索引摘要。
+
+Trivy 扫描（每个变体与架构）：swoole5、swoole6 的 amd64 与 arm64 均为 0 项。
 
 - **全套验收通过（每个变体）**：PHP 版本与 65 个原生模块；扩展与 Loader 版本逐项核对；默认关闭与开关加载、不支持的开关报错；libgd 旋转回归 210 组且链接 `/opt/libgd`、未安装系统 libgd；可选扩展离线功能（含 FFI、Imagick、APCu、zstd、Event）；git 与 Composer（默认禁用函数下执行成功，业务禁用保持）；Swoole TCP 服务与客户端收发、Xdebug 3 覆盖率与跟踪；MySQL / PostgreSQL / Redis / Memcache / Memcached 真实读写；MongoDB 8.0 认证与读写；Redis 公开接口与基线一致；安全冒烟、31 项 MySQL 协议回归、HTTP 凭据 / 重定向 / 响应头、SOAP、CGI；TLS 与 CA（新增 CA 后信任、错误主机名与 SAN 不匹配拒绝、wildcard 边界）；FPM 同 worker 请求、内存耗尽后恢复、重启与退出；Trivy 扫描 0 项（扫描器无法识别自编译 PHP 与闭源 Loader，0 项不等于没有漏洞）。
-- **上游 PHPT**（官方 `run-tests.php`，nobody 用户、断网，`swoole5` 变体的构建阶段）：共 572 个用例（补丁附带 1 个 + 上游安全回归、FPM 安全、mysqlnd GHSA-r6x9、PCRE、GD 全套），通过 497、失败 8、跳过 67、XFAIL 0。**安全回归用例 0 失败**。失败项逐项核实，均为外部 libgd 2.3.3 / FreeType 与 PHP 内置 GD 的数值差异，没有崩溃：`bug43073.phpt`、`bug48732-mb.phpt`、`bug48732.phpt`、`bug48801-mb.phpt`、`bug48801.phpt`、`bug53504.phpt`、`bug65148.phpt`、`bug73272.phpt`。跳过原因：requires bundled GD library 22 项；test requires GD 2.3.2 or older 20 项；Run only on Windows 6 项；upstream bugfix has not been released 3 项；resource-heavy test 3 项；slow test 3 项；setlocale() is broken /w musl 2 项；IPv6 is not supported. 2 项；only for external libgd < 2.2.4 1 项；windows only test 1 项；function only available in bundled, external GD detected 1 项；windows only 1 项；Required extension missing: zend_test 1 项；Windows only 1 项。
-
-镜像摘要在推送后补充。
+- **上游 PHPT**（官方 `run-tests.php`，nobody 用户、断网，`swoole5` 变体的构建阶段）：linux/amd64 与 linux/arm64 结果相同、失败清单一致，没有 arm64 独有失败；共 572 个用例（补丁附带 1 个 + 上游安全回归、FPM 安全、mysqlnd GHSA-r6x9、PCRE、GD 全套），通过 497、失败 8、跳过 67、XFAIL 0。**安全回归用例 0 失败**。失败项逐项核实，均为外部 libgd 2.3.3 / FreeType 与 PHP 内置 GD 的数值差异，没有崩溃：`bug43073.phpt`、`bug48732-mb.phpt`、`bug48732.phpt`、`bug48801-mb.phpt`、`bug48801.phpt`、`bug53504.phpt`、`bug65148.phpt`、`bug73272.phpt`。跳过原因：requires bundled GD library 22 项；test requires GD 2.3.2 or older 20 项；Run only on Windows 6 项；upstream bugfix has not been released 3 项；resource-heavy test 3 项；slow test 3 项；setlocale() is broken /w musl 2 项；IPv6 is not supported. 2 项；only for external libgd < 2.2.4 1 项；windows only test 1 项；function only available in bundled, external GD detected 1 项；windows only 1 项；Required extension missing: zend_test 1 项；Windows only 1 项。
