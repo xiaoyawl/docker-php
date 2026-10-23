@@ -1,0 +1,13 @@
+From: LookBack <mondeolove@gmail.com>
+Subject: Keep PHP7.4 enchant_dict_is_in_session alias with Enchant2
+
+--- a/ext/enchant/enchant.c
++++ b/ext/enchant/enchant.c
+@@ -138,6 +138,7 @@
+ 	PHP_FE(enchant_dict_add, 	arginfo_enchant_dict_check)
+ 	PHP_FALIAS(enchant_dict_add_to_personal, 	enchant_dict_add, 	arginfo_enchant_dict_check)
+ 	PHP_FE(enchant_dict_add_to_session, 	arginfo_enchant_dict_check)
++	PHP_FALIAS(enchant_dict_is_in_session, enchant_dict_is_added, arginfo_enchant_dict_check)
+ 	PHP_FE(enchant_dict_is_added, 		arginfo_enchant_dict_check)
+ 	PHP_FE(enchant_dict_store_replacement, 	arginfo_enchant_dict_store_replacement)
+ 	PHP_FE(enchant_dict_get_error, 			arginfo_enchant_broker_free_dict)

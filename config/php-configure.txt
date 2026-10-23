@@ -1,0 +1,84 @@
+# PHP 7.4.33 configure 参数（一行一项，# 为注释）。各分支只在本文件体现 configure 差异。
+# 安装布局与 SAPI（U1：保留 GNU 布局、PIC 与共享库）
+--prefix=/usr/local/php
+--with-config-file-path=/usr/local/php/etc
+--with-config-file-scan-dir=/usr/local/php/etc/php.d
+--with-layout=GNU
+--enable-fpm
+--with-fpm-user=www
+--with-fpm-group=www
+--enable-cli
+--enable-cgi
+--enable-opcache
+--disable-debug
+--disable-rpath
+--with-pic
+--enable-shared
+# 数据库：mysqlnd 系列、SQLite、PostgreSQL、ODBC、FreeTDS（7.4 起改用 pkg-config，不再带路径）
+--with-mysqli=mysqlnd
+--with-pdo-mysql=mysqlnd
+--with-sqlite3
+--with-pdo-sqlite
+--with-pgsql
+--with-pdo-pgsql
+--with-unixODBC
+--with-pdo-odbc=unixODBC,/usr
+--with-pdo-dblib
+# 编码与文本：GNU libiconv、系统 PCRE2 与 Oniguruma、ICU、拼写与整理
+--with-iconv=/opt/libiconv
+--with-external-pcre
+--enable-mbstring
+--enable-mbregex
+--enable-intl
+--with-gettext
+--with-enchant
+--with-pspell
+--with-tidy
+# 图像：外部补丁版 libgd（/opt/libgd，经 pkg-config 发现）；U3 WebP（7.4+）/ AVIF（8.1+），U4 jis-conv
+--enable-gd
+--with-external-gd
+--with-freetype
+--with-jpeg
+--with-xpm
+--with-webp
+--enable-gd-jis-conv
+--enable-exif
+# XML 与 Web 服务（xmlrpc 在 PHP 8.0 上游移出核心）
+--with-xsl
+--enable-soap
+--with-xmlrpc
+# 网络、加密与压缩（U2：保留 mhash；U3：argon2 7.2+）
+--with-openssl
+--with-curl
+--enable-ftp
+--enable-sockets
+--with-imap
+--with-imap-ssl
+--with-ldap
+--with-ldap-sasl
+--with-snmp
+--with-mhash
+--with-sodium
+--with-password-argon2
+--with-zlib
+--with-bz2
+--with-zip
+# 数据存储（DBA；U2：保留 db4）
+--enable-dba
+--with-db4=/usr
+--with-gdbm=/usr
+--with-cdb
+--enable-inifile
+--enable-flatfile
+# 进程、IPC 与其它；FFI 以共享模块编译，入口开关 FFI 默认关闭
+--enable-fileinfo
+--enable-bcmath
+--with-gmp
+--enable-calendar
+--enable-pcntl
+--enable-shmop
+--enable-sysvsem
+--enable-sysvmsg
+--enable-sysvshm
+--with-readline
+--with-ffi=shared

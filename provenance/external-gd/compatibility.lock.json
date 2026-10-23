@@ -1,0 +1,28 @@
+{
+  "php": "7.4.33",
+  "patches": [
+    {
+      "file": "0906-external-gd-bicubic-compatibility.patch",
+      "sha256": "380eaa6e22df7e9d9728857793ea53882d910d96f030c0f2758026a520ce3cc8",
+      "reason": "外部GD2.3.3遗漏BICUBIC模式，按官方修复兼容；仅系统函数拒绝该两模式才回退"
+    },
+    {
+      "file": "0910-php74-soap-heavy-test-helper-api.patch",
+      "sha256": "ea038ff983776cefd2e549f80a518b61aa05b75162d5a3b82bce83c4412b7190",
+      "reason": "7.4 http_server_skipif必须socket参数，避免SKIPIF参数异常被旧runner隐藏，导致资源保护未执行"
+    }
+  ],
+  "upstream": {
+    "commit": "a5f5698a6832fc1f8179a9257f0b91c9a8ef496b",
+    "original_commit": "39abd7238cea2ba8baa4bcac1d6fc01c6cb8afab",
+    "url": "https://github.com/libgd/libgd/commit/a5f5698a6832fc1f8179a9257f0b91c9a8ef496b.patch",
+    "file": "upstream-libgd-a5f5698.patch",
+    "sha256": "d7902b7245023ae36b15bccd9742b24f8c96d84c51aae81fd7b61018ef5d02b4"
+  },
+  "license": {
+    "url": "https://raw.githubusercontent.com/libgd/libgd/a5f5698a6832fc1f8179a9257f0b91c9a8ef496b/COPYING",
+    "file": "libgd-COPYING",
+    "sha256": "005f4b6b0141d1bd11d371bbf7d4f67947f85a4906b7f5465f942204cf918ba3"
+  },
+  "validation": "修前真实原生PHPT imagescale_preserve_ratio/bug79676失败；修后待增量构建与回归"
+}
