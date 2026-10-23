@@ -3,7 +3,7 @@
 # 项目：LookBack PHP Alpine 镜像（全版本统一模板）
 # 维护者：LookBack <mondeolove@gmail.com>
 # 仓库：https://git.dwhd.org/lookback/docker-php
-# 用途：提供 PHP CLI/FPM/CGI、常用数据库与缓存扩展、官方 Loader；当前仅构建 amd64。
+# 用途：提供 PHP CLI/FPM/CGI、常用数据库与缓存扩展、官方 Loader；构建 amd64 与 arm64。
 # 版本：PHP 版本、扩展、Loader 与 Swoole 变体见 config/extensions.json；
 #       configure 参数见 config/php-configure.txt；依赖包见 config/*-packages.txt。
 # 安全范围：可信安全回补、现代依赖适配与 CA 更新；EOL 版本不等于获得官方安全支持。
@@ -22,6 +22,8 @@ SHELL ["/bin/bash", "-c"]
 ARG BUILD_JOBS=2
 # 镜像变体后缀（如 -swoole6），无后缀时为 -；决定编译哪个 Swoole 版本。
 ARG VARIANT_SUFFIX=-
+# 目标架构由 buildx 自动传入（amd64 / arm64），用于选择对应架构的官方 Loader。
+ARG TARGETARCH
 
 # 编译工具、校验工具及各扩展开发包只安装在构建阶段，包清单见 config/build-packages.txt。
 # apk 使用基础镜像的 v3.24 软件源；实际解析版本记录在镜像 /usr/local/php/build-apk-packages.txt。
@@ -46,7 +48,7 @@ COPY patches ./patches
 COPY provenance ./provenance
 COPY scripts/manifest.py scripts/verify-provenance.py scripts/prepare-sources.py scripts/build-php.sh ./scripts/
 RUN --mount=type=cache,id=lookback-php-sources,target=/build/.cache/sources \
-    python3 scripts/verify-provenance.py && python3 scripts/prepare-sources.py \
+    python3 scripts/verify-provenance.py && TARGETARCH=${TARGETARCH} python3 scripts/prepare-sources.py \
     && BUILD_JOBS=${BUILD_JOBS} bash scripts/build-php.sh
 
 # 单独构建 PECL 扩展与 Loader，复用已验证的 PHP 内核构建层；
@@ -54,7 +56,7 @@ RUN --mount=type=cache,id=lookback-php-sources,target=/build/.cache/sources \
 COPY extension-patches.lock.json ./
 COPY extension-patches ./extension-patches
 COPY scripts/build-extensions.sh ./scripts/
-RUN VARIANT_SUFFIX=${VARIANT_SUFFIX} BUILD_JOBS=${BUILD_JOBS} bash scripts/build-extensions.sh
+RUN TARGETARCH=${TARGETARCH} VARIANT_SUFFIX=${VARIANT_SUFFIX} BUILD_JOBS=${BUILD_JOBS} bash scripts/build-extensions.sh
 
 # 系统 tzdata 不会替换 PHP 内嵌时区库，单独构建官方时区数据库并默认加载。
 COPY timezonedb.lock.json ./
@@ -73,7 +75,7 @@ LABEL org.opencontainers.image.title="LookBack PHP ${PHP_VERSION} 镜像" \
     org.opencontainers.image.authors="LookBack <mondeolove@gmail.com>" \
     org.opencontainers.image.source="https://git.dwhd.org/lookback/docker-php" \
     org.opencontainers.image.version="${IMAGE_TAG}" \
-    org.opencontainers.image.description="PHP ${PHP_VERSION}，可信安全回补、CA 更新、常用扩展与官方 Loader；amd64"
+    org.opencontainers.image.description="PHP ${PHP_VERSION}，可信安全回补、CA 更新、常用扩展与官方 Loader；amd64/arm64"
 
 # 保留历史安装目录与命令路径；GNU libiconv（如有）使用独立库目录，无全局 LD_PRELOAD。
 ENV INSTALL_DIR=/usr/local/php \
