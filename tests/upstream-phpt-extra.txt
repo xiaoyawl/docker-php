@@ -1,0 +1,8 @@
+# 上游 PHPT 额外用例清单（相对 PHP 源码根目录，支持目录与通配符，# 为注释）。
+# 补丁序列附带的 .phpt 会自动收集，无需在此列出；以下为原有运行器的额外范围。
+# GD：本镜像使用补丁版外部 libgd，需全量回归与 PHP 内置 GD 的差异。
+ext/gd/tests
+# PCRE：系统 PCRE2，原 7.4–8.1 运行器全量回归。
+ext/pcre/tests
+# mysqlnd 安全回补（GHSA-r6x9 等）附带的伪服务端用例，显式列出便于核对。
+ext/mysqli/tests/ghsa-*.phpt

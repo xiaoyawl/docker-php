@@ -1,0 +1,4 @@
+# 补丁必须保留原始上下文和字节摘要，不按普通源码行检查补丁文本的缩进。
+*.patch -whitespace
+# Markdown 行尾双空格表示换行；其余源码继续使用 Git 默认空白检查。
+*.md whitespace=-blank-at-eol

@@ -1,0 +1,30 @@
+{
+  "version": "2.5.6",
+  "reason": "PECL mongodb2.5.5随包省略C驱动独立license/notices，从对应官方tag补保留",
+  "files": [
+    {
+      "path": "COPYING",
+      "url": "https://raw.githubusercontent.com/mongodb/mongo-c-driver/2.5.6/COPYING",
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "size": 10174
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES",
+      "url": "https://raw.githubusercontent.com/mongodb/mongo-c-driver/2.5.6/THIRD_PARTY_NOTICES",
+      "sha256": "2f397b6b524dadf7385fc0fac003fd713781cf84adb146fd85eecd8351defbe5",
+      "size": 8959
+    },
+    {
+      "path": "src/libbson/THIRD_PARTY_NOTICES",
+      "url": "https://raw.githubusercontent.com/mongodb/mongo-c-driver/2.5.6/src/libbson/THIRD_PARTY_NOTICES",
+      "sha256": "2dd83c6556d2306093c2d4fcb5bce6fde23d26195a6e8f695f96dbc7d8a2efea",
+      "size": 1275
+    },
+    {
+      "path": "src/libmongoc/THIRD_PARTY_NOTICES",
+      "url": "https://raw.githubusercontent.com/mongodb/mongo-c-driver/2.5.6/src/libmongoc/THIRD_PARTY_NOTICES",
+      "sha256": "17b2daac1485adea3a60d8a11ce780aa267dfc904d71e0fa5ab18e9165405f72",
+      "size": 1450
+    }
+  ]
+}

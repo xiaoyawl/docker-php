@@ -1,0 +1,50 @@
+Subject: 按libgd官方#847修复补外部BICUBIC模式兼容
+
+--- a/ext/gd/gd.c
++++ b/ext/gd/gd.c
+@@ -74,6 +74,23 @@
+ # include <gdfontl.h>  /* 4 Large font */
+ # include <gdfontg.h>  /* 5 Giant font */
+ #endif
++
++/* External libgd 2.3.3 misses the upstream #847 compatibility methods.
++ * Adapted from libgd a5f5698a6832fc1f8179a9257f0b91c9a8ef496b;
++ * original patch and COPYING are retained with the build provenance. */
++static int php_gd_set_interpolation_method(gdImagePtr im, gdInterpolationMethod method)
++{
++	int result = gdImageSetInterpolationMethod(im, method);
++#ifndef HAVE_GD_BUNDLED
++	if (!result && im && (method == GD_BICUBIC || method == GD_BICUBIC_FIXED)) {
++		/* Dedicated bicubic scaling does not require an interpolation filter. */
++		im->interpolation = NULL;
++		im->interpolation_id = method;
++		return 1;
++	}
++#endif
++	return result;
++}
+ 
+ #if defined(HAVE_GD_FREETYPE) && defined(HAVE_GD_BUNDLED)
+ # include <ft2build.h>
+@@ -3788,10 +3805,10 @@
+ 
+ 	/* gdImageGetInterpolationMethod() is only available as of GD 2.1.1 */
+ 	old_method = im->interpolation_id;
+-	if (gdImageSetInterpolationMethod(im, method)) {
++	if (php_gd_set_interpolation_method(im, method)) {
+ 		im_scaled = gdImageScale(im, new_width, new_height);
+ 	}
+-	gdImageSetInterpolationMethod(im, old_method);
++	php_gd_set_interpolation_method(im, old_method);
+ 
+ 	if (im_scaled == NULL) {
+ 		RETURN_FALSE;
+@@ -4072,7 +4089,7 @@
+ 	if (method == -1) {
+ 		 method = GD_BILINEAR_FIXED;
+ 	}
+-	RETURN_BOOL(gdImageSetInterpolationMethod(im, (gdInterpolationMethod) method));
++	RETURN_BOOL(php_gd_set_interpolation_method(im, (gdInterpolationMethod) method));
+ }
+ /* }}} */
+ 
