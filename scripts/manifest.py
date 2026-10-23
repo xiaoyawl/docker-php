@@ -10,12 +10,20 @@
 # @License  : (C) Copyright 2013-2026, DSTW Corporation Limited.
 # @Contact  : admin@dstw.com
 import json
+import os
 import sys
 from pathlib import Path
 
 root = Path(__file__).resolve().parent.parent
 manifest = json.loads((root / 'config/extensions.json').read_text(encoding='utf-8'))
 lock = json.loads((root / 'sources.lock.json').read_text(encoding='utf-8'))
+# 目标架构：构建时由 buildx 的 TARGETARCH 传入，测试时由平台参数推得；未设置时按 amd64 处理。
+arch = os.environ.get('TARGETARCH') or 'amd64'
+
+
+def for_arch(items):
+    # 未声明 arch 的条目适用于所有架构；声明了的只在对应架构生效。
+    return [item for item in items if item.get('arch', arch) == arch]
 
 
 def php_version():
@@ -46,7 +54,7 @@ def lines(path):
 def extension_rows():
     # 输出给 entrypoint.sh 的竖线分隔清单：开关、类型、加载值、额外 ini（以 \x1f 分隔）、预加载库、互斥开关。
     rows = []
-    for item in manifest['loaders']:
+    for item in for_arch(manifest['loaders']):
         rows.append(['loader', item['switch'], 'zend' if item['zend'] else 'extension', item['path'],
             '', item.get('preload', ''), item.get('conflicts', '')])
     rows.append(['opcache', 'OPCACHE', 'zend', 'builtin' if manifest['opcache']['builtin'] else 'opcache.so', '', '', ''])
@@ -82,8 +90,8 @@ def expected_versions(suffix):
         if package == 'variant':
             package = variant(suffix)[item['name']]
         result[item['name']] = package.split('-', 1)[1]
-    versions = {item['name']: item['version'] for item in lock.get('binary_loaders', [])}
-    for item in manifest['loaders']:
+    versions = {item['name']: item['version'] for item in for_arch(lock.get('binary_loaders', []))}
+    for item in for_arch(manifest['loaders']):
         result[item['module']] = versions[item['name']]
     return result
 
@@ -94,7 +102,8 @@ commands = {
     'variants': lambda args: print('\n'.join(item['suffix'] or '-' for item in manifest['variants'])),
     'opcache-builtin': lambda args: print('1' if manifest['opcache']['builtin'] else '0'),
     'composer-file': lambda args: print(manifest['tools']['composer']),
-    'switches': lambda args: print(' '.join(sorted({i['switch'] for i in manifest['extensions']} | {i['switch'] for i in manifest['loaders']}))),
+    'switches': lambda args: print(' '.join(sorted({i['switch'] for i in manifest['extensions']} | {i['switch'] for i in for_arch(manifest['loaders'])}))),
+    'loaders': lambda args: print(json.dumps(for_arch(manifest['loaders']), ensure_ascii=False)),
     'configure-args': lambda args: print('\n'.join(lines('config/php-configure.txt'))),
     'build-packages': lambda args: print(' '.join(lines('config/build-packages.txt'))),
     'runtime-packages': lambda args: print(' '.join(lines('config/runtime-packages.txt'))),

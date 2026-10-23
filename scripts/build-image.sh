@@ -4,7 +4,7 @@
 # @Author   : LookBack
 # @Project  : docker-php
 # @File     : build-image.sh
-# @Desc     : 在远程 Linux 构建节点按 config/extensions.json 的变体逐个生成 amd64 OCI 镜像，不自动发布。
+# @Desc     : 在远程 Linux 构建节点按 config/extensions.json 的变体逐个生成多架构（默认 amd64、arm64）OCI 镜像，不自动发布。
 # @Contact  : admin@dstw.com
 set -Eeuo pipefail
 [[ $(uname -s) == Linux ]] || { echo '请在指定远程 Linux 构建节点运行，禁止自动改为本机构建。' >&2; exit 1; }
@@ -12,7 +12,9 @@ cd "$(dirname "$0")/.."
 manifest() { python3 scripts/manifest.py "$@"; }
 php_version=$(manifest php-version)
 build_date=${BUILD_DATE:-$(TZ=Asia/Shanghai date +%Y%m%d)}
-builder=${BUILDX_BUILDER:-default}
+# 多架构构建需要 docker-container 驱动的构建器（arm64 经 QEMU 构建）；可用 PLATFORMS 只构建部分架构。
+builder=${BUILDX_BUILDER:-dstw-builder}
+platforms=${PLATFORMS:-linux/amd64,linux/arm64}
 docker buildx inspect "$builder" >/dev/null
 # 可用 VARIANTS 环境变量只构建指定变体（以空格分隔，无后缀写 -）。
 variants=${VARIANTS:-$(manifest variants | tr '\n' ' ')}
@@ -25,7 +27,7 @@ for variant in $variants; do
     mkdir -p "$output"
     echo "构建 PHP $php_version 变体 $label：$image"
     docker buildx build --builder "$builder" \
-        --platform linux/amd64 \
+        --platform "$platforms" \
         --build-arg BUILD_JOBS="${BUILD_JOBS:-2}" \
         --build-arg BUILD_DATE="$build_date" \
         --build-arg PHP_VERSION="$php_version" \
@@ -33,10 +35,11 @@ for variant in $variants; do
         --build-arg VARIANT_SUFFIX="$variant" \
         --progress plain --provenance=mode=min --sbom=true \
         --metadata-file "$output/build-metadata.json" \
-        --output type=oci,dest="$output/php-$php_version-amd64.oci.tar" \
+        --output type=oci,dest="$output/php-$php_version.oci.tar" \
         -t "$image" .
-    (cd "$output" && sha256sum "php-$php_version-amd64.oci.tar" > "php-$php_version-amd64.oci.tar.sha256")
+    (cd "$output" && sha256sum "php-$php_version.oci.tar" > "php-$php_version.oci.tar.sha256")
+    echo "$platforms" > "$output/platforms.txt"
     echo "$image" > "$output/image-tag.txt"
-    echo "变体 $label 的 amd64 OCI 镜像已生成：$output/php-$php_version-amd64.oci.tar（尚未推送）"
+    echo "变体 $label 的多架构 OCI 镜像（$platforms）已生成：$output/php-$php_version.oci.tar（尚未推送）"
 done
 echo '全部变体构建完成，尚未推送镜像仓库。'
