@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "php": "8.0.30",
+  "native_modules": [
+    "Core",
+    "date",
+    "libxml",
+    "openssl",
+    "pcre",
+    "sqlite3",
+    "zlib",
+    "bcmath",
+    "bz2",
+    "calendar",
+    "ctype",
+    "curl",
+    "dba",
+    "dom",
+    "enchant",
+    "hash",
+    "fileinfo",
+    "filter",
+    "ftp",
+    "gd",
+    "gettext",
+    "gmp",
+    "SPL",
+    "iconv",
+    "session",
+    "intl",
+    "json",
+    "ldap",
+    "mbstring",
+    "standard",
+    "mysqlnd",
+    "odbc",
+    "pcntl",
+    "mysqli",
+    "PDO",
+    "pdo_dblib",
+    "pdo_mysql",
+    "PDO_ODBC",
+    "pdo_pgsql",
+    "pdo_sqlite",
+    "pgsql",
+    "Phar",
+    "posix",
+    "pspell",
+    "readline",
+    "Reflection",
+    "imap",
+    "shmop",
+    "SimpleXML",
+    "snmp",
+    "soap",
+    "sockets",
+    "sodium",
+    "exif",
+    "sysvmsg",
+    "sysvsem",
+    "sysvshm",
+    "tidy",
+    "tokenizer",
+    "xml",
+    "xmlreader",
+    "xmlwriter",
+    "xsl",
+    "zip"
+  ],
+  "comment": "本文件是分支的版本差异清单：扩展、开关、编译参数与 Loader 均在此定义，脚本不写死版本信息。",
+  "opcache": {
+    "builtin": false
+  },
+  "fpm": {
+    "oom_worker_exits": true,
+    "oom_reason": "Surý 补丁 0137（CVE-2026-109618/109619 的回补）在内存耗尽路径调用 _exit(1)，由 FPM master 补充新 worker；旧版 verify.py 已实测 pid 变化"
+  },
+  "tools": {
+    "composer": "composer-2.10.3.phar",
+    "composer_reason": "PHP 7.2 起的分支使用 Composer 最新稳定版",
+    "packages": "git 与 ssh 客户端见 config/runtime-packages.txt"
+  },
+  "variants": [
+    {
+      "suffix": "swoole5",
+      "swoole": "swoole-5.1.8"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "memcache",
+      "package": "memcache-8.2",
+      "switch": "MEMCACHE",
+      "configure": [],
+      "ini": []
+    },
+    {
+      "name": "memcached",
+      "package": "memcached-3.4.0",
+      "switch": "MEMCACHE",
+      "configure": [
+        "--enable-memcached-sasl"
+      ],
+      "ini": [
+        "memcached.use_sasl=1"
+      ]
+    },
+    {
+      "name": "redis",
+      "package": "redis-6.3.0",
+      "switch": "REDIS",
+      "configure": [
+        "--enable-redis-session",
+        "--disable-redis-igbinary",
+        "--disable-redis-lzf"
+      ],
+      "ini": [],
+      "reason": "保留 Session 支持与默认存储格式，不引入额外序列化扩展"
+    },
+    {
+      "name": "swoole",
+      "package": "variant",
+      "switch": "SWOOLE",
+      "configure": [
+        "--enable-openssl",
+        "--enable-sockets",
+        "--enable-swoole-curl",
+        "--enable-mysqlnd"
+      ],
+      "ini": [],
+      "reason": "U6：统一为该 Swoole 版本支持的最大公共编译集合（openssl、sockets、curl hook、mysqlnd）"
+    },
+    {
+      "name": "xdebug",
+      "package": "xdebug-3.5.3",
+      "switch": "XDEBUG",
+      "zend": true,
+      "configure": [],
+      "ini": [],
+      "xdebug_ini": [
+        "xdebug.mode=debug",
+        "xdebug.start_with_request=trigger",
+        "xdebug.client_host={host}",
+        "xdebug.client_port={port}",
+        "xdebug.discover_client_host=0",
+        "xdebug.output_dir=/tmp"
+      ]
+    },
+    {
+      "name": "mongodb",
+      "package": "mongodb-1.20.1",
+      "switch": "MONGODB",
+      "configure": [
+        "--with-mongodb-system-libs=yes",
+        "--with-mongodb-client-side-encryption=no"
+      ],
+      "ini": [],
+      "reason": "使用维护中的系统 libmongoc/libbson"
+    },
+    {
+      "name": "zstd",
+      "package": "zstd-0.18.0",
+      "switch": "ZSTD",
+      "configure": [
+        "--with-libzstd"
+      ],
+      "ini": []
+    },
+    {
+      "name": "event",
+      "package": "event-3.1.6",
+      "switch": "EVENT",
+      "configure": [
+        "--with-event-core",
+        "--with-event-extra",
+        "--with-event-openssl"
+      ],
+      "ini": []
+    },
+    {
+      "name": "apcu",
+      "package": "apcu-5.1.28",
+      "switch": "APCU",
+      "configure": [],
+      "ini": []
+    },
+    {
+      "name": "imagick",
+      "package": "imagick-3.8.1",
+      "switch": "IMAGICK",
+      "configure": [
+        "--with-imagick"
+      ],
+      "ini": []
+    },
+    {
+      "name": "ffi",
+      "package": "native",
+      "switch": "FFI",
+      "configure": [],
+      "ini": [
+        "ffi.enable=1"
+      ],
+      "reason": "PHP 7.4 起内置 FFI，以共享模块编译（--with-ffi=shared），默认关闭，开启时授权 ffi.enable=1"
+    }
+  ],
+  "loaders": [
+    {
+      "name": "SourceGuardian Loader",
+      "module": "SourceGuardian",
+      "switch": "SOURCEGUARDIAN",
+      "zend": false,
+      "path": "/usr/local/sourceguardian/ixed.8.0.lin",
+      "preload": "",
+      "conflicts": "",
+      "reason": "官方 glibc 版 Loader，依赖 gcompat 提供的 libc.so.6 与 libudev-zero"
+    }
+  ]
+}

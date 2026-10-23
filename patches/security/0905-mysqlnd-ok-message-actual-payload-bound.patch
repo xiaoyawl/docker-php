@@ -1,0 +1,103 @@
+Subject: MySQLnd实际OK与结果包边界、完整64位长度、保留哨兵、防溢出与非法前缀
+
+--- a/ext/mysqlnd/mysqlnd_wireprotocol.c
++++ b/ext/mysqlnd/mysqlnd_wireprotocol.c
+@@ -31,7 +31,7 @@
+ 
+ /* Bail out unless the packet still has the required number of bytes left to read. */
+ #define BAIL_IF_NOT_ENOUGH_DATA_EX(min_required_bytes) \
+-	if (UNEXPECTED((size_t)(p - begin) + (min_required_bytes) > packet->header.size)) { \
++	if (UNEXPECTED((size_t)(p - begin) > packet->header.size || (size_t)(min_required_bytes) > packet->header.size - (size_t)(p - begin))) { \
+ 		BAIL_PREMATURE_END; \
+ 	}
+ 
+@@ -127,11 +127,18 @@
+ 				return (zend_ulong) uint3korr(p+1);
+ 			}
+ 			return MYSQLND_INVALID_NET_FIELD_LENGTH;
++		case 254:
++			if (EXPECTED(remaining_size >= 9)) {
++				const uint64_t field_length = uint8korr(p+1);
++				/* 0xfb is the only NULL encoding; do not alias reserved length sentinels. */
++				if (UNEXPECTED(field_length >= MYSQLND_INVALID_NET_FIELD_LENGTH)) {
++					return MYSQLND_INVALID_NET_FIELD_LENGTH;
++				}
++				(*packet) += 9;
++				return (zend_ulong) field_length;
++			}
++			return MYSQLND_INVALID_NET_FIELD_LENGTH;
+ 		default:
+-			if (EXPECTED(remaining_size >= 9)) {
+-				(*packet) += 9;
+-				return (zend_ulong) uint4korr(p+1);
+-			}
+ 			return MYSQLND_INVALID_NET_FIELD_LENGTH;
+ 	}
+ }
+@@ -180,12 +187,14 @@
+ 				result.has_value = true;
+ 			}
+ 			return result;
+-		default:
++		case 254:
+ 			if (EXPECTED(remaining_size >= 9)) {
+ 				(*packet) += 9;
+ 				result.value = uint8korr(p+1);
+ 				result.has_value = true;
+ 			}
++			return result;
++		default:
+ 			return result;
+ 	}
+ }
+@@ -801,7 +810,7 @@
+ 			 * could overread the OK packet. Now reading the length won't go out of bounds and we only have
+ 			 * to check whether the message length is in bounds. */
+ 			ZEND_ASSERT((p - buf) <= packet->header.size);
+-			if (packet->header.size - (p - buf) < net_len) {
++			if (net_len == MYSQLND_INVALID_NET_FIELD_LENGTH || packet->header.size - (p - buf) < net_len) {
+ 				DBG_ERR_FMT("OK packet message length is past the packet size");
+ 				php_error_docref(NULL, E_WARNING, "OK packet message length is past the packet size");
+ 				DBG_RETURN(FAIL);
+@@ -956,7 +965,8 @@
+ 		if (UNEXPECTED(net_len == MYSQLND_INVALID_NET_FIELD_LENGTH)) {
+ 			BAIL_PREMATURE_END;
+ 		}
+-		packet->message_len = MIN(net_len, buf_len - (p - begin));
++		BAIL_IF_NOT_ENOUGH_DATA_EX(net_len);
++		packet->message_len = net_len;
+ 		packet->message = mnd_pestrndup((char *)p, packet->message_len, FALSE);
+ 	} else {
+ 		packet->message = NULL;
+@@ -1209,10 +1219,17 @@
+ 			packet->warning_count = uint2korr(p);
+ 			p+=2;
+ 
+-			len = php_mysqlnd_net_field_length(&p, packet->header.size - (p - begin));
++			/* Additional info is optional, but a present malformed prefix is not empty info. */
++			len = 0;
++			if (packet->header.size > (size_t) (p - begin)) {
++				len = php_mysqlnd_net_field_length(&p, packet->header.size - (p - begin));
++				if (UNEXPECTED(len == MYSQLND_INVALID_NET_FIELD_LENGTH)) {
++					BAIL_PREMATURE_END;
++				}
++			}
+ 
+ 			/* Check for additional textual data */
+-			if (len && len != MYSQLND_INVALID_NET_FIELD_LENGTH) {
++			if (len) {
+ 				/* This checks both whether reading the len was successful
+ 				 * and that the len is not greater than the packet size */
+ 				if (packet->header.size - (p - buf) < len) {
+@@ -1380,9 +1397,8 @@
+ 		meta->flags |= NUM_FLAG;
+ 	}
+ 
+-	/* COM_FIELD_LIST is no longer supported so def should not be present */
+-	len = php_mysqlnd_net_field_length(&p, packet->header.size - (p - begin));
+-	if (len < MYSQLND_INVALID_NET_FIELD_LENGTH)
++	/* COM_FIELD_LIST is no longer supported, including malformed default-length trailers. */
++	if ((size_t) (p - begin) < packet->header.size)
+ 	{
+ 		DBG_ERR_FMT("Protocol error. Server sent default for unsupported field list");
+ 		php_error_docref(NULL, E_WARNING,

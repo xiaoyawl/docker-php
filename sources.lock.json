@@ -1,0 +1,526 @@
+{
+  "sources": [
+    {
+      "url": "https://www.php.net/distributions/php-8.0.30.tar.xz",
+      "file": "php-8.0.30.tar.xz",
+      "sha256": "216ab305737a5d392107112d618a755dc5df42058226f1670e9db90e77d777d9"
+    },
+    {
+      "file": "libiconv-1.18.tar.gz",
+      "url": "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.18.tar.gz",
+      "sha256": "3b08f5f4f9b4eb82f151a7040bfd6fe6c6fb922efe4b1659c66ea933276965e8"
+    },
+    {
+      "file": "redis-6.3.0.tgz",
+      "url": "https://pecl.php.net/get/redis-6.3.0.tgz",
+      "sha256": "0d5141f634bd1db6c1ddcda053d25ecf2c4fc1c395430d534fd3f8d51dd7f0b5"
+    },
+    {
+      "file": "memcache-8.2.tgz",
+      "url": "https://pecl.php.net/get/memcache-8.2.tgz",
+      "sha256": "b3f0640eacdeb9046c6c86a1546d7fb8a4e9f219e5d9a36a287e59b2dd8208e5"
+    },
+    {
+      "file": "memcached-3.4.0.tgz",
+      "url": "https://pecl.php.net/get/memcached-3.4.0.tgz",
+      "sha256": "c163434eb0da97c8f45c7ad41d979d381f8b81c49402b1b90b063987fb37972e"
+    },
+    {
+      "file": "xdebug-3.5.3.tgz",
+      "url": "https://pecl.php.net/get/xdebug-3.5.3.tgz",
+      "sha256": "f073de91bea046106abf4d6071c963ea71e58571df6ce58948ceca89d121cb2d"
+    },
+    {
+      "file": "mongodb-1.20.1.tgz",
+      "url": "https://pecl.php.net/get/mongodb-1.20.1.tgz",
+      "sha256": "614e57594918feb621f525e6516d59ce09b78f5172355ba8afb6c2207c1ce900"
+    },
+    {
+      "file": "event-3.1.6.tgz",
+      "url": "https://pecl.php.net/get/event-3.1.6.tgz",
+      "sha256": "5b74554c6370aae8c284c8110fe27e071d3f663953c3eb762ffc429b0a3c83a2"
+    },
+    {
+      "file": "zstd-0.18.0.tgz",
+      "url": "https://pecl.php.net/get/zstd-0.18.0.tgz",
+      "sha256": "223d0f77eb5a5e73cf5e7a0652dd8fde7ffdcc843e7f30eeb3998283dec847b9"
+    },
+    {
+      "file": "apcu-5.1.28.tgz",
+      "url": "https://pecl.php.net/get/apcu-5.1.28.tgz",
+      "sha256": "ca9c1820810a168786f8048a4c3f8c9e3fd941407ad1553259fb2e30b5f057bf"
+    },
+    {
+      "file": "imagick-3.8.1.tgz",
+      "url": "https://pecl.php.net/get/imagick-3.8.1.tgz",
+      "sha256": "3a3587c0a524c17d0dad9673a160b90cd776e836838474e173b549ed864352ee"
+    },
+    {
+      "file": "swoole-5.1.8.tgz",
+      "url": "https://pecl.php.net/get/swoole-5.1.8.tgz",
+      "sha256": "c365ccd37b1804527064325a0d2641d4bc33fda23c5b4660dd840ac24f333aa8"
+    },
+    {
+      "file": "loaders.linux-x86_64.tar.gz",
+      "url": "https://www.sourceguardian.com/loaders/download/loaders.linux-x86_64.tar.gz",
+      "sha256": "aeaf6b5cf8f27ff01fd05affebdec490e6f7a01284c000a63ae3ceb6dcb6e419",
+      "extract_dir": "sourceguardian",
+      "note": "官方下载地址不含版本号；厂商更新后摘要校验会失败并中止构建，需重新审查后更新锁定"
+    },
+    {
+      "file": "composer-2.10.3.phar",
+      "url": "https://getcomposer.org/download/2.10.3/composer.phar",
+      "sha256": "7a2d379d5b8ffdaa028580ef26494c36d2feef4b178d3dd1473a4dbc5e17c8d6",
+      "extract": false,
+      "note": "Composer 最新稳定版 2.10.3（要求 PHP >= 7.2.5）；摘要与官方发布值一致"
+    }
+  ],
+  "patches": [
+    {
+      "file": "compat/0042-Add-minimal-OpenSSL-3.0-patch.patch",
+      "sha256": "ef1499da7f055aeb2fe64d1b5fe753978223e1ed697081483ff9ead42df8f83d",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0043-ax_gcc_func_attribute-Revise-the-detection-of-unknow.patch",
+      "sha256": "5e75a4df9047ea11c81ec68e69e8ba12ce19a5a03a65d40bd8187102e2777695",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0044-Fix-bug-79589-ssl3_read_n-unexpected-eof-while-readi.patch",
+      "sha256": "3383d1881379827e02b42842367666725f4f54f4364d937c6acb0ee67bce84a2",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0045-Fix-GH-10187-Segfault-in-stripslashes-with-arm64.patch",
+      "sha256": "70f253f04f7ce09dc4b8d1931a5ee279678794c28a990b991414f6bc8d256552",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0048-Add-missing-header-includes.patch",
+      "sha256": "0f3ed5af0d703f4696db72d79f7b059589884f60e5882c8edfbc995669638c58",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0049-Fix-GHSA-wpj3-hf5j-x4v4-__Host-__Secure-cookie-bypas.patch",
+      "sha256": "c7467b622836e1f2a57d7d2d37ab9b89eb9d8c634f856f745f8b7bfb17f44f7f",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0051-Fix-bug-GHSA-q6x7-frmf-grcw-password_verify-can-erro.patch",
+      "sha256": "6b371059799c620d6085b9eb7b3069a7c3d2bfb4a0b2f98e9a0eee29d9d8e2f4",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0053-Add-proc_open-escaping-for-cmd-file-execution-Backpo.patch",
+      "sha256": "9135ca7721bea02cc320794c1266a930c1450ef6903f26bf2880cd66956ce7a7",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0055-Fix-GHSA-w8qr-v226-r27w.patch",
+      "sha256": "ca9f086bb59cbdc7876c243ae6d9b13e551dae9921363977671929e9042f6f58",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0057-Fix-GHSA-9fcc-425m-g385-bypass-CVE-2024-1874.patch",
+      "sha256": "10d65d2ff9c3904ece578ab45b4734d937d8dccbd9215bd20b926bc54e58eda4",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0058-Fix-GHSA-3qgc-jrrr-25jv.patch",
+      "sha256": "fdadcefc0329904bc81e4a6d0849e908e144b625053c841dbeef91ffedf8b851",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0060-Fix-GHSA-9pqp-7h25-4f32.patch",
+      "sha256": "fcf959892154efb0ad91d47c22749b6d7518d711a3c092bbf157bc06652aeb74",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0061-Fix-GHSA-p99j-rfp4-xqvq.patch",
+      "sha256": "89557c6b8b2f2a383521118f2344e890c621d8376cfd0668a1ca9ada1f91721a",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0062-Fix-GHSA-94p6-54jq-9mwp.patch",
+      "sha256": "f9f84225d9f87aac7ba9fa62e1d75d1b514e93eda246584e51bbe6ff79d787c4",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0063-Fix-GHSA-865w-9rf3-2wh5-FPM-Logs-from-childrens-may-.patch",
+      "sha256": "32c334048e9324295abe1dc32687ae4a54a1c56ef4d75452b2311c431f0c9b95",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0064-Skip-GHSA-9pqp-7h25-4f32-test-on-Windows.patch",
+      "sha256": "368bfbade24609493b3d20c15625f0f79abad333485befbe8f8441c55547d16b",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0066-Fix-GHSA-5hqh-c84r-qjcv-Integer-overflow-in-the-dbli.patch",
+      "sha256": "cc9923f3ef94a3b74d2b31e4c1adb497416c838507085b8c0065095437882a77",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0067-Fix-GHSA-5hqh-c84r-qjcv-Integer-overflow-in-the-fire.patch",
+      "sha256": "52cb8b0d2ff0f2ec67e533bc5720002c2375997848eea3c35bf290159656a136",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0068-Fix-GHSA-c5f2-jwm7-mmq2-stream-HTTP-fulluri-CRLF-inj.patch",
+      "sha256": "a74bcde2b7bf30ed585c3092b18f66f3806d2a7befe61838b4043e94671372e1",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0069-Fix-GHSA-g665-fm4p-vhff-OOB-access-in-ldap_escape.patch",
+      "sha256": "875f4e77b91472b18e2a674bf89ffdec55691649ef5b966031a66f2eb4a401f5",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0070-Fix-GHSA-r977-prxv-hc43.patch",
+      "sha256": "5a31d70f002318d8186d21b4a37948eae040b120ae953508b4e43a697fac8b70",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0071-Fix-GHSA-4w77-75f9-2c8w.patch",
+      "sha256": "33403e9273fa630c120908ceeeb63b25abe36acc997f3882fd39708685198a7f",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0073-fix-transport_string-release.patch",
+      "sha256": "6b422342056943795b426504f43089e2fc8ae1d8d3cf93b369bda47e853c1db5",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0074-Fix-GHSA-h35g-vwh6-m678-Mysqlnd-various-heap-buffer-.patch",
+      "sha256": "1b3d5370a1de73eb1b12a16283e8b343b43e2ecc28cd7632ce0708382b8c1d0f",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0075-Fix-MySQLnd-possible-buffer-over-read-in-auth_protoc.patch",
+      "sha256": "152ab0fde3cd95c72a666d132aac5873ec84c2a86538a91552047f0e47b8f228",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0076-Change-port-for-mysqli-fake-server-auth-message-test.patch",
+      "sha256": "7466653211a34e08e883e9257bc1d9e3a419bee53b851ed890cf8363ab421003",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0077-Increase-MySQLi-fake-server-read-timeout-for-ASAN-jo.patch",
+      "sha256": "d939bf4936dcd46e7969da1b0036c2a1b16241e2e9e469b67552e32aa943690b",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0078-Avoid-using-uninitialised-struct.patch",
+      "sha256": "a581c6b07c41b53a82c3823df912ec37f860413b43b3ed742b9150dc9cc03bca",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0079-adapt-test-NEWS.patch",
+      "sha256": "3b5949148e6381b8288baf34d4b915d28fce7d200856e62c94f21d242849d698",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0080-Fix-GHSA-ghsa-v8xr-gpvj-cx9g-http-header-folding.patch",
+      "sha256": "9bc93645ae3aed7010f1102f3ba380183e72fc29faee8bf94f6520d28972392c",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0081-Fix-GHSA-pcmh-g36c-qc44-http-headers-without-colon.patch",
+      "sha256": "f9f280a8e788a4a00ea28f024fcd4dd73bf0eb44fd973a163b04bab97ef49c9f",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0082-Fix-GHSA-52jp-hrpf-2jff-http-redirect-location-trunc.patch",
+      "sha256": "74c4a8a03187c4ac2c6a9fa868f174ade13de822a8a3cfe9a9644812a483c745",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0083-Fix-GHSA-hgf5-96fm-v528-http-user-header-check-of-cr.patch",
+      "sha256": "0f33a5b88194b11e669023f21132db426c0624662dd471f2af344410e1b20563",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0084-Fix-GH-11160-Few-tests-failed-building-with-new-libx.patch",
+      "sha256": "9cb0e16396312d781216e96d6a616f47cf47fdd875e8b3876635bd41a151d1c1",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0085-Backport-0a39890c-Fix-libxml2-2.12-build-due-to-API-.patch",
+      "sha256": "a2f3eee81711158aa243feb981f5c8f7fbb8624d25fabf3dcdfdb5058b0b73f2",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0086-Backport-4fe82131-Backport-libxml2-2.13.2-fixes-1481.patch",
+      "sha256": "7e5a3f6cc2a12d16a0a52fb67126112579af4741edc7450cf8ff31c9cc6433d1",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0087-Fix-GHSA-p3x9-6h7p-cgfc-libxml-streams-wrong-content.patch",
+      "sha256": "c79a36817223d2445571ad3f13baa8b7ee3647e87c6064061963b4aecd2d4940",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0088-Fix-GHSA-wg4p-4hqh-c3g9.patch",
+      "sha256": "19d3c47ca5717159249830ff79d712fb699ba1ba2a57ff856c491235231db842",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0089-Fix-GH-12702-libxml2-2.12.0-issue-building-from-src.patch",
+      "sha256": "66018d19e72a888d286e05cf36409ce5cc6bc7a3df8c197f5f498f5470fcdcf2",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0091-Fix-GHSA-453j-q27h-5p8x.patch",
+      "sha256": "9fd84bb837c66cfafbf8c87f33e00dc7e6463009047e79c32fdecb673e3494be",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0092-Fix-GHSA-3cr5-j632-f35r-Null-byte-in-hostnames.patch",
+      "sha256": "9718d8751918203ff987a103d87d75c60cb9a5c9cd0bcac0b3a558f50abf50b5",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0093-Fix-GHSA-hrwm-9436-5mv3-pgsql-escaping-no-error-chec.patch",
+      "sha256": "08fddbf966b043f10f5c82c40142e9074a91315ef34da646b0aae041950905ef",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0095-Fix-GH-20584-Information-Leak-of-Memory.patch",
+      "sha256": "29b594dda5ace4171792c61e82407d20de56729825b40a9936ad21dc429ef9bb",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0096-Only-test-from-code-is-not-affected.patch",
+      "sha256": "bec96896291efe1280ea275bfb5c0927a14ae80dfafbafc67677a457680f9388",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0097-Fix-GHSA-h96m-rvf9-jgm2.patch",
+      "sha256": "cfe87396eaa479458f04bdb73bd5f9f71e75671edb1465a071a0ff440a7c0991",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0098-Fix-GHSA-www2-q4fc-65wf.patch",
+      "sha256": "ac809647a0e00256f13b1b8cf81729a52e15fe34f7f2db81a130f7f065d3aaab",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0101-GHSA-85c2-q967-79q5-soap-Fix-stale-SOAP_GLOBAL-ref_m.patch",
+      "sha256": "d931ac91e1b607a384eb4c5318cdd3c3615f04bf8bc02d1b818e4323fb60280f",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0102-GHSA-m33r-qmcv-p97q-soap-Fix-use-after-free-after-he.patch",
+      "sha256": "edb8b962eb2701af4d185ed660e2e847992052e7edecf91f05797bcbaee4cf87",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0103-GHSA-hmxp-6pc4-f3vv-soap-Fix-broken-Apache-map-value.patch",
+      "sha256": "95c7eafa2193e73a83de79dcee13e21b80e10039e514f602bea38bf99fc0f536",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0104-GHSA-7qg2-v9fj-4mwv-fpm-XSS-within-status-endpoint.patch",
+      "sha256": "efeb564de107f1be50fc08f688b8d49127203c42d1a7e2526a78cbd03c9f00a6",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0105-GHSA-wm6j-2649-pv75-mbstring-Fix-null-pointer-derefe.patch",
+      "sha256": "5cc4bd534c0ae944f7fe53ff00e67295297ce989d4c52e6c7eb2d8c9c3d7b950",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0106-GHSA-96wq-48vp-hh57-metaphone-Fix-signed-integer-ove.patch",
+      "sha256": "65a2f7278fc696bc334fccd03dd4c75839c82410d55d92d9d13925c136543367",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0107-Adjust-credits-for-GHSA-96wq-48vp-hh57.phpt.patch",
+      "sha256": "86bb51a92c285175fddeb01210f87763af6c1b9bad876124876adeed93b5af50",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0108-GHSA-w476-322c-wpvm-pdo_firebird-Fix-SQL-injection-v.patch",
+      "sha256": "2f4230fb1768a8150c6a8661be330dedc44fc440edf933ea697678e87c084726",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0109-GHSA-m8rr-4c36-8gq4-Consistently-pass-unsigned-char-.patch",
+      "sha256": "f8178ee5886079303c28f865ac8f051888ccb3f99fcfdd3527a87f0a121e1fd6",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0111-ext-openssl-openssl_encrypt-zend-mm-heap-overflow-on.patch",
+      "sha256": "ddfb7b17f9a61f314851b8822688ddc3cd634c8fd650f5ad183234328c0a9681",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0112-Fix-heap-buffer-overflow-in-convert-stream-filters-w.patch",
+      "sha256": "bdc01942fb51eff977087cb965dbefa59c79a26c83820695c9c56b52e2980f4f",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0113-libgd-patch-for-CVE-2026-9672.patch",
+      "sha256": "556d4eff74d4a7e3ddf88c2da659c323d092f8e5a9d21d4bbf34ca4ef90fc50b",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0114-Fix-GHSA-62xp-839h-2637-FastCGI-allowed_clients-comp.patch",
+      "sha256": "529486484bcbfd3e322e2f87f6a5b664b718ab1a39ecdc8c7b6968746141edcd",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0115-Fix-SQL-injection-in-ext-pgsql-via-E-.-backslash-bre.patch",
+      "sha256": "f50039d1efffa17b23ddeeabf242f7725bc06e8b269110b1e344272d8c9390ab",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0116-Fix-GHSA-vc5h-9ppw-p5f3-phar-circular-symlink-crash.patch",
+      "sha256": "fcf3f76284de6b25eb6af312de5290b7b2f1db65f0b68c96e853827d99209623",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0117-logtool-changes-from-8.2.patch",
+      "sha256": "af3c01d79e3629b95c194f51a69ec0d63b695018f817d62766f73ce423a0b39d",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0118-Fix-GHSA-vvx9-73fr-5jjx-do-not-fall-back-to-CN-if-th.patch",
+      "sha256": "00f48c376c1c82e355d788e8d53f1cd04ab4576f1ec1770ff65f9dd3c8289462",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0119-Fix-leak-on-double-DatePeriod-__construct-call.patch",
+      "sha256": "88c88bf8b89cd754fd720e27b95352b7494326f8a2b84a3e6f51068b2a4c8bcd",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0120-Fix-GHSA-xr7j-rvgx-xq5p-OOB-read-in-php_openssl_matc.patch",
+      "sha256": "f13ede82c5e4fcde171dfbc9f422d2ca826af2dc5cf13d387ba4c8a76f6ed9c2",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0122-Partial-Fix-GHSA-r6x9-5r99-36j7-Various-packet-overr.patch",
+      "sha256": "3ef593357c52a29f3fa8ce7a06f1a5f310babbe6da5e5172ebb50393fd248af5",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0123-Fix-GH-11274-POST-PATCH-request-via-file_get_content.patch",
+      "sha256": "a9892b6de554a96abc36808d79d096eece97cfa32c2ddc9bd14dbb4a5242176b",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0124-Fix-GHSA-fpwc-w8rq-cr92-strip-credentials-from-user-.patch",
+      "sha256": "5acc9e00b43e4c1991a1e58aea91057520553d4c98a0def8a778edb88ba3a73e",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0125-Fix-GHSA-rgrp-mwpx-f6rm-unbounded-recursion-in-ext-s.patch",
+      "sha256": "7330e518b20cbc7d06bc849eb73e5464184a9d272a347f3b18dcb39e7fe4758d",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0126-Fix-GHSA-cj93-vc83-wgqv.patch",
+      "sha256": "c3a9e72e8ca7bc92b7c926b71a7d11f5be17afabc9e137ba104e0b52704ca5fd",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0127-Fix-GHSA-j3wh-g957-2m85-phar-tar-entry-injection.patch",
+      "sha256": "4497fb2cf64a62071937dde782f5bf8ee8ba8f3a756447ca4e1f874b9228c50f",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0128-Fix-GHSA-9f67-6fw4-hpfp.patch",
+      "sha256": "ea2d583219312b09adbc6a3927fdc238f2301fc3234ee9ef6e0b529e02517539",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0129-Fix-GHSA-ch8v-r6jh-4vvr-encode-0xFF-in-FILTER_SANITI.patch",
+      "sha256": "260d2c0d4b8527a5b673647c9e51480e3443b2a58bda4d6bccde80a959c8a622",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0130-ext-soap-make-GHSA-cj93-vc83-wgqv-test-lean-and-reli.patch",
+      "sha256": "33e89ec6d5a3ed8f6b4b510bf34c1f1c47618803e2a89c5b9915bf363825fbf7",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0132-re-add-new-tests-as-XFAIL-because-of-partial-fix.patch",
+      "sha256": "5026a2f78c9dd815197385f51fdfa9fbb0affa872c54b87e4c1d000abfb0c719",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0133-fix-new-tests-expectations-warnings-raised-instead-o.patch",
+      "sha256": "663ea4e6196dfbfd446fc0cdad90058a681a8a7584cf393249574c4f24a2642e",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0135-Fix-out-of-bounds-read-on-empty-Location-header.patch",
+      "sha256": "f4b370782d336b8ba995d1c539ad81b3f90691cd06031e6b5f442b1d777a95ee",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0136-ext-standard-Fix-1-char-relative-Location-redirects-.patch",
+      "sha256": "14e44ef0ba4e84eb48cec99a43d22e6a10d3793a661bfc840f719b2c1fc247dc",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "security/0137-Avoid-state-corruption-via-bailout.patch",
+      "sha256": "106cbf22830a5ac33b0ef62d530f0c54caa13df2fda3956589367ff2f33d62e7",
+      "change": "取自 Surý php8.0 同分支回补；去除 NEWS 文档段，保留修复及测试"
+    },
+    {
+      "file": "compat/0900-musl-fopencookie-seek-signature.patch",
+      "sha256": "1241795371026c134abf1410c0e3d05c997baa3f17c503449e43524589fe2a91",
+      "change": "本项目补丁：musl fopencookie指针签名适配"
+    },
+    {
+      "file": "security/0902-http-wrapper-boundary-guards.patch",
+      "sha256": "746de55bd4869dd97722fab84694361965b92d59f3a7368b99d9bb19abb5c65a",
+      "change": "本项目补丁：HTTP回补边界审查：长度索引trim、s-2边界、响应头NUL与EOF错误处理及空Location内存复用"
+    },
+    {
+      "file": "compat/0903-intl-build-with-cxx17-for-icu74-plus.patch",
+      "sha256": "9e1157b1db0fe0a120919a5c8d73a680581cc28d26c7e60c5b44a85f10f493f0",
+      "change": "本项目补丁：远程实际编译发现PHP8.0 Intl模块强制-std=c++11覆盖环境C++17，而固定Alpine ICU78要求C++17；参照PHP8.1 intl对ICU74+的标准要求选择C++17"
+    },
+    {
+      "file": "compat/0904-external-gd-php-flip-mode-constants.patch",
+      "sha256": "d1b9bcdb6233b1fb4f69869ccad520f0a848e47be5cced1b7a34950b320858c2",
+      "change": "本项目补丁：外部libgd缺少PHP历史翻转常量；按本PHP bundled gd.h公开模式值1/2/3补定义，不改变GD_BUNDLED状态"
+    },
+    {
+      "file": "security/0905-mysqlnd-ok-message-actual-payload-bound.patch",
+      "sha256": "7e780853a6a4fd5b8847681276fa98b10da93f484842d8b919c470a1b7235d80",
+      "change": "本项目补丁：新增正常PING/畸形包对照真实复现23/25：官方38未覆盖OK消息capacity边界；按实际header.size拒绝超长并拒绝非法ff前缀、宏减法防溢出；0xfe必须完整读取64位并检查zend_ulong可表示，避免高32位被截成空消息；generic读数必须拒保留哨兵max-1/max，避免0xfe伪造NULL；LL可表示完整64位并独立has_value不套generic哨兵限制；RSET存在无效前缀不能伪装成缺失optional info；field元数据禁止的default trailer包含畸形编码也拒绝"
+    },
+    {
+      "file": "compat/0906-external-gd-bicubic-compatibility.patch",
+      "sha256": "7bc66d8786ab159221fc0d3563851098f78d6b461c7fd1c1c19f7dcee5bfaf03",
+      "change": "本项目补丁：外部GD2.3.3遗漏BICUBIC模式，按官方修复兼容；仅系统函数拒绝该两模式才回退"
+    }
+  ],
+  "patch_source": {
+    "url": "https://packages.sury.org/php/pool/main/p/php8.0/php8.0_8.0.30-25+0~20261021.88+debian12~1.gbpabebea.debian.tar.xz",
+    "sha256": "8dd2d897829859df423919744fa4db2a4a61c027ffa6afdef01d276262f5df6e",
+    "signature_verified": true,
+    "signing_fingerprint": "15058500A0235D97F5D10063B188E2B695BD4743",
+    "trust_origin": "公钥来自 packages.sury.org 官方 HTTPS，固定指纹；验证 InRelease→Sources→补丁包摘要链"
+  },
+  "binary_loaders": [
+    {
+      "name": "SourceGuardian Loader",
+      "php": "8.0",
+      "version": "17.0.0",
+      "file": "ixed.8.0.lin",
+      "sha256": "04b2af2680787ea8afc33fbce3b687c904079a0b25642f26be0e6ab7df12d13d",
+      "platform": "linux/amd64",
+      "libc_mode": "gcompat-libc.so.6-and-libudev-zero",
+      "license": "sourceguardian/SourceGuardian Loader License.pdf",
+      "license_sha256": "3c6512267e5a21acd904e0e531442b573c43543b761ef2fa76da5d6392193c23",
+      "dir": "sourceguardian"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "mongodb": {
+    "image": "mongo:8.0@sha256:4a4ab5d4834207389e0d7270fac988e21ffedccecba77991a552f755df229907",
+    "expected_server_version": "8.0.34",
+    "platform": "linux/amd64",
+    "purpose": "仅供隔离认证与读写测试，不进入PHP镜像"
+  },
+  "mongodb_legacy": {
+    "image": "mongo:5.0@sha256:41108d183e972dcbf98d09ed83f6cfc89a471a3f15d06f9d64a95e45d9db8dd2",
+    "expected_server_version": "5.0.33",
+    "platform": "linux/amd64",
+    "purpose": "旧版 mongo 1.6.16 驱动隔离认证与读写测试；该驱动只能连接 MongoDB 5.0 及以下，6.0+ 已实测失败；不进入PHP镜像"
+  }
+}

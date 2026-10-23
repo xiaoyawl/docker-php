@@ -1,0 +1,23 @@
+From: LookBack <mondeolove@gmail.com>
+Subject: Match musl fopencookie off_t pointer callback and position semantics
+
+--- a/main/streams/cast.c
++++ b/main/streams/cast.c
+@@ -112,10 +112,13 @@
+ 	return 0;
+ }
+ # else
+-static int stream_cookie_seeker(void *cookie, zend_off_t position, int whence)
+-{
+-
+-	return php_stream_seek((php_stream *)cookie, position, whence);
++static int stream_cookie_seeker(void *cookie, off_t *position, int whence)
++{
++	int result = php_stream_seek((php_stream *)cookie, *position, whence);
++	if (result == 0) {
++		*position = php_stream_tell((php_stream *)cookie);
++	}
++	return result;
+ }
+ # endif
+ 

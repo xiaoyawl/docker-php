@@ -1,0 +1,32 @@
+{
+  "name": "libgd",
+  "version": "2.3.3",
+  "install_prefix": "/opt/libgd",
+  "reason": "Alpine 3.24 系统 gd-2.3.3-r10 无补丁：调色板图像 imagerotate 180° 释放调用方原图（释放后使用/重复释放），最近邻插值旋转传入调色板图像触发空指针段错误；两项上游修复均未进入任何 libgd 发行版",
+  "source": {
+    "file": "libgd-2.3.3.tar.xz",
+    "url": "https://github.com/libgd/libgd/releases/download/gd-2.3.3/libgd-2.3.3.tar.xz",
+    "sha256": "3fe822ece20796060af63b7c60acb151e5844204d289da0ce08f8fdf131e5a61",
+    "sha512_crosscheck": "aa49d4381d604a4360d556419d603df2ffd689a6dcc10f8e5e1d158ddaa3ab89912f6077ca77da4e370055074007971cf6d356ec9bf26dcf39bcff3208bc7e6c",
+    "sha512_source": "Alpine aports 3.24-stable main/gd/APKBUILD"
+  },
+  "configure": "--enable-gd-formats --disable-static（与 Alpine APKBUILD 一致，前缀改为 /opt/libgd）",
+  "patches": [
+    {
+      "file": "patches/0001-Fix-810-wrong-image-freed-6cc1e39.patch",
+      "sha256": "b62871bf10a34191fb140a275305e741a11631225063ad7e998ca1c771481e75",
+      "upstream": "https://github.com/libgd/libgd/commit/6cc1e39e9fddd15ae74adb1a09fcd5740f44923e",
+      "issue": "libgd #810 / PR #811",
+      "effect": "gdImageRotateInterpolated 180° 分支释放 src_tc 而非调用方的 src"
+    },
+    {
+      "file": "patches/0002-Fix-fix-for-320-pass-truecolor-clone-a656f5c.patch",
+      "sha256": "8104f6696c8101d9ac9c9f37a9120c528b500afb5ab194810d5a299d5d2c4919",
+      "upstream": "https://github.com/libgd/libgd/commit/a656f5cc5592757996e9e96b0821a0966bfaa3b3",
+      "issue": "libgd #320 后续修复 / PR #929",
+      "effect": "最近邻与通用插值分支传入真彩色克隆；0° 返回已克隆图像",
+      "local_scope": "只取 src/gd_interpolation.c，未带上游测试文件 tests/gdimagecopyrotated/bug00320.c"
+    }
+  ],
+  "regression": "tests/libgd-rotate.php（调色板图像 0/90/180/270/-5° × 全部插值方式 + 真彩色对照）"
+}

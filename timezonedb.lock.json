@@ -1,0 +1,12 @@
+{
+  "file": "timezonedb-2026.5.tgz",
+  "url": "https://pecl.php.net/get/timezonedb-2026.5.tgz",
+  "sha256": "affcad3175b7d2d3dde359ca2737addc8c8c95de355c2c73a2bab69bbbc2e012",
+  "size": 645239,
+  "release": "2026.5",
+  "php_min": "5.4.0",
+  "php_max": null,
+  "metadata": "https://pecl.php.net/rest/r/timezonedb/2026.5.xml",
+  "license": "PHP-3.01 AND public-domain",
+  "license_sha256": "f16e7903bd1e1c82d5471a178c685d5fe5c86998beba3cd0f1cb76ae03fa2150"
+}

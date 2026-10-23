@@ -1,0 +1,89 @@
+From: LookBack <mondeolove@gmail.com>
+Subject: Bound HTTP header trimming and lookup; reject NUL and final-line errors
+
+--- a/ext/standard/http_fopen_wrapper.c
++++ b/ext/standard/http_fopen_wrapper.c
+@@ -151,7 +151,7 @@
+ static zend_bool check_has_header(const char *headers, const char *header) {
+ 	const char *s = headers;
+ 	while ((s = strstr(s, header))) {
+-		if (s == headers || (*(s-1) == '\n' && *(s-2) == '\r')) {
++		if (s == headers || ((size_t)(s - headers) >= 2 && *(s-1) == '\n' && *(s-2) == '\r')) {
+ 			return 1;
+ 		}
+ 		s++;
+@@ -179,28 +179,16 @@
+ static bool php_stream_http_response_header_trim(char *http_header_line,
+ 		size_t *http_header_line_length)
+ {
+-	char *http_header_line_end = http_header_line + *http_header_line_length - 1;
+-	while (http_header_line_end >= http_header_line && 
+-			(*http_header_line_end == '\n' || *http_header_line_end == '\r')) {
+-		http_header_line_end--;
+-	}
+-
+-	/* The primary definition of an HTTP header in RFC 7230 states:
+-	* > Each header field consists of a case-insensitive field name followed
+-	* > by a colon (":"), optional leading whitespace, the field value, and
+-	* > optional trailing whitespace. */
+-
+-	/* Strip trailing whitespace */
+-	bool space_trim = (*http_header_line_end == ' ' || *http_header_line_end == '\t');
+-	if (space_trim) {
+-		do {
+-			http_header_line_end--;
+-		} while (http_header_line_end >= http_header_line &&
+-				(*http_header_line_end == ' ' || *http_header_line_end == '\t'));
+-	}
+-	http_header_line_end++;
+-	*http_header_line_end = '\0';
+-	*http_header_line_length = http_header_line_end - http_header_line;
++	size_t length = *http_header_line_length;
++	while (length > 0 && (http_header_line[length - 1] == '\n' || http_header_line[length - 1] == '\r')) {
++		length--;
++	}
++	zend_bool space_trim = length > 0 && (http_header_line[length - 1] == ' ' || http_header_line[length - 1] == '\t');
++	while (length > 0 && (http_header_line[length - 1] == ' ' || http_header_line[length - 1] == '\t')) {
++		length--;
++	}
++	http_header_line[length] = '\0';
++	*http_header_line_length = length;
+ 
+ 	return space_trim;
+ }
+@@ -216,7 +204,13 @@
+ {
+ 	char *last_header_line = ZSTR_VAL(last_header_line_str);
+ 	size_t last_header_line_length = ZSTR_LEN(last_header_line_str);
+-	char *last_header_line_end = ZSTR_VAL(last_header_line_str) + ZSTR_LEN(last_header_line_str) - 1;
++	char *last_header_line_end = last_header_line + last_header_line_length;
++	if (memchr(last_header_line, '\0', last_header_line_length) != NULL) {
++		header_info->error = 1;
++		php_stream_wrapper_log_error(wrapper, options, "HTTP invalid response format (NUL in header line)!");
++		zend_string_efree(last_header_line_str);
++		return NULL;
++	}
+ 
+ 	/* Process non empty header line. */
+ 	if (header_line && (*header_line != '\n' && *header_line != '\r')) {
+@@ -307,7 +301,7 @@
+ 			zend_string_efree(last_header_line_str);
+ 			return NULL;
+ 		}
+-		if (header_info->location_len == 0) {
++		if (header_info->location == NULL) {
+ 			header_info->location = emalloc(last_header_value_len + 1);
+ 		} else if (header_info->location_len <= last_header_value_len) {
+ 			header_info->location = erealloc(header_info->location, last_header_value_len + 1);
+@@ -1062,6 +1056,11 @@
+ 	if (last_header_line_str != NULL) {
+ 		php_stream_http_response_headers_parse(wrapper, stream, context, options,
+ 				last_header_line_str, NULL, NULL, response_code, response_header, &header_info);
++		if (UNEXPECTED(header_info.error)) {
++			php_stream_close(stream);
++			stream = NULL;
++			goto out;
++		}
+ 	}
+ 
+ 	if (!reqok || (header_info.location != NULL && header_info.follow_location)) {

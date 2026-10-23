@@ -1,0 +1,60 @@
+From a656f5cc5592757996e9e96b0821a0966bfaa3b3 Mon Sep 17 00:00:00 2001
+From: "Christoph M. Becker" <cmbecker69@gmx.de>
+Date: Thu, 9 Jan 2025 13:11:19 +0100
+Subject: [PATCH] Fix fix for #320 (#929)
+
+At least `gdImageRotateNearestNeighbour()` requires a truecolor image,
+so we should actually pass the truecolor clone.  To be safe regarding
+future changes, we also do this for `gdImageRotateGeneric()`.  And if
+rotation of zero degrees is requested, we return the already cloned
+image, instead of creating another clone.
+
+We also extend the existing test case to cover all relevant code paths.
+---
+ src/gd_interpolation.c | 16 ++++------------
+ 1 file changed, 4 insertions(+), 12 deletions(-)
+
+diff --git a/src/gd_interpolation.c b/src/gd_interpolation.c
+index 1cf2fc0..cb9e08c 100644
+--- a/src/gd_interpolation.c
++++ b/src/gd_interpolation.c
+@@ -1832,15 +1832,8 @@ BGD_DECLARE(gdImagePtr) gdImageRotateInterpolated(const gdImagePtr src, const fl
+ 	/* 0 && 90 degrees multiple rotation, 0 rotation simply clones the return image and convert it
+ 	   to truecolor, as we must return truecolor image. */
+ 	switch (angle_rounded) {
+-		case    0: {
+-			gdImagePtr dst = gdImageClone(src);
+-
+-			if (dst == NULL) {
+-				return NULL;
+-			}
+-			if (src_cloned) gdImageDestroy(src_tc);
+-			return dst;
+-		}
++		case    0:
++			return src_cloned ? src_tc : gdImageClone(src);
+ 
+ 		case -27000:
+ 		case   9000:
+@@ -1865,16 +1858,15 @@ BGD_DECLARE(gdImagePtr) gdImageRotateInterpolated(const gdImagePtr src, const fl
+ 
+ 	switch (src->interpolation_id) {
+ 		case GD_NEAREST_NEIGHBOUR: {
+-			gdImagePtr res = gdImageRotateNearestNeighbour(src, angle, bgcolor);
++			gdImagePtr res = gdImageRotateNearestNeighbour(src_tc, angle, bgcolor);
+ 			if (src_cloned) gdImageDestroy(src_tc);
+ 			return res;
+-			break;
+ 		}
+ 
+ 		case GD_BILINEAR_FIXED:
+ 		case GD_BICUBIC_FIXED:
+ 		default: {
+-			gdImagePtr res = gdImageRotateGeneric(src, angle, bgcolor);
++			gdImagePtr res = gdImageRotateGeneric(src_tc, angle, bgcolor);
+ 			if (src_cloned) gdImageDestroy(src_tc);
+ 			return res;
+ 		}
+-- 
+2.54.0 (Apple Git-157)
+
