@@ -211,11 +211,13 @@ printf '%s' "$令牌" | DOCKERHUB_USER=benyoo bash scripts/push-image.sh   # 原
 
 | 镜像标签（已推送） | 索引摘要（仓库端与归档一致） | amd64 清单 | arm64 清单 | 压缩层 amd64 / arm64 | OCI 归档 SHA-256 |
 |---|---|---|---|---|---|
-| `benyoo/php-alpine:8.5.12.20261023-swoole6` | `sha256:cd0862a7bb6c7596df7f52b6b94526f5e4e69311f7039e039e7126cdcf05ee96` | `sha256:69f7d41e3e3d028f8fe5dd814c463dafe272f1a0a4754f01c9e0c57dbe50961f` | `sha256:f0dbeb2664b87eaa62eb4bb604a6df384d8ffb9cfd797af4d4d11ff74693e576` | 约 129 / 128 MB | `976e93eb44701e284617132bc209fde5d0c4286e5891ddeb369cc7113f84851c` |
+| `benyoo/php-alpine:8.5.12.20261023-swoole6` | `sha256:813ee1104fd0d9387bc01a867c5d7e02a304ba65c11c02226e952ac111bef652` | `sha256:246f76b0f4987e569ea0904ab81a031597faba5683c53c18ce19cb791d009fd0` | `sha256:fb2108adc5019e6de61d103a8dfc1e4c3786d2010fa28d441ed4090262a45451` | 约 129 / 128 MB | `952cdd99de6b9d022ce9c4f59751ea28e7bc09d202a46ab292b06adf2fcd265a` |
 
 无后缀标签 `benyoo/php-alpine:8.5.12.20261023` 是 swoole6 标签的别名，指向同一索引摘要。
 
 Trivy 扫描（每个变体与架构）：amd64 0、arm64 0 项。
+
+2026-10-24 以相同构建日重建并覆盖上述标签：只把维护者标签改为 Manta（`org.opencontainers.image.authors`、`maintainer`），编译阶段复用缓存；两种架构重新完成全套功能验收与 Trivy 扫描（0 项），上游 PHPT 未重跑（编译阶段未变，沿用上述结果）。
 
 - **全套验收通过（每个变体）**：PHP 版本与 65 个原生模块；扩展与 Loader 版本逐项核对；默认关闭与开关加载、不支持的开关报错；libgd 旋转回归 210 组且链接 `/opt/libgd`、未安装系统 libgd；可选扩展离线功能（含 FFI、Imagick、APCu、zstd、Event）；git 与 Composer（默认禁用函数下执行成功，业务禁用保持）；Swoole TCP 服务与客户端收发、Xdebug 3 覆盖率与跟踪；MySQL / PostgreSQL / Redis / Memcache / Memcached 真实读写；MongoDB 8.0 认证与读写；Redis 公开接口与基线一致；安全冒烟、31 项 MySQL 协议回归、HTTP 凭据 / 重定向 / 响应头、SOAP、CGI；TLS 与 CA（新增 CA 后信任、错误主机名与 SAN 不匹配拒绝、wildcard 边界）；FPM 同 worker 请求、内存耗尽后恢复、重启与退出；Trivy 扫描 0 项（扫描器无法识别自编译 PHP 与闭源 Loader，0 项不等于没有漏洞）。
 - **上游 PHPT**（官方 `run-tests.php`，nobody 用户、断网，`swoole6` 变体的构建阶段）：linux/amd64 与 linux/arm64 结果相同、失败清单一致，没有 arm64 独有失败；共 618 个用例（补丁附带 0 个 + 上游安全回归、FPM 安全、mysqlnd GHSA-r6x9、PCRE、GD 全套），通过 533、失败 8、跳过 77、XFAIL 0。**安全回归用例 0 失败**。失败项逐项核实，均为外部 libgd 2.3.3 / FreeType 与 PHP 内置 GD 的数值差异，没有崩溃：`bug43073.phpt`、`bug48732-mb.phpt`、`bug48732.phpt`、`bug48801-mb.phpt`、`bug48801.phpt`、`bug53504.phpt`、`bug65148.phpt`、`bug73272.phpt`。跳过原因：requires bundled GD library 25 项；test requires GD 2.3.2 or older 20 项；Run only on Windows 6 项；upstream bugfix has not been released 3 项；resource-heavy test 3 项；slow test 3 项；Required extension missing: zend_test 3 项；meaningful only for bundled libgd 2 项；setlocale() is broken /w musl 2 项；IPv6 is not supported. 2 项；only for external libgd < 2.2.4 1 项；only for bundled libgd 1 项；windows only test 1 项；this test is for 32bit platforms only 1 项；function only available in bundled, external GD detected 1 项；new pcre version 1 项；windows only 1 项；Windows only 1 项。
