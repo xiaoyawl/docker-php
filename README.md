@@ -217,8 +217,10 @@ printf '%s' "$令牌" | DOCKERHUB_USER=benyoo bash scripts/push-image.sh   # 原
 
 | 镜像标签（已推送） | 索引摘要（仓库端与归档一致） | amd64 清单 | arm64 清单 | 压缩层 amd64 / arm64 | OCI 归档 SHA-256 |
 |---|---|---|---|---|---|
-| `benyoo/php-alpine:8.0.30.20261023-swoole5` | `sha256:08acc83be5bf03b61c752d68916e9516821fb124da2ea93d0a8cafda50b2515d` | `sha256:cf67ec6a8f87eca96b54d87db25d5b77bf6eb4fcee3ed8ff4571b5b01f6f6e7d` | `sha256:83d5e78e5b42086576ed862157149a53c743d7e24133c741b113d62144271ee6` | 约 118 / 117 MB | `704cdc4ec869b4b36ede2c604ff56d867bf6e54c2f8269df085dc64ad5e6be87` |
+| `benyoo/php-alpine:8.0.30.20261023-swoole5` | `sha256:001293c3a349b1fb54976aa78b7f9e659ebe6ae190feb0441af037ef140754f7` | `sha256:20eb74f40083483e89f7ff8fb2e84c18933f8c1c3a39a65bca823dba7003254b` | `sha256:479435a3212035129ca41db26bc3df6e8e004ca5fee57fea94eec813dd6cb07c` | 约 118 / 117 MB | `b7a50658844ffe7a4347fdf10367e3d9ce7051acc1cd2549d89418a14d0ed010` |
 
 无后缀标签 `benyoo/php-alpine:8.0.30.20261023` 是 swoole5 标签的别名，指向同一索引摘要。
 
 Trivy 扫描（每个变体与架构）：amd64 0、arm64 0 项。
+
+2026-10-24 以相同构建日重建并覆盖上述标签：只把维护者标签改为 Manta（`org.opencontainers.image.authors`、`maintainer`），编译阶段复用缓存；两种架构重新完成全套功能验收与 Trivy 扫描（0 项），上游 PHPT 未重跑（编译阶段未变，沿用上述结果）。
