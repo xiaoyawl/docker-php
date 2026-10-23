@@ -4,7 +4,7 @@
 # @Author   : LookBack
 # @Project  : docker-php
 # @File     : inspect-oci.py
-# @Desc     : 验证amd64 单架构 OCI、镜像配置及来源/SBOM 证明并提取报告。
+# @Desc     : 验证多架构 OCI 的平台、镜像配置、版本标签及来源/SBOM 证明，并记录索引与各平台摘要。
 # @Contact  : admin@dstw.com
 import hashlib
 import json
@@ -16,6 +16,9 @@ import tarfile
 path = Path(sys.argv[1])
 output = path.parent
 expected_version = sys.argv[2] if len(sys.argv) > 2 else None
+# 期望的架构集合取自构建时记录的 platforms.txt（如 linux/amd64,linux/arm64）。
+platforms_file = path.parent / 'platforms.txt'
+expected_arches = {p.split('/')[1] for p in platforms_file.read_text().strip().split(',')} if platforms_file.exists() else {'amd64'}
 php_version = json.loads((Path(__file__).resolve().parent.parent / 'config/extensions.json').read_text())['php']
 images = {}
 attestations = []
@@ -68,11 +71,12 @@ with tarfile.open(path) as archive:
                 statement = blob(layer['digest'])
                 attestations.append((reference, statement))
 
+    index_digests = [descriptor['digest'] for descriptor in read_json('index.json')['manifests']]
     for descriptor in read_json('index.json')['manifests']:
         visit(descriptor)
 
-if set(images) != {'amd64'}:
-    raise SystemExit('当前 OCI 必须且仅包含 linux/amd64')
+if set(images) != expected_arches:
+    raise SystemExit('OCI 平台不符：期望 ' + ','.join(sorted(expected_arches)) + '，实际 ' + ','.join(sorted(images)))
 for architecture, image in images.items():
     for reference, statement in attestations:
         if reference != image['manifest']:
@@ -91,7 +95,7 @@ for architecture, image in images.items():
     if {'sbom-' + architecture + '.spdx.json', 'provenance-' + architecture + '.json'} - set(image['proofs']):
         raise SystemExit('架构缺少来源或 SBOM 证明：' + architecture)
 
-result = {'archive': path.name, 'platforms': images}
+result = {'archive': path.name, 'index_digests': index_digests, 'platforms': images}
 (output / 'oci-inspection.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
-print('amd64 单架构 OCI 配置、元数据摘要、版本标签、provenance 与 SBOM 验证通过。')
+print('OCI（' + ','.join(sorted(images)) + '）配置、元数据摘要、版本标签、provenance 与 SBOM 验证通过。')
 print(json.dumps(result, ensure_ascii=False, indent=2))

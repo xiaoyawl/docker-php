@@ -2,7 +2,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-7.3.33-777BB4)
 ![Alpine](https://img.shields.io/badge/Alpine-3.24-0D597F)
-![架构](https://img.shields.io/badge/架构-amd64-blue)
+![架构](https://img.shields.io/badge/架构-amd64%20%7C%20arm64-blue)
 ![维护状态](https://img.shields.io/badge/上游-EOL-B0332B)
 
 本分支 `php-7.3.33` 构建 `benyoo/php-alpine:7.3.33.<构建日>`：基于 Alpine 3.24 从源码编译 PHP 7.3.33，纳入可信安全回补、现代依赖适配、常用数据库与缓存扩展、官方 Loader，并在构建时更新 CA 信任库。
@@ -77,8 +77,8 @@ configure 参数见 [`config/php-configure.txt`](config/php-configure.txt)。
 | zstd | 0.18.0 | `ZSTD` | 链接系统 libzstd |
 | imagick | 3.8.1 | `IMAGICK` | 运行镜像含 imagemagick 格式模块 |
 | hprose | 1.8.0 | `HPROSE` | 上游最终版本（PHP 8 起无法编译，仅 PHP 5/7 分支提供） |
-| ionCube Loader | 15.5.1 | `IONCUBE` | 官方 musl 版，无需预加载；与 Xdebug 互斥 |
-| SourceGuardian Loader | 17.0.0 | `SOURCEGUARDIAN` | 官方 glibc 版，依赖 gcompat 与 libudev-zero |
+| ionCube Loader | 15.5.1 | `IONCUBE` | 官方 musl 版，无需预加载；与 Xdebug 互斥；arm64 使用官方 aarch64 glibc 版，启用时预加载 gcompat |
+| SourceGuardian Loader | 17.0.0 | `SOURCEGUARDIAN` | 官方 glibc 版，依赖 gcompat 与 libudev-zero；仅 amd64（官方无 PHP 7.3 的 aarch64 版），arm64 开启即报错退出 |
 
 扩展的版本、编译参数与开关统一定义在 [`config/extensions.json`](config/extensions.json)，源码摘要见 [`sources.lock.json`](sources.lock.json)。
 
@@ -155,9 +155,10 @@ configure 参数见 [`config/php-configure.txt`](config/php-configure.txt)。
 | `libgd/` | 补丁版 libgd 的源码锁与补丁 |
 
 ```bash
-# 在指定的远程 Linux 构建节点执行（只构建 amd64，不推送）
-bash scripts/build-image.sh       # 产物：artifacts/<变体>/php-7.3.33-amd64.oci.tar
-bash scripts/verify-artifact.sh   # 全套验收：功能、扩展、数据库与缓存真实读写、TLS/CA、FPM 生命周期、扫描、上游 PHPT
+# 在指定的远程 Linux 构建节点执行（默认 linux/amd64,linux/arm64，不推送；PLATFORMS 可只构建部分架构）
+bash scripts/build-image.sh       # 产物：artifacts/<变体>/php-7.3.33.oci.tar（多架构 OCI 索引）
+bash scripts/verify-artifact.sh   # 按架构全套验收：功能、扩展、数据库与缓存真实读写、TLS/CA、FPM 生命周期、扫描、上游 PHPT
+printf '%s' "$令牌" | DOCKERHUB_USER=benyoo bash scripts/push-image.sh   # 原样推送已验收归档并核对仓库端摘要
 ```
 
 ## 目录与维护说明
@@ -187,14 +188,17 @@ bash scripts/verify-artifact.sh   # 全套验收：功能、扩展、数据库�
 
 ## 验收结果
 
-最近一次模板构建（2026-10-23，amd64）：
+最近一次模板构建（2026-10-23，linux/amd64 与 linux/arm64，两种架构分别验收）：
 
 - **全套验收通过**：扩展与 Loader 版本逐项核对（memcache 4.0.5.2、memcached 3.4.0、redis 6.0.2、swoole 4.8.13、xdebug 3.1.6、mongodb 1.16.2、zstd 0.18.0、event 3.1.6、apcu 5.1.28、imagick 3.8.1、hprose 1.8.0、ionCube 15.5.1、SourceGuardian 17.0.0）；ionCube / SourceGuardian 在 CLI 与 FPM worker 中加载，ionCube 与 Xdebug 互斥；libgd 旋转回归 210 组；可选扩展离线功能；git 2.54.0 与 Composer 2.10.3；Redis 6.0.2 接口基线与真实读写；MySQL / PostgreSQL（无效 UTF-8 转义受控失败）/ Memcache / Memcached 真实读写；MongoDB 8.0 认证与读写；Swoole 旧类名 TCP 收发、Xdebug 3 覆盖率与跟踪；`PASSWORD_ARGON2I` / `PASSWORD_ARGON2ID` 可用；安全冒烟、mysqlnd 畸形包、HTTP 包装器、SOAP、CGI；TLS 与 CA（自建 CA、主机名、SAN、wildcard 边界）；FPM 同 worker 请求、multipart、fatal、内存耗尽 worker 退出并由 master 补充、重启与退出（上游内置 IPv6 回退，默认 `listen=9000` 正常启动）；Trivy 扫描 0 项（扫描器无法识别自编译 PHP 与闭源 Loader，0 项不等于没有漏洞）。
-- **上游 PHPT**（官方 `run-tests.php`，非 root、断网）：共 756 个用例（补丁附带 102 个 + GD、PCRE、mbregex、zip 全套），通过 654、失败 48、跳过 54。失败项逐项核实，**没有安全修复缺失**：
+- **上游 PHPT**（官方 `run-tests.php`，非 root、断网）：linux/amd64 与 linux/arm64 结果相同、失败清单一致，没有 arm64 独有失败；共 756 个用例（补丁附带 102 个 + GD、PCRE、mbregex、zip 全套），通过 654、失败 48、跳过 54。失败项逐项核实，**没有安全修复缺失**：
   - 22 项为新版系统库的输出差异：外部 libgd / FreeType 15 项（警告文案、包围盒与缩放尺寸差 1–2 像素；溢出类用例均被安全拒绝）、系统 PCRE2 10.49 的错误文案与偏移 5 项（其中 bug70345 的 lookaround 内 `\K` 在新版直接编译拒绝）、musl locale 1 项、musl `crypt` 失败标记为 `*` 而非 `*0` 1 项（bcrypt_salt_dollar，非法盐仍被拒绝）；
   - 22 项为测试夹具不完整：mysqli GHSA-r6x9 14 项（7.3 源码的 `fake_server.inc` 缺少对应服务端函数）、GHSA-hgf5 3 项（测试框架缺 `phpt_notify_server_start()`）、OpenSSL GHSA-xr7j 与 `san_*` 5 项（证书生成器忽略 SAN，`san_peer_matching` 的静态证书为 2013 年 SHA1 / 1024 位且已过期）。只替换测试夹具（7.4.33 的 `fake_server.inc` 与证书生成器、8.1.34 的测试框架，仅做 PHP 7.3 语法 / API 适配；同 SAN / Subject 的 SHA256 / 2048 位等价证书），在同一构建阶段镜像以 nobody、断网复跑：GHSA-hgf5 3/3、OpenSSL 5/5、mysqli 13/14 通过。剩余的 `eof-warning-count`：期望的 3 条越界保护告警全部出现，多出的“server has gone away / Error reading result set's header”来自假服务器在收到查询后关闭连接，PHP 7.4 起 mysqlnd 在 `CR_SERVER_GONE_ERROR` 时不再告警，同一用例在 7.4.33 上通过，属版本告警语义差异。命令、夹具（原文件、适配版与摘要）与结果见 `artifacts/default/upstream-phpt/rerun-*/`；
   - 2 项为运行环境限制：内置 CLI 服务器启动横幅混入输出（GHSA-c5f2、GHSA-4w77，修复本身的拒绝信息已出现）；
-  - 2 项为运行资源限制：`soap_qname_crash`（GHSA-453j）与 SOAP GHSA-cj93-vc83-wgqv 需要超过 3G 内存，主运行未产生输出；以同一构建阶段镜像、nobody、断网、`--memory 12g` 单独复跑通过（用例未改动）。
-- **产物**：OCI SHA-256 `57bbdd4f699cb7b61792808ee0440080220f3c3b8d0eada84fc7a92a0f8d5bfe`；清单 `sha256:20e317b2…6db53d13`；配置 `sha256:f0f7f717…059d7a6c`；镜像约 118 MB。
+  - 2 项为运行资源限制：`soap_qname_crash`（GHSA-453j）与 SOAP GHSA-cj93-vc83-wgqv 需要超过 3G 内存，主运行无输出或只输出 `Termsig=0`（两种架构均为进程被中止）；以同一构建阶段镜像、nobody、断网、`--memory 12g` 单独复跑通过（用例未改动）。
 
-镜像摘要在推送后补充。
+| 镜像标签（已推送） | 索引摘要（仓库端与归档一致） | amd64 清单 | arm64 清单 | 压缩层 amd64 / arm64 | OCI 归档 SHA-256 |
+|---|---|---|---|---|---|
+| `benyoo/php-alpine:7.3.33.20261023` | `sha256:32fcf3c945a50fdd1f96c42a3b8ada7cbc9c283768c250ea58a34306bd536a97` | `sha256:be579abba1241f8daa3c8f9fe1e36193c40dc65d27736ccd4bebd7a863745259` | `sha256:6670e0ea07729e01d20221d1e43537ae2c90edc5d97593bfbbbfc4c9884e615c` | 约 118 / 117 MB | `4f0ae038796d8cb8dee4bafeecff25e3a2a3081cc03536c146ae64c04b042620` |
+
+Trivy 扫描（每个变体与架构）：amd64 0、arm64 0 项。

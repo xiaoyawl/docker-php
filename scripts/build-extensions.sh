@@ -65,10 +65,14 @@ python3 - <<'INSTALL_LOADERS'
 import hashlib
 import json
 from pathlib import Path
+import os
 import shutil
 work = Path('/build/.cache/work')
-lock = {item['name']: item for item in json.loads(Path('/build/sources.lock.json').read_text())['binary_loaders']}
-for loader in json.loads(Path('/build/config/extensions.json').read_text())['loaders']:
+# 只安装当前目标架构的官方 Loader（各架构的包与文件摘要分别锁定）。
+arch = os.environ.get('TARGETARCH') or 'amd64'
+match = lambda item: item.get('arch', arch) == arch
+lock = {item['name']: item for item in json.loads(Path('/build/sources.lock.json').read_text())['binary_loaders'] if match(item)}
+for loader in [item for item in json.loads(Path('/build/config/extensions.json').read_text())['loaders'] if match(item)]:
     entry = lock[loader['name']]
     source = work / entry['dir'] / entry['file']
     license_file = work / entry['license']
