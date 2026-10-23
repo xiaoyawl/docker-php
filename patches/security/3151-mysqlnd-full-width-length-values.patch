@@ -1,0 +1,32 @@
+Subject: MySQLnd完整64位长度、保留哨兵防冲突与结果头非法附加长度拒绝
+
+--- a/ext/mysqlnd/mysqlnd_wireprotocol.c
++++ b/ext/mysqlnd/mysqlnd_wireprotocol.c
+@@ -126,8 +126,13 @@
+ 			return MYSQLND_INVALID_NET_FIELD_LENGTH;
+ 		case 254:
+ 			if (EXPECTED(remaining_size >= 9)) {
++				uint64_t length = uint8korr(p+1);
++				/* Length bytes must not truncate or collide with reserved sentinel values. */
++				if (UNEXPECTED(length >= MYSQLND_INVALID_NET_FIELD_LENGTH)) {
++					return MYSQLND_INVALID_NET_FIELD_LENGTH;
++				}
+ 				(*packet) += 9;
+-				return (zend_ulong) uint4korr(p+1);
++				return (zend_ulong) length;
+ 			}
+ 			return MYSQLND_INVALID_NET_FIELD_LENGTH;
+ 		default:
+@@ -1264,7 +1269,11 @@
+ 			packet->warning_count = uint2korr(p);
+ 			p+=2;
+ 
+-			len = php_mysqlnd_net_field_length(&p, packet->header.size - (p - begin));
++			len = packet->header.size > (size_t)(p - begin)
++				? php_mysqlnd_net_field_length(&p, packet->header.size - (p - begin)) : 0;
++			if (UNEXPECTED(len == MYSQLND_INVALID_NET_FIELD_LENGTH)) {
++				BAIL_PREMATURE_END;
++			}
+ 
+ 			/* Check for additional textual data */
+ 			if (len && len != MYSQLND_INVALID_NET_FIELD_LENGTH) {

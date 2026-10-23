@@ -1,0 +1,33 @@
+From: LookBack <admin@dstw.com>
+Subject: [PATCH] PHP7.2 GHSA-www2-q4fc-65wf: reject NUL in dns_get_record/dns_get_mx on Linux
+
+Supplement to security/3125-network-nul-parameters.patch (left unchanged for
+traceability). The PHP 7.2 version of 3125 converted dns_check_record in
+ext/standard/dns.c, but dns_get_record and dns_get_mx were only converted in
+the Windows implementation ext/standard/dns_win32.c; the Linux implementation
+in ext/standard/dns.c still used Z_PARAM_STRING and accepted hostnames with
+embedded NUL bytes (truncated lookups). This switches both to Z_PARAM_PATH,
+line-for-line identical to the corresponding php-7.3.33 ext/standard/dns.c
+code in this project. Regression: ext/standard/tests/network/ghsa-www2-q4fc-65wf.phpt
+(all 9 "valid path" warnings).
+
+--- a/ext/standard/dns.c
++++ b/ext/standard/dns.c
+@@ -815,7 +815,7 @@
+ 	zend_bool raw = 0;
+ 
+ 	ZEND_PARSE_PARAMETERS_START(1, 5)
+-		Z_PARAM_STRING(hostname, hostname_len)
++		Z_PARAM_PATH(hostname, hostname_len)
+ 		Z_PARAM_OPTIONAL
+ 		Z_PARAM_LONG(type_param)
+ 		Z_PARAM_ZVAL_DEREF_EX(authns, 1, 0)
+@@ -1050,7 +1050,7 @@
+ #endif
+ 
+ 	ZEND_PARSE_PARAMETERS_START(2, 3)
+-		Z_PARAM_STRING(hostname, hostname_len)
++		Z_PARAM_PATH(hostname, hostname_len)
+ 		Z_PARAM_ZVAL_DEREF(mx_list)
+ 		Z_PARAM_OPTIONAL
+ 		Z_PARAM_ZVAL_DEREF(weight_list)

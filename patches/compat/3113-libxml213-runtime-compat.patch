@@ -1,0 +1,66 @@
+From: LookBack
+Subject: 适配libxml2解析选项及输出接口
+
+来源：已签名Surý PHP7.4 0113，按本版API与上下文移植。
+
+--- a/ext/dom/document.c
++++ b/ext/dom/document.c
+@@ -1438,11 +1438,13 @@
+ 	if (keep_blanks == 0 && ! (options & XML_PARSE_NOBLANKS)) {
+ 		options |= XML_PARSE_NOBLANKS;
+ 	}
++	if (recover) {
++		options |= XML_PARSE_RECOVER;
++	}
+ 
+ 	php_libxml_sanitize_parse_ctxt_options(ctxt);
+ 	xmlCtxtUseOptions(ctxt, options);
+ 
+-	ctxt->recovery = recover;
+ 	if (recover) {
+ 		old_error_reporting = EG(error_reporting);
+ 		EG(error_reporting) = old_error_reporting | E_WARNING;
+@@ -1452,7 +1454,7 @@
+ 
+ 	if (ctxt->wellFormed || recover) {
+ 		ret = ctxt->myDoc;
+-		if (ctxt->recovery) {
++		if (recover) {
+ 			EG(error_reporting) = old_error_reporting;
+ 		}
+ 		/* If loading from memory, set the base reference uri for the document */
+--- a/ext/libxml/libxml.c
++++ b/ext/libxml/libxml.c
+@@ -534,6 +534,8 @@
+ 		} else {
+ 			php_error_docref(NULL, level, "%s in Entity, line: %d", msg, parser->input->line);
+ 		}
++	} else {
++		php_error_docref(NULL, E_WARNING, "%s", msg);
+ 	}
+ }
+ 
+--- a/ext/xml/compat.c
++++ b/ext/xml/compat.c
+@@ -752,8 +752,7 @@
+ {
+ 	/* WARNING: this is identical to ByteIndex; it should probably
+ 	 * be different */
+-	return parser->parser->input->consumed +
+-			(parser->parser->input->cur - parser->parser->input->base);
++	return XML_GetCurrentByteIndex(parser);
+ }
+ 
+ PHP_XML_API const XML_Char *XML_ExpatVersion(void)
+--- a/ext/xmlwriter/php_xmlwriter.c
++++ b/ext/xmlwriter/php_xmlwriter.c
+@@ -1805,7 +1805,8 @@
+ 		}
+ 		output_bytes = xmlTextWriterFlush(ptr);
+ 		if (buffer) {
+-			RETVAL_STRING((char *) buffer->content);
++			const xmlChar *content = xmlBufferContent(buffer);
++			RETVAL_STRING((const char *) content);
+ 			if (empty) {
+ 				xmlBufferEmpty(buffer);
+ 			}

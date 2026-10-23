@@ -1,0 +1,77 @@
+From: LookBack
+Subject: 适配现代libxml2、GCC和musl
+
+--- a/ext/libxml/libxml.c
++++ b/ext/libxml/libxml.c
+@@ -744,7 +744,7 @@
+ #if LIBXML_VERSION >= 21200
+ PHP_LIBXML_API void php_libxml_structured_error_handler(void *userData, const xmlError *error)
+ #else
+-PHP_LIBXML_API void php_libxml_structured_error_handler(void *userData, xmlErrorPtr error)
++PHP_LIBXML_API void php_libxml_structured_error_handler(void *userData, const xmlError *error)
+ #endif
+ {
+ 	_php_list_set_error_structure(error, NULL);
+@@ -1055,7 +1055,7 @@
+ static PHP_FUNCTION(libxml_get_errors)
+ {
+ 
+-	xmlErrorPtr error;
++	const xmlError *error;
+ 
+ 	if (array_init(return_value) == FAILURE) {
+ 		RETURN_FALSE;
+--- a/ext/dom/dom_iterators.c
++++ b/ext/dom/dom_iterators.c
+@@ -45,7 +45,7 @@
+ #if LIBXML_VERSION >= 20908
+ static void itemHashScanner (void *payload, void *data, const xmlChar *name) /* {{{ */
+ #else
+-static void itemHashScanner (void *payload, void *data, xmlChar *name)
++static void itemHashScanner (void *payload, void *data, const xmlChar *name)
+ #endif
+ {
+ 	nodeIterator *priv = (nodeIterator *)data;
+--- a/ext/snmp/snmp.c
++++ b/ext/snmp/snmp.c
+@@ -2023,7 +2023,7 @@
+ }
+ /* }}} */
+ 
+-static HashTable *php_snmp_get_gc(zval *object, zval ***gc_data, int *gc_data_count) /* {{{ */
++static HashTable *php_snmp_get_gc(zval *object, zval **gc_data, int *gc_data_count) /* {{{ */
+ {
+ 	*gc_data = NULL;
+ 	*gc_data_count = 0;
+--- a/ext/zip/lib/mkstemp.c
++++ b/ext/zip/lib/mkstemp.c
+@@ -38,6 +38,9 @@
+ #include <ctype.h>
+ #include <errno.h>
+ #include <fcntl.h>
++#ifndef _WIN32
++#include <unistd.h>
++#endif
+ #ifdef _WIN32
+ #include <io.h>
+ #endif
+--- a/main/streams/cast.c
++++ b/main/streams/cast.c
+@@ -115,10 +115,13 @@
+ 	return 0;
+ }
+ # else
+-static int stream_cookie_seeker(void *cookie, zend_off_t position, int whence)
+-{
+-
+-	return php_stream_seek((php_stream *)cookie, position, whence);
++static int stream_cookie_seeker(void *cookie, off_t *position, int whence)
++{
++	int result = php_stream_seek((php_stream *)cookie, *position, whence);
++	if (result == 0) {
++		*position = php_stream_tell((php_stream *)cookie);
++	}
++	return result;
+ }
+ # endif
+ 
