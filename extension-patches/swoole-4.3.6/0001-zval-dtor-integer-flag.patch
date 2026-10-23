@@ -1,0 +1,40 @@
+From: LookBack <admin@dstw.com>
+Subject: [PATCH] Swoole 4.3.6: use integer false for ZVAL destructor flag
+
+PHP7.0 ZVAL_ZVAL tests this integer flag in a boolean expression.
+New C++ compilers reject implicit nullptr conversion introduced by NULL.
+Use literal 0, preserving existing ownership and destructor behavior.
+
+--- a/swoole_client.cc
++++ b/swoole_client.cc
+@@ -1585,7 +1585,7 @@
+     zval *zsocket = (zval *) swoole_get_property(getThis(), client_property_socket);
+     if (zsocket)
+     {
+-        RETURN_ZVAL(zsocket, 1, NULL);
++        RETURN_ZVAL(zsocket, 1, 0);
+     }
+     swClient *cli = client_get_ptr(getThis());
+     if (!cli)
+--- a/swoole_client_coro.cc
++++ b/swoole_client_coro.cc
+@@ -1082,7 +1082,7 @@
+     zval *zsocket = (zval *) swoole_get_property(getThis(), client_property_socket);
+     if (zsocket)
+     {
+-        RETURN_ZVAL(zsocket, 1, NULL);
++        RETURN_ZVAL(zsocket, 1, 0);
+     }
+     Socket *cli = client_get_ptr(getThis());
+     if (!cli)
+--- a/swoole_server.cc
++++ b/swoole_server.cc
+@@ -2827,7 +2827,7 @@
+     }
+ 
+     zval *port_object = php_swoole_server_add_port(serv, ls);
+-    RETURN_ZVAL(port_object, 1, NULL);
++    RETURN_ZVAL(port_object, 1, 0);
+ }
+ 
+ static PHP_METHOD(swoole_server, addProcess)

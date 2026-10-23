@@ -1,0 +1,138 @@
+From: LookBack <admin@dstw.com>
+Subject: [PATCH] PHP7.0 reject embedded NUL in network names (0119/0125)
+
+Reference: signed Surý php7.4 7.4.33-31 patches 0112/0113/0115/0119/0122/0125/0146/0157.
+Adapt native PHP7.0 APIs; runtime and Windows validation are recorded separately.
+
+--- a/ext/standard/basic_functions.c
++++ b/ext/standard/basic_functions.c
+@@ -3910,7 +3910,7 @@
+ 	size_t address_len;
+ 	char buffer[17];
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &address, &address_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p", &address, &address_len) == FAILURE) {
+ 		RETURN_FALSE;
+ 	}
+ 
+@@ -3950,7 +3950,7 @@
+ 	zend_ulong ip;
+ #endif
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &addr, &addr_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p", &addr, &addr_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -5542,7 +5542,7 @@
+ 	size_t name_len, proto_len;
+ 	struct servent *serv;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "ss", &name, &name_len, &proto, &proto_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "pp", &name, &name_len, &proto, &proto_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -5585,7 +5585,7 @@
+ 	zend_long port;
+ 	struct servent *serv;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "ls", &port, &proto, &proto_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "lp", &port, &proto, &proto_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -5609,7 +5609,7 @@
+ 	size_t name_len;
+ 	struct protoent *ent;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &name, &name_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p", &name, &name_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+--- a/ext/standard/dns.c
++++ b/ext/standard/dns.c
+@@ -372,7 +372,7 @@
+ 	struct __res_state *handle = &state;
+ #endif
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|s", &hostname, &hostname_len, &rectype, &rectype_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p|s", &hostname, &hostname_len, &rectype, &rectype_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -817,7 +817,7 @@
+ 	int type, first_query = 1, store_results = 1;
+ 	zend_bool raw = 0;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|lz/!z/!b",
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p|lz/!z/!b",
+ 			&hostname, &hostname_len, &type_param, &authns, &addtl, &raw) == FAILURE) {
+ 		return;
+ 	}
+@@ -1048,7 +1048,7 @@
+ 	struct __res_state *handle = &state;
+ #endif
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sz/|z/", &hostname, &hostname_len, &mx_list, &weight_list) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "pz/|z/", &hostname, &hostname_len, &mx_list, &weight_list) == FAILURE) {
+ 		return;
+ 	}
+ 
+--- a/ext/standard/dns_win32.c
++++ b/ext/standard/dns_win32.c
+@@ -50,7 +50,7 @@
+ 	DNS_STATUS      status;                 /* Return value of DnsQuery_A() function */
+ 	PDNS_RECORD     pResult, pRec;          /* Pointer to DNS_RECORD structure */
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sz/|z/", &hostname, &hostname_len, &mx_list, &weight_list) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "pz/|z/", &hostname, &hostname_len, &mx_list, &weight_list) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -99,7 +99,7 @@
+ 	DNS_STATUS      status;                 /* Return value of DnsQuery_A() function */
+ 	PDNS_RECORD     pResult;          /* Pointer to DNS_RECORD structure */
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|s", &hostname, &hostname_len, &rectype, &rectype_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p|s", &hostname, &hostname_len, &rectype, &rectype_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -352,7 +352,7 @@
+ 	int type, type_to_fetch, first_query = 1, store_results = 1;
+ 	zend_bool raw = 0;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|lz/!z/!b",
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p|lz/!z/!b",
+ 			&hostname, &hostname_len, &type_param, &authns, &addtl, &raw) == FAILURE) {
+ 		return;
+ 	}
+--- a/ext/standard/fsock.c
++++ b/ext/standard/fsock.c
+@@ -51,7 +51,7 @@
+ 
+ 	RETVAL_FALSE;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|lz/z/d", &host, &host_len, &port, &zerrno, &zerrstr, &timeout) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p|lz/z/d", &host, &host_len, &port, &zerrno, &zerrstr, &timeout) == FAILURE) {
+ 		RETURN_FALSE;
+ 	}
+ 
+--- a/main/streams/xp_socket.c
++++ b/main/streams/xp_socket.c
+@@ -567,6 +567,13 @@
+ 
+ static inline char *parse_ip_address_ex(const char *str, size_t str_len, int *portno, int get_err, zend_string **err)
+ {
++	if (memchr(str, '\0', str_len)) {
++		if (get_err) {
++			*err = strpprintf(0, "The hostname must not contain null bytes");
++		}
++		return NULL;
++	}
++
+ 	char *colon;
+ 	char *host = NULL;
+ 

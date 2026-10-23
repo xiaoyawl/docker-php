@@ -1,0 +1,35 @@
+From: LookBack <admin@dstw.com>
+Subject: [PATCH] PHP7.0 reject incomplete image APP payloads (GH-20584)
+
+Reference: signed Surý php7.4 7.4.33-31 patches 0112/0113/0115/0119/0122/0125/0146/0157.
+Adapt native PHP7.0 APIs; runtime and Windows validation are recorded separately.
+
+--- a/ext/standard/image.c
++++ b/ext/standard/image.c
+@@ -431,6 +431,17 @@
+ 
+ /* {{{ php_read_APP
+  */
++static size_t php_read_stream_all_chunks(php_stream *stream, char *buffer, size_t length)
++{
++	size_t total = 0;
++	while (total < length) {
++		ssize_t received = php_stream_read(stream, buffer + total, length - total);
++		if (received <= 0) return 0;
++		total += (size_t) received;
++	}
++	return total;
++}
++
+ static int php_read_APP(php_stream * stream, unsigned int marker, zval *info)
+ {
+ 	unsigned short length;
+@@ -446,7 +457,7 @@
+ 
+ 	buffer = emalloc(length);
+ 
+-	if (php_stream_read(stream, buffer, (zend_long) length) <= 0) {
++	if (php_read_stream_all_chunks(stream, buffer, length) != length) {
+ 		efree(buffer);
+ 		return 0;
+ 	}

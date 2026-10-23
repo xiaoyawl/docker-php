@@ -1,0 +1,52 @@
+From: LookBack <admin@dstw.com>
+Subject: [PATCH] PHP7.0 openssl_pkey_export(_to_file): check bio_out before use
+
+Upstream fix backport (no CVE). When BIO_new_file() cannot open the output
+path (e.g. a directory or unwritable file), PHP 7.0.33 dereferences a NULL
+bio_out and the process crashes. Official php-7.1.33 ext/openssl/openssl.c
+already checks bio_out == NULL in openssl_pkey_export_to_file and jumps to
+clean_exit; this mirrors that control flow (without the 7.1-only
+php_openssl_store_errors() helper). openssl_pkey_export gets the same check
+for BIO_new(BIO_s_mem()), matching the corresponding hunk of the PHP 5.6
+branch patch security/0400. Regression: tests/security-smoke.php.
+
+--- a/ext/openssl/openssl.c
++++ b/ext/openssl/openssl.c
+@@ -4134,6 +4134,9 @@
+ 
+ 	if (PHP_SSL_REQ_PARSE(&req, args) == SUCCESS) {
+ 		bio_out = BIO_new_file(filename, "w");
++		if (bio_out == NULL) {
++			goto clean_exit;
++		}
+ 
+ 		if (passphrase && req.priv_key_encrypt) {
+ 			if (req.priv_key_encrypt_cipher) {
+@@ -4162,6 +4165,8 @@
+ 			RETVAL_TRUE;
+ 		}
+ 	}
++
++clean_exit:
+ 	PHP_SSL_REQ_DISPOSE(&req);
+ 
+ 	if (key_resource == NULL && key) {
+@@ -4203,6 +4208,9 @@
+ 
+ 	if (PHP_SSL_REQ_PARSE(&req, args) == SUCCESS) {
+ 		bio_out = BIO_new(BIO_s_mem());
++		if (bio_out == NULL) {
++			goto clean_exit;
++		}
+ 
+ 		if (passphrase && req.priv_key_encrypt) {
+ 			if (req.priv_key_encrypt_cipher) {
+@@ -4238,6 +4246,8 @@
+ 			ZVAL_STRINGL(out, bio_mem_ptr, bio_mem_len);
+ 		}
+ 	}
++
++clean_exit:
+ 	PHP_SSL_REQ_DISPOSE(&req);
+ 
+ 	if (key_resource == NULL && key) {

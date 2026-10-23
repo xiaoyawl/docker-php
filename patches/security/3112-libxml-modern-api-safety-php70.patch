@@ -1,0 +1,99 @@
+From: LookBack <admin@dstw.com>
+Subject: [PATCH] PHP7.0 libxml modern API and tag boundary compatibility
+
+Reference: signed Surý php7.4 7.4.33-31 patches 0112/0113/0115/0119/0122/0125/0146/0157.
+Adapt native PHP7.0 APIs; runtime and Windows validation are recorded separately.
+
+--- a/ext/dom/document.c
++++ b/ext/dom/document.c
+@@ -1439,10 +1439,13 @@
+ 		options |= XML_PARSE_NOBLANKS;
+ 	}
+ 
++	if (recover) {
++		options |= XML_PARSE_RECOVER;
++	}
+ 	php_libxml_sanitize_parse_ctxt_options(ctxt);
+ 	xmlCtxtUseOptions(ctxt, options);
+ 
+-	ctxt->recovery = recover;
++
+ 	if (recover) {
+ 		old_error_reporting = EG(error_reporting);
+ 		EG(error_reporting) = old_error_reporting | E_WARNING;
+@@ -1452,7 +1455,7 @@
+ 
+ 	if (ctxt->wellFormed || recover) {
+ 		ret = ctxt->myDoc;
+-		if (ctxt->recovery) {
++		if (recover) {
+ 			EG(error_reporting) = old_error_reporting;
+ 		}
+ 		/* If loading from memory, set the base reference uri for the document */
+--- a/ext/libxml/libxml.c
++++ b/ext/libxml/libxml.c
+@@ -1017,9 +1017,7 @@
+    Retrieve last error from libxml */
+ static PHP_FUNCTION(libxml_get_last_error)
+ {
+-	xmlErrorPtr error;
+-
+-	error = xmlGetLastError();
++	const xmlError *error = xmlGetLastError();
+ 
+ 	if (error) {
+ 		object_init_ex(return_value, libxmlerror_class_entry);
+--- a/ext/soap/php_sdl.c
++++ b/ext/soap/php_sdl.c
+@@ -332,7 +332,7 @@
+ 	sdl_restore_uri_credentials(ctx);
+ 
+ 	if (!wsdl) {
+-		xmlErrorPtr xmlErrorPtr = xmlGetLastError();
++		const xmlError *xmlErrorPtr = xmlGetLastError();
+ 
+ 		if (xmlErrorPtr) {
+ 			soap_error2(E_ERROR, "Parsing WSDL: Couldn't load from '%s' : %s", struri, xmlErrorPtr->message);
+--- a/ext/xml/compat.c
++++ b/ext/xml/compat.c
+@@ -752,8 +752,7 @@
+ {
+ 	/* WARNING: this is identical to ByteIndex; it should probably
+ 	 * be different */
+-	return parser->parser->input->consumed +
+-			(parser->parser->input->cur - parser->parser->input->base);
++	return XML_GetCurrentByteIndex(parser);
+ }
+ 
+ PHP_XML_API const XML_Char *XML_ExpatVersion(void)
+--- a/ext/xml/xml.c
++++ b/ext/xml/xml.c
+@@ -762,7 +762,7 @@
+ 				array_init(&tag);
+ 				array_init(&atr);
+ 
+-				_xml_add_to_info(parser, ZSTR_VAL(tag_name) + parser->toffset);
++				_xml_add_to_info(parser, SKIP_TAGSTART(ZSTR_VAL(tag_name)));
+ 
+ 				add_assoc_string(&tag, "tag", SKIP_TAGSTART(ZSTR_VAL(tag_name))); /* cast to avoid gcc-warning */
+ 				add_assoc_string(&tag, "type", "open");
+@@ -832,7 +832,7 @@
+ 			} else {
+ 				array_init(&tag);
+ 				  
+-				_xml_add_to_info(parser, ZSTR_VAL(tag_name) + parser->toffset);
++				_xml_add_to_info(parser, SKIP_TAGSTART(ZSTR_VAL(tag_name)));
+ 
+ 				add_assoc_string(&tag, "tag", SKIP_TAGSTART(ZSTR_VAL(tag_name))); /* cast to avoid gcc-warning */
+ 				add_assoc_string(&tag, "type", "close");
+--- a/ext/xmlwriter/php_xmlwriter.c
++++ b/ext/xmlwriter/php_xmlwriter.c
+@@ -1803,7 +1803,7 @@
+ 		}
+ 		output_bytes = xmlTextWriterFlush(ptr);
+ 		if (buffer) {
+-			RETVAL_STRING((char *) buffer->content);
++			RETVAL_STRING((const char *) xmlBufferContent(buffer));
+ 			if (empty) {
+ 				xmlBufferEmpty(buffer);
+ 			}

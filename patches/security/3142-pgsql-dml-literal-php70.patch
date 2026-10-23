@@ -1,0 +1,15 @@
+From: LookBack <admin@dstw.com>
+Subject: [PATCH] PHP7.0 preserve PQescapeStringConn ordinary literal semantics
+
+Reference: signed PHP7.4 patch 0142 (SQL injection in pgsql DML).
+
+--- a/ext/pgsql/pgsql.c
++++ b/ext/pgsql/pgsql.c
+@@ -5796,7 +5796,6 @@
+ 	assert(Z_TYPE_P(src) == IS_STRING);
+ 	assert(should_free == 1 || should_free == 0);
+ 
+-	smart_str_appendc(&str, 'E');
+ 	smart_str_appendc(&str, '\'');
+ 	smart_str_appendl(&str, Z_STRVAL_P(src), Z_STRLEN_P(src));
+ 	smart_str_appendc(&str, '\'');

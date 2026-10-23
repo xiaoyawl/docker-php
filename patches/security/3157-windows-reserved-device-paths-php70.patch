@@ -1,0 +1,188 @@
+From: LookBack <admin@dstw.com>
+Subject: [PATCH] PHP7.0 Windows reserved device path validation
+
+Reference: signed PHP7.4 patch 0157; retain full device-name classifier and fallback.
+Old ANSI path conversion uses CP_ACP; DLL function pointer is local to each call.
+
+--- a/Zend/zend_virtual_cwd.c
++++ b/Zend/zend_virtual_cwd.c
+@@ -1193,6 +1193,159 @@
+ 
+ /* Resolve path relatively to state and put the real path into state */
+ /* returns 0 for ok, 1 for error */
++#ifdef ZEND_WIN32
++/* PHP7.0 predates win32/ioutil. Keep the upstream classifier at the existing
++ * virtual-cwd boundary and use its current ANSI Windows path encoding. */
++#define PHP_WIN32_IOUTIL_IS_SLASHW(c) ((c) == L'\\' || (c) == L'/')
++#define PHP_WIN32_IOUTIL_IS_LETTERW(c) (((c) >= L'A' && (c) <= L'Z') || ((c) >= L'a' && (c) <= L'z'))
++typedef enum { PHP_WIN32_IOUTIL_PATH_OK, PHP_WIN32_IOUTIL_PATH_RESERVED,
++    PHP_WIN32_IOUTIL_PATH_DEVICE } php_win32_ioutil_path_kind;
++typedef ULONG (WINAPI *php_win32_ioutil_rtl_is_dos_device_name_u_t)(PCWSTR);
++
++
++
++static BOOL php_win32_ioutil_is_reserved_name_w(const wchar_t *name, size_t len)
++{/*{{{*/
++	if (len == 3) {
++		return _wcsnicmp(name, L"CON", 3) == 0
++			|| _wcsnicmp(name, L"PRN", 3) == 0
++			|| _wcsnicmp(name, L"AUX", 3) == 0
++			|| _wcsnicmp(name, L"NUL", 3) == 0;
++	}
++
++	if (len == 4 && (_wcsnicmp(name, L"COM", 3) == 0 || _wcsnicmp(name, L"LPT", 3) == 0)) {
++		return (name[3] >= L'1' && name[3] <= L'9')
++			|| name[3] == L'\u00B2'
++			|| name[3] == L'\u00B3'
++			|| name[3] == L'\u00B9';
++	}
++
++	return (len == 6 && _wcsnicmp(name, L"CONIN$", 6) == 0)
++		|| (len == 7 && _wcsnicmp(name, L"CONOUT$", 7) == 0);
++}/*}}}*/
++
++/* Also catches variants like NUL.txt, NUL:stream or "NUL ", as far as the OS treats them as devices. */
++static BOOL php_win32_ioutil_is_reserved_component_w(const wchar_t *name, size_t len)
++{/*{{{*/
++	HMODULE module = GetModuleHandleW(L"ntdll.dll");
++	php_win32_ioutil_rtl_is_dos_device_name_u_t rtl_is_dos_device_name_u = module ?
++		(php_win32_ioutil_rtl_is_dos_device_name_u_t)GetProcAddress(module, "RtlIsDosDeviceName_U") : NULL;
++	size_t base_len = len;
++	wchar_t *tmp;
++	BOOL ret;
++	ALLOCA_FLAG(use_heap)
++
++	if (php_win32_ioutil_is_reserved_name_w(name, len)) {
++		return TRUE;
++	}
++
++	for (size_t i = 0; i < len; i++) {
++		if (name[i] == L'.' || name[i] == L':') {
++			base_len = i;
++			break;
++		}
++	}
++	while (base_len > 0 && name[base_len - 1] == L' ') {
++		base_len--;
++	}
++
++	if (base_len == len || !php_win32_ioutil_is_reserved_name_w(name, base_len)) {
++		return FALSE;
++	}
++
++	if (!rtl_is_dos_device_name_u) {
++		return TRUE;
++	}
++
++	tmp = do_alloca((len + 1) * sizeof(wchar_t), use_heap);
++	memcpy(tmp, name, len * sizeof(wchar_t));
++	tmp[len] = L'\0';
++	ret = rtl_is_dos_device_name_u(tmp) > 0;
++	free_alloca(tmp, use_heap);
++
++	return ret;
++}/*}}}*/
++
++static php_win32_ioutil_path_kind php_win32_ioutil_path_kind_w(const wchar_t *path, size_t path_len)
++{/*{{{*/
++	size_t i = 0;
++
++	while (i < path_len && !PHP_WIN32_IOUTIL_IS_SLASHW(path[i])) {
++		i++;
++	}
++
++	if (i == path_len && !(path_len > 2 && PHP_WIN32_IOUTIL_IS_LETTERW(path[0]) && path[1] == L':')) {
++		if (path_len == 0) {
++			return PHP_WIN32_IOUTIL_PATH_OK;
++		}
++		/* Bare device names like NUL or NUL: are kept working for BC. */
++		if (php_win32_ioutil_is_reserved_name_w(path, path_len - (path[path_len - 1] == L':'))) {
++			return PHP_WIN32_IOUTIL_PATH_DEVICE;
++		}
++		return php_win32_ioutil_is_reserved_component_w(path, path_len)
++			? PHP_WIN32_IOUTIL_PATH_RESERVED : PHP_WIN32_IOUTIL_PATH_OK;
++	}
++
++	/* Windows does not map device names within DOS device paths (\\.\, \\?\ and \??\). */
++	if (path_len >= 4 && PHP_WIN32_IOUTIL_IS_SLASHW(path[3])
++		&& ((PHP_WIN32_IOUTIL_IS_SLASHW(path[0]) && PHP_WIN32_IOUTIL_IS_SLASHW(path[1]) && (path[2] == L'.' || path[2] == L'?'))
++			|| (path[0] == L'\\' && path[1] == L'?' && path[2] == L'?'))) {
++		return PHP_WIN32_IOUTIL_PATH_OK;
++	}
++
++	i = 0;
++	if (path_len >= 2 && PHP_WIN32_IOUTIL_IS_SLASHW(path[0]) && PHP_WIN32_IOUTIL_IS_SLASHW(path[1])) {
++		/* UNC, skip server and share. */
++		for (int n = 0; n < 2; n++) {
++			while (i < path_len && PHP_WIN32_IOUTIL_IS_SLASHW(path[i])) {
++				i++;
++			}
++			while (i < path_len && !PHP_WIN32_IOUTIL_IS_SLASHW(path[i])) {
++				i++;
++			}
++		}
++	} else if (path_len >= 2 && PHP_WIN32_IOUTIL_IS_LETTERW(path[0]) && path[1] == L':') {
++		i = 2;
++	}
++
++	while (i < path_len) {
++		size_t start;
++
++		while (i < path_len && PHP_WIN32_IOUTIL_IS_SLASHW(path[i])) {
++			i++;
++		}
++		start = i;
++		while (i < path_len && !PHP_WIN32_IOUTIL_IS_SLASHW(path[i])) {
++			i++;
++		}
++		if (i > start && php_win32_ioutil_is_reserved_component_w(path + start, i - start)) {
++			return PHP_WIN32_IOUTIL_PATH_RESERVED;
++		}
++	}
++
++	return PHP_WIN32_IOUTIL_PATH_OK;
++}/*}}}*/
++
++static php_win32_ioutil_path_kind php_win32_ioutil_path_kind_a(const char *path, size_t len)
++{
++    int count;
++    wchar_t *wide;
++    php_win32_ioutil_path_kind result;
++    if (len == 0) return PHP_WIN32_IOUTIL_PATH_OK;
++    count = MultiByteToWideChar(CP_ACP, 0, path, (int)len, NULL, 0);
++    if (count <= 0) return PHP_WIN32_IOUTIL_PATH_OK;
++    wide = safe_emalloc((size_t)count + 1, sizeof(wchar_t), 0);
++    if (MultiByteToWideChar(CP_ACP, 0, path, (int)len, wide, count) != count) {
++        efree(wide);
++        return PHP_WIN32_IOUTIL_PATH_OK;
++    }
++    wide[count] = 0;
++    result = php_win32_ioutil_path_kind_w(wide, count);
++    efree(wide);
++    return result;
++}
++#endif
++
+ CWD_API int virtual_file_ex(cwd_state *state, const char *path, verify_path_func verify_path, int use_realpath) /* {{{ */
+ {
+ 	int path_length = (int)strlen(path);
+@@ -1215,6 +1368,19 @@
+ 
+ #if VIRTUAL_CWD_DEBUG
+ 	fprintf(stderr,"cwd = %s path = %s\n", state->cwd, path);
++#endif
++
++#ifdef ZEND_WIN32
++    switch (php_win32_ioutil_path_kind_a(path, path_length)) {
++        case PHP_WIN32_IOUTIL_PATH_RESERVED:
++            _set_errno(EINVAL); SetLastError(ERROR_INVALID_NAME);
++            return 1;
++        case PHP_WIN32_IOUTIL_PATH_DEVICE:
++            memcpy(resolved_path, path, path_length + 1);
++            goto verify;
++        default:
++            break;
++    }
+ #endif
+ 
+ 	/* cwd_length can be 0 when getcwd() fails.

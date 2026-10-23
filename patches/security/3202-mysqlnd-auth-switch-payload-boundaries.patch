@@ -1,0 +1,174 @@
+--- a/ext/mysqlnd/mysqlnd_wireprotocol.c
++++ b/ext/mysqlnd/mysqlnd_wireprotocol.c
+@@ -741,24 +741,28 @@
+ 										 packet->error, sizeof(packet->error),
+ 										 &packet->error_no, packet->sqlstate
+ 										);
+ 		DBG_RETURN(PASS);
+ 	}
+ 	if (0xFE == packet->response_code) {
+ 		/* Authentication Switch Response */
+ 		if (packet->header.size > (size_t) (p - buf)) {
+-			packet->new_auth_protocol = mnd_pestrdup((char *)p, FALSE);
+-			packet->new_auth_protocol_len = strlen(packet->new_auth_protocol);
+-			p+= packet->new_auth_protocol_len + 1; /* +1 for the \0 */
++			const char *protocol_end = memchr(p, '\0', packet->header.size - (size_t)(p - begin));
++			if (!protocol_end) {
++				goto premature_end;
++			}
++			packet->new_auth_protocol_len = protocol_end - (const char *)p;
++			packet->new_auth_protocol = mnd_pestrndup((char *)p, packet->new_auth_protocol_len, FALSE);
++			p = (zend_uchar *)protocol_end + 1;
+ 
+ 			packet->new_auth_protocol_data_len = packet->header.size - (size_t) (p - buf);
+ 			if (packet->new_auth_protocol_data_len) {
++				BAIL_IF_NOT_ENOUGH_DATA(packet->new_auth_protocol_data_len);
+ 				packet->new_auth_protocol_data = mnd_emalloc(packet->new_auth_protocol_data_len);
+-				BAIL_IF_NOT_ENOUGH_DATA(packet->new_auth_protocol_data_len);
+ 				memcpy(packet->new_auth_protocol_data, p, packet->new_auth_protocol_data_len);
+ 			}
+ 			DBG_INF_FMT("The server requested switching auth plugin to : %s", packet->new_auth_protocol);
+ 			DBG_INF_FMT("Server salt : [%d][%.*s]", packet->new_auth_protocol_data_len, packet->new_auth_protocol_data_len, packet->new_auth_protocol_data);
+ 		}
+ 	} else {
+ 		/* Everything was fine! */
+ 		MYSQLND_READ_FIELD_LENGTH(packet->affected_rows);
+@@ -776,17 +780,18 @@
+ 		packet->warning_count = uint2korr(p);
+ 		p+= 2;
+ 		BAIL_IF_NO_MORE_DATA;
+ 
+ 		/* There is a message */
+ 		if (packet->header.size > (size_t) (p - buf)) {
+         MYSQLND_READ_FIELD_LENGTH(i);
+         if (i) {
+-			packet->message_len = MIN(i, buf_len - (p - begin));
++			BAIL_IF_NOT_ENOUGH_DATA(i);
++			packet->message_len = i;
+ 			packet->message = mnd_pestrndup((char *)p, packet->message_len, FALSE);
+ 		}
+     } else {
+ 			packet->message = NULL;
+ 			packet->message_len = 0;
+ 		}
+ 
+ 		DBG_INF_FMT("OK packet: aff_rows=%lld last_ins_id=%pd server_status=%u warnings=%u",
+@@ -923,17 +928,18 @@
+ 	packet->warning_count = uint2korr(p);
+ 	p+= 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* There is a message */
+ 	if (packet->header.size > (size_t) (p - buf)) {
+         MYSQLND_READ_FIELD_LENGTH(i);
+         if (i) {
+-		packet->message_len = MIN(i, buf_len - (p - begin));
++		BAIL_IF_NOT_ENOUGH_DATA(i);
++			packet->message_len = i;
+ 		packet->message = mnd_pestrndup((char *)p, packet->message_len, FALSE);
+ 	}
+     } else {
+ 		packet->message = NULL;
+ 		packet->message_len = 0;
+ 	}
+ 
+ 	DBG_INF_FMT("OK packet: aff_rows=%lld last_ins_id=%ld server_status=%u warnings=%u",
+@@ -1169,16 +1175,17 @@
+ 			/*
+ 			  First byte in the packet is the field count.
+ 			  Thus, the name is size - 1. And we add 1 for a trailing \0.
+ 			  Because we have BAIL_IF_NO_MORE_DATA before the switch, we are guaranteed
+ 			  that packet->header.size is > 0. Which means that len can't underflow, that
+ 			  would lead to 0 byte allocation but 2^32 or 2^64 bytes copied.
+ 			*/
+ 			len = packet->header.size - 1;
++			BAIL_IF_NOT_ENOUGH_DATA(len);
+ 			packet->info_or_local_file = mnd_emalloc(len + 1);
+ 			if (packet->info_or_local_file) {
+ 				BAIL_IF_NOT_ENOUGH_DATA(len);
+ 				memcpy(packet->info_or_local_file, p, len);
+ 				packet->info_or_local_file[len] = '\0';
+ 				packet->info_or_local_file_len = len;
+ 			} else {
+ 				SET_OOM_ERROR(*conn->error_info);
+@@ -1201,17 +1208,18 @@
+ 			BAIL_IF_NOT_ENOUGH_DATA(2);
+ 			packet->warning_count = uint2korr(p);
+ 			p+=2;
+ 			BAIL_IF_NO_MORE_DATA;
+ 			/* Check for additional textual data */
+ 			if (packet->header.size  > (size_t) (p - buf)) {
+         MYSQLND_READ_FIELD_LENGTH(len);
+         if (len) {
+-				packet->info_or_local_file = mnd_emalloc(len + 1);
++				BAIL_IF_NOT_ENOUGH_DATA(len);
++			packet->info_or_local_file = mnd_emalloc(len + 1);
+ 				if (packet->info_or_local_file) {
+ 					BAIL_IF_NOT_ENOUGH_DATA(len);
+ 					memcpy(packet->info_or_local_file, p, len);
+ 					packet->info_or_local_file[len] = '\0';
+ 					packet->info_or_local_file_len = len;
+ 				} else {
+ 					SET_OOM_ERROR(*conn->error_info);
+ 					ret = FAIL;
+@@ -2202,25 +2210,29 @@
+ 	if (ERROR_MARKER == packet->response_code) {
+ 		php_mysqlnd_read_error_from_line(p, packet->header.size - 1,
+ 										 packet->error_info.error,
+ 										 sizeof(packet->error_info.error),
+ 										 &packet->error_info.error_no,
+ 										 packet->error_info.sqlstate
+ 										);
+ 	}
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	if (packet->response_code == 0xFE && packet->header.size > (size_t) (p - buf)) {
+-		packet->new_auth_protocol = mnd_pestrdup((char *)p, FALSE);
+-		packet->new_auth_protocol_len = strlen(packet->new_auth_protocol);
+-		p+= packet->new_auth_protocol_len + 1; /* +1 for the \0 */
++		const char *protocol_end = memchr(p, '\0', packet->header.size - (size_t)(p - begin));
++		if (!protocol_end) {
++			goto premature_end;
++		}
++		packet->new_auth_protocol_len = protocol_end - (const char *)p;
++		packet->new_auth_protocol = mnd_pestrndup((char *)p, packet->new_auth_protocol_len, FALSE);
++		p = (zend_uchar *)protocol_end + 1;
+ 		packet->new_auth_protocol_data_len = packet->header.size - (size_t) (p - buf);
+ 		if (packet->new_auth_protocol_data_len) {
++			BAIL_IF_NOT_ENOUGH_DATA(packet->new_auth_protocol_data_len);
+ 			packet->new_auth_protocol_data = mnd_emalloc(packet->new_auth_protocol_data_len);
+-			BAIL_IF_NOT_ENOUGH_DATA(packet->new_auth_protocol_data_len);
+ 			memcpy(packet->new_auth_protocol_data, p, packet->new_auth_protocol_data_len);
+ 		}
+ 		DBG_INF_FMT("The server requested switching auth plugin to : %s", packet->new_auth_protocol);
+ 		DBG_INF_FMT("Server salt : [%*s]", packet->new_auth_protocol_data_len, packet->new_auth_protocol_data);
+ 	}
+ 
+ 	DBG_RETURN(PASS);
+ premature_end:
+@@ -2298,22 +2310,23 @@
+ 	MYSQLND_PACKET_SHA256_PK_REQUEST_RESPONSE * packet= (MYSQLND_PACKET_SHA256_PK_REQUEST_RESPONSE *) _packet;
+ 
+ 	DBG_ENTER("php_mysqlnd_sha256_pk_request_response_read");
+ 
+ 	/* leave space for terminating safety \0 */
+ 	PACKET_READ_HEADER_AND_BODY(packet, conn, buf, sizeof(buf), "SHA256_PK_REQUEST_RESPONSE", PROT_SHA256_PK_REQUEST_RESPONSE_PACKET);
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	p++;
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 
+ 	packet->public_key_len = packet->header.size - (p - buf);
++	BAIL_IF_NOT_ENOUGH_DATA(packet->public_key_len);
+ 	packet->public_key = mnd_emalloc(packet->public_key_len + 1);
+-	BAIL_IF_NOT_ENOUGH_DATA(packet->public_key_len);
+ 	memcpy(packet->public_key, p, packet->public_key_len);
+ 	packet->public_key[packet->public_key_len] = '\0';
+ 
+ 	DBG_RETURN(PASS);
+ 
+ premature_end:
+ 	DBG_ERR_FMT("OK packet %d bytes shorter than expected", p - begin - packet->header.size);
+ 	php_error_docref(NULL, E_WARNING, "SHA256_PK_REQUEST_RESPONSE packet "MYSQLND_SZ_T_SPEC" bytes shorter than expected",

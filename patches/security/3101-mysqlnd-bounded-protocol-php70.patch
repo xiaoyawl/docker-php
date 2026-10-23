@@ -1,0 +1,684 @@
+From: LookBack <admin@dstw.com>
+Subject: [PATCH] PHP 7.0: bound mysqlnd packet and row decoding
+
+Reference: PHP upstream GHSA-h35g-vwh6-m678 and GHSA-r6x9-5r99-36j7,
+signed php7.4 7.4.33-31 fixes, and independently verified PHP5.6 port.
+Keep PHP7 zval ownership and pre-7.1 MYSQLND_NET transport API.
+Use app for received bytes; preserve old exported unbounded decoder ABI but
+replace every network input call with a status-returning bounded reader.
+
+--- a/ext/mysqlnd/mysqlnd_ps_codec.c
++++ b/ext/mysqlnd/mysqlnd_ps_codec.c
+@@ -52,6 +52,21 @@
+ #define MYSQLND_PS_SKIP_RESULT_W_LEN	-1
+ #define MYSQLND_PS_SKIP_RESULT_STR		-2
+ 
++#define MYSQLND_PS_BAIL() do { \
++    php_error_docref(NULL, E_WARNING, "Malformed prepared statement row packet"); \
++    *row = NULL; \
++    return; \
++} while (0)
++#define MYSQLND_PS_REQUIRE(n) do { if ((size_t)(n) > pack_len) MYSQLND_PS_BAIL(); } while (0)
++#define MYSQLND_PS_READ_LENGTH(target) do { \
++    zend_uchar *start = *row; \
++    uint64_t value; \
++    if (!mysqlnd_read_field_length_checked(row, start + pack_len, &value) || \
++        value == MYSQLND_NULL_LENGTH || value > pack_len - (size_t)(*row - start) || value > INT_MAX) MYSQLND_PS_BAIL(); \
++    target = (zend_ulong)value; \
++    pack_len -= (size_t)(*row - start); \
++} while (0)
++
+ /* {{{ ps_fetch_from_1_to_8_bytes */
+ void
+ ps_fetch_from_1_to_8_bytes(zval * zv, const MYSQLND_FIELD * const field, unsigned int pack_len,
+@@ -60,6 +75,7 @@
+ 	char tmp[22];
+ 	size_t tmp_len = 0;
+ 	zend_bool is_bit = field->type == MYSQL_TYPE_BIT;
++	MYSQLND_PS_REQUIRE(byte_count);
+ 	DBG_ENTER("ps_fetch_from_1_to_8_bytes");
+ 	DBG_INF_FMT("zv=%p byte_count=%u", zv, byte_count);
+ 	if (field->flags & UNSIGNED_FLAG) {
+@@ -178,6 +194,7 @@
+ 	float fval;
+ 	double dval;
+ 	DBG_ENTER("ps_fetch_float");
++	MYSQLND_PS_REQUIRE(4);
+ 	float4get(fval, *row);
+ 	(*row)+= 4;
+ 	DBG_INF_FMT("value=%f", fval);
+@@ -200,6 +217,7 @@
+ {
+ 	double value;
+ 	DBG_ENTER("ps_fetch_double");
++	MYSQLND_PS_REQUIRE(8);
+ 	float8get(value, *row);
+ 	ZVAL_DOUBLE(zv, value);
+ 	(*row)+= 8;
+@@ -218,7 +236,9 @@
+ 	char * value;
+ 	DBG_ENTER("ps_fetch_time");
+ 
+-	if ((length = php_mysqlnd_net_field_length(row))) {
++	MYSQLND_PS_READ_LENGTH(length);
++	if (length != 0 && length != 8 && length != 12) MYSQLND_PS_BAIL();
++	if (length) {
+ 		zend_uchar * to= *row;
+ 
+ 		t.time_type = MYSQLND_TIMESTAMP_TIME;
+@@ -261,7 +281,9 @@
+ 	char * value;
+ 	DBG_ENTER("ps_fetch_date");
+ 
+-	if ((length = php_mysqlnd_net_field_length(row))) {
++	MYSQLND_PS_READ_LENGTH(length);
++	if (length != 0 && length != 4) MYSQLND_PS_BAIL();
++	if (length) {
+ 		zend_uchar *to= *row;
+ 
+ 		t.time_type= MYSQLND_TIMESTAMP_DATE;
+@@ -298,7 +320,9 @@
+ 	char * value;
+ 	DBG_ENTER("ps_fetch_datetime");
+ 
+-	if ((length = php_mysqlnd_net_field_length(row))) {
++	MYSQLND_PS_READ_LENGTH(length);
++	if (length != 0 && length != 4 && length != 7 && length != 11) MYSQLND_PS_BAIL();
++	if (length) {
+ 		zend_uchar * to = *row;
+ 
+ 		t.time_type = MYSQLND_TIMESTAMP_DATETIME;
+@@ -341,7 +365,8 @@
+ 	  For now just copy, before we make it possible
+ 	  to write \0 to the row buffer
+ 	*/
+-	const zend_ulong length = php_mysqlnd_net_field_length(row);
++	zend_ulong length;
++	MYSQLND_PS_READ_LENGTH(length);
+ 	DBG_ENTER("ps_fetch_string");
+ 	DBG_INF_FMT("len = %lu", length);
+ 	DBG_INF("copying from the row buffer");
+@@ -357,7 +382,9 @@
+ static void
+ ps_fetch_bit(zval * zv, const MYSQLND_FIELD * const field, unsigned int pack_len, zend_uchar ** row)
+ {
+-	zend_ulong length = php_mysqlnd_net_field_length(row);
++	zend_ulong length;
++	MYSQLND_PS_READ_LENGTH(length);
++	if (length > 8) MYSQLND_PS_BAIL();
+ 	ps_fetch_from_1_to_8_bytes(zv, field, pack_len, row, length);
+ }
+ /* }}} */
+--- a/ext/mysqlnd/mysqlnd_result.c
++++ b/ext/mysqlnd/mysqlnd_result.c
+@@ -533,7 +533,7 @@
+ 				if (FAIL == (ret = result->m.read_result_metadata(result, conn))) {
+ 					/* For PS, we leave them in Prepared state */
+ 					if (!stmt && conn->current_result) {
+-						mnd_efree(conn->current_result);
++						conn->current_result->m.free_result(conn->current_result, TRUE);
+ 						conn->current_result = NULL;
+ 					}
+ 					DBG_ERR("Error occurred while reading metadata");
+@@ -1365,7 +1365,18 @@
+ 			ret = FAIL;
+ 			goto end;
+ 		}
+-		*row_buffers = mnd_perealloc(*row_buffers, (size_t) (set->row_count * sizeof(MYSQLND_MEMORY_POOL_CHUNK *)), 0);
++		if (set->row_count == 0) {
++            mnd_pefree(*row_buffers, 0);
++            *row_buffers = NULL;
++        } else {
++            *row_buffers = mnd_perealloc(*row_buffers,
++                (size_t)(set->row_count * sizeof(MYSQLND_MEMORY_POOL_CHUNK *)), 0);
++            if (!*row_buffers) {
++                SET_OOM_ERROR(*conn->error_info);
++                ret = FAIL;
++                goto end;
++            }
++        }
+ 	}
+ 
+ 	if (conn->upsert_status->server_status & SERVER_MORE_RESULTS_EXISTS) {
+--- a/ext/mysqlnd/mysqlnd_wireprotocol.c
++++ b/ext/mysqlnd/mysqlnd_wireprotocol.c
+@@ -60,12 +60,23 @@
+ 	}
+ 
+ 
+-#define BAIL_IF_NO_MORE_DATA \
+-	if ((size_t)(p - begin) > packet->header.size) { \
+-		php_error_docref(NULL, E_WARNING, "Premature end of data (mysqlnd_wireprotocol.c:%u)", __LINE__); \
+-		goto premature_end; \
+-	} \
+-
++#define BAIL_IF_NOT_ENOUGH_DATA(n) do { \
++    if (!p || p < begin || (size_t)(p - begin) > packet->header.size || \
++        (size_t)(n) > packet->header.size - (size_t)(p - begin)) { \
++        php_error_docref(NULL, E_WARNING, "Malformed server packet: premature end of data"); \
++        goto premature_end; \
++    } \
++} while (0)
++#define BAIL_IF_NO_MORE_DATA BAIL_IF_NOT_ENOUGH_DATA(0)
++#define MYSQLND_READ_FIELD_LENGTH(target) do { \
++    uint64_t value; \
++    BAIL_IF_NO_MORE_DATA; \
++    if (!mysqlnd_read_field_length_checked(&p, begin + packet->header.size, &value)) { \
++        php_error_docref(NULL, E_WARNING, "Malformed server packet: invalid field length"); \
++        goto premature_end; \
++    } \
++    target = value; \
++} while (0)
+ 
+ static const char *unknown_sqlstate= "HY000";
+ const char * const mysqlnd_empty_string = "";
+@@ -341,6 +352,7 @@
+ 		buf[packet->header.size] = '\0';
+ 	}
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->protocol_version = uint1korr(p);
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -361,41 +373,54 @@
+ 		DBG_RETURN(PASS);
+ 	}
+ 
+-	packet->server_version = estrdup((char *)p);
++	{
++        char *end = memchr(p, '\0', packet->header.size - (size_t)(p-begin));
++        if (!end) goto premature_end;
++        packet->server_version = estrndup((char *)p, end - (char *)p);
++    }
+ 	p+= strlen(packet->server_version) + 1; /* eat the '\0' */
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(4);
+ 	packet->thread_id = uint4korr(p);
+ 	p+=4;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(SCRAMBLE_LENGTH_323);
++
+ 	memcpy(packet->auth_plugin_data, p, SCRAMBLE_LENGTH_323);
+ 	p+= SCRAMBLE_LENGTH_323;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* pad1 */
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	packet->server_capabilities = uint2korr(p);
+ 	p+= 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->charset_no = uint1korr(p);
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	packet->server_status = uint2korr(p);
+ 	p+= 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* pad2 */
+ 	pad_start = p;
++    BAIL_IF_NOT_ENOUGH_DATA(13);
+ 	p+= 13;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	if ((size_t) (p - buf) < packet->header.size) {
+ 		/* auth_plugin_data is split into two parts */
++		BAIL_IF_NOT_ENOUGH_DATA(SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323 + 1);
+ 		memcpy(packet->auth_plugin_data + SCRAMBLE_LENGTH_323, p, SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323);
+ 		p+= SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323;
+ 		p++; /* 0x0 at the end of the scramble and thus last byte in the packet in 5.1 and previous */
+@@ -414,7 +439,9 @@
+ 		packet->auth_plugin_data_len = uint1korr(pad_start + 2);
+ 		if (packet->auth_plugin_data_len > SCRAMBLE_LENGTH) {
+ 			/* more data*/
+-			zend_uchar * new_auth_plugin_data = emalloc(packet->auth_plugin_data_len);
++			zend_uchar *new_auth_plugin_data;
++            BAIL_IF_NOT_ENOUGH_DATA(packet->auth_plugin_data_len - SCRAMBLE_LENGTH);
++            new_auth_plugin_data = emalloc(packet->auth_plugin_data_len);
+ 			if (!new_auth_plugin_data) {
+ 				goto premature_end;
+ 			}
+@@ -430,8 +457,13 @@
+ 	if (packet->server_capabilities & CLIENT_PLUGIN_AUTH) {
+ 		BAIL_IF_NO_MORE_DATA;
+ 		/* The server is 5.5.x and supports authentication plugins */
+-		packet->auth_protocol = estrdup((char *)p);
+-		p+= strlen(packet->auth_protocol) + 1; /* eat the '\0' */
++		{
++            size_t remaining = packet->header.size - (size_t)(p-begin);
++            char *end = memchr(p, '\0', remaining);
++            size_t length = end ? (size_t)(end-(char *)p) : remaining;
++            packet->auth_protocol = estrndup((char *)p, length);
++            p += length + (end != NULL);
++        }
+ 	}
+ 
+ 	DBG_INF_FMT("proto=%u server=%s thread_id=%u",
+@@ -699,6 +731,7 @@
+ 	buf[packet->header.size] = '\0';
+ 
+ 	/* Should be always 0x0 or ERROR_MARKER for error */
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->response_code = uint1korr(p);
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -720,6 +753,7 @@
+ 			packet->new_auth_protocol_data_len = packet->header.size - (size_t) (p - buf);
+ 			if (packet->new_auth_protocol_data_len) {
+ 				packet->new_auth_protocol_data = mnd_emalloc(packet->new_auth_protocol_data_len);
++				BAIL_IF_NOT_ENOUGH_DATA(packet->new_auth_protocol_data_len);
+ 				memcpy(packet->new_auth_protocol_data, p, packet->new_auth_protocol_data_len);
+ 			}
+ 			DBG_INF_FMT("The server requested switching auth plugin to : %s", packet->new_auth_protocol);
+@@ -727,25 +761,30 @@
+ 		}
+ 	} else {
+ 		/* Everything was fine! */
+-		packet->affected_rows  = php_mysqlnd_net_field_length_ll(&p);
++		MYSQLND_READ_FIELD_LENGTH(packet->affected_rows);
+ 		BAIL_IF_NO_MORE_DATA;
+ 
+-		packet->last_insert_id = php_mysqlnd_net_field_length_ll(&p);
++		MYSQLND_READ_FIELD_LENGTH(packet->last_insert_id);
+ 		BAIL_IF_NO_MORE_DATA;
+ 
++		BAIL_IF_NOT_ENOUGH_DATA(2);
+ 		packet->server_status = uint2korr(p);
+ 		p+= 2;
+ 		BAIL_IF_NO_MORE_DATA;
+ 
++		BAIL_IF_NOT_ENOUGH_DATA(2);
+ 		packet->warning_count = uint2korr(p);
+ 		p+= 2;
+ 		BAIL_IF_NO_MORE_DATA;
+ 
+ 		/* There is a message */
+-		if (packet->header.size > (size_t) (p - buf) && (i = php_mysqlnd_net_field_length(&p))) {
++		if (packet->header.size > (size_t) (p - buf)) {
++        MYSQLND_READ_FIELD_LENGTH(i);
++        if (i) {
+ 			packet->message_len = MIN(i, buf_len - (p - begin));
+ 			packet->message = mnd_pestrndup((char *)p, packet->message_len, FALSE);
+-		} else {
++		}
++    } else {
+ 			packet->message = NULL;
+ 			packet->message_len = 0;
+ 		}
+@@ -855,6 +894,7 @@
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* Should be always 0x0 or ERROR_MARKER for error */
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->field_count = uint1korr(p);
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -868,25 +908,30 @@
+ 		DBG_RETURN(PASS);
+ 	}
+ 	/* Everything was fine! */
+-	packet->affected_rows  = php_mysqlnd_net_field_length_ll(&p);
+-	BAIL_IF_NO_MORE_DATA;
+-
+-	packet->last_insert_id = php_mysqlnd_net_field_length_ll(&p);
+-	BAIL_IF_NO_MORE_DATA;
+-
++	MYSQLND_READ_FIELD_LENGTH(packet->affected_rows);
++	BAIL_IF_NO_MORE_DATA;
++
++	MYSQLND_READ_FIELD_LENGTH(packet->last_insert_id);
++	BAIL_IF_NO_MORE_DATA;
++
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	packet->server_status = uint2korr(p);
+ 	p+= 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	packet->warning_count = uint2korr(p);
+ 	p+= 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* There is a message */
+-	if (packet->header.size > (size_t) (p - buf) && (i = php_mysqlnd_net_field_length(&p))) {
++	if (packet->header.size > (size_t) (p - buf)) {
++        MYSQLND_READ_FIELD_LENGTH(i);
++        if (i) {
+ 		packet->message_len = MIN(i, buf_len - (p - begin));
+ 		packet->message = mnd_pestrndup((char *)p, packet->message_len, FALSE);
+-	} else {
++	}
++    } else {
+ 		packet->message = NULL;
+ 		packet->message_len = 0;
+ 	}
+@@ -945,6 +990,7 @@
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* Should be always EODATA_MARKER */
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->field_count = uint1korr(p);
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -963,10 +1009,12 @@
+ 		according to the Docs@Forge!!!
+ 	*/
+ 	if (packet->header.size > 1) {
++		BAIL_IF_NOT_ENOUGH_DATA(2);
+ 		packet->warning_count = uint2korr(p);
+ 		p+= 2;
+ 		BAIL_IF_NO_MORE_DATA;
+ 
++		BAIL_IF_NOT_ENOUGH_DATA(2);
+ 		packet->server_status = uint2korr(p);
+ 		p+= 2;
+ 		BAIL_IF_NO_MORE_DATA;
+@@ -1099,6 +1147,7 @@
+ 	  Don't increment. First byte is ERROR_MARKER on error, but otherwise is starting byte
+ 	  of encoded sequence for length.
+ 	*/
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	if (ERROR_MARKER == *p) {
+ 		/* Error */
+ 		p++;
+@@ -1111,7 +1160,7 @@
+ 		DBG_RETURN(PASS);
+ 	}
+ 
+-	packet->field_count = php_mysqlnd_net_field_length(&p);
++	MYSQLND_READ_FIELD_LENGTH(packet->field_count);
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	switch (packet->field_count) {
+@@ -1127,6 +1176,7 @@
+ 			len = packet->header.size - 1;
+ 			packet->info_or_local_file = mnd_emalloc(len + 1);
+ 			if (packet->info_or_local_file) {
++				BAIL_IF_NOT_ENOUGH_DATA(len);
+ 				memcpy(packet->info_or_local_file, p, len);
+ 				packet->info_or_local_file[len] = '\0';
+ 				packet->info_or_local_file_len = len;
+@@ -1137,23 +1187,28 @@
+ 			break;
+ 		case 0x00:
+ 			DBG_INF("UPSERT");
+-			packet->affected_rows = php_mysqlnd_net_field_length_ll(&p);
++			MYSQLND_READ_FIELD_LENGTH(packet->affected_rows);
+ 			BAIL_IF_NO_MORE_DATA;
+ 
+-			packet->last_insert_id = php_mysqlnd_net_field_length_ll(&p);
++			MYSQLND_READ_FIELD_LENGTH(packet->last_insert_id);
+ 			BAIL_IF_NO_MORE_DATA;
+ 
++			BAIL_IF_NOT_ENOUGH_DATA(2);
+ 			packet->server_status = uint2korr(p);
+ 			p+=2;
+ 			BAIL_IF_NO_MORE_DATA;
+ 
++			BAIL_IF_NOT_ENOUGH_DATA(2);
+ 			packet->warning_count = uint2korr(p);
+ 			p+=2;
+ 			BAIL_IF_NO_MORE_DATA;
+ 			/* Check for additional textual data */
+-			if (packet->header.size  > (size_t) (p - buf) && (len = php_mysqlnd_net_field_length(&p))) {
++			if (packet->header.size  > (size_t) (p - buf)) {
++        MYSQLND_READ_FIELD_LENGTH(len);
++        if (len) {
+ 				packet->info_or_local_file = mnd_emalloc(len + 1);
+ 				if (packet->info_or_local_file) {
++					BAIL_IF_NOT_ENOUGH_DATA(len);
+ 					memcpy(packet->info_or_local_file, p, len);
+ 					packet->info_or_local_file[len] = '\0';
+ 					packet->info_or_local_file_len = len;
+@@ -1162,6 +1217,7 @@
+ 					ret = FAIL;
+ 				}
+ 			}
++    }
+ 			DBG_INF_FMT("affected_rows=%llu last_insert_id=%llu server_status=%u warning_count=%u",
+ 						packet->affected_rows, packet->last_insert_id,
+ 						packet->server_status, packet->warning_count);
+@@ -1241,6 +1297,7 @@
+ 	}
+ 
+ 	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	if (ERROR_MARKER == *p) {
+ 		/* Error */
+ 		p++;
+@@ -1261,8 +1318,9 @@
+ 	meta = packet->metadata;
+ 
+ 	for (i = 0; i < field_count; i += 2) {
+-		len = php_mysqlnd_net_field_length(&p);
++		MYSQLND_READ_FIELD_LENGTH(len);
+ 		BAIL_IF_NO_MORE_DATA;
++		if (len != MYSQLND_NULL_LENGTH) { BAIL_IF_NOT_ENOUGH_DATA(len); }
+ 		switch ((len)) {
+ 			case 0:
+ 				*(const char **)(((char*)meta) + rset_field_offsets[i]) = mysqlnd_empty_string;
+@@ -1281,6 +1339,7 @@
+ 	}
+ 
+ 	/* 1 byte length */
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	if (12 != *p) {
+ 		DBG_ERR_FMT("Protocol error. Server sent false length. Expected 12 got %d", (int) *p);
+ 		php_error_docref(NULL, E_WARNING, "Protocol error. Server sent false length. Expected 12");
+@@ -1289,27 +1348,33 @@
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	meta->charsetnr = uint2korr(p);
+ 	p += 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(4);
+ 	meta->length = uint4korr(p);
+ 	p += 4;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	meta->type = uint1korr(p);
+ 	p += 1;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	meta->flags = uint2korr(p);
+ 	p += 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	meta->decimals = uint1korr(p);
+ 	p += 1;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* 2 byte filler */
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	p +=2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+@@ -1328,12 +1393,16 @@
+ 	  NULL_LENGTH (0xFB) comes from COM_FIELD_LIST when the default value is NULL.
+ 	  Otherwise the string is length encoded.
+ 	*/
+-	if (packet->header.size > (size_t) (p - buf) &&
+-		(len = php_mysqlnd_net_field_length(&p)) &&
+-		len != MYSQLND_NULL_LENGTH)
++	if (packet->header.size > (size_t)(p - buf)) {
++        MYSQLND_READ_FIELD_LENGTH(len);
++    } else {
++        len = MYSQLND_NULL_LENGTH;
++    }
++    if (len && len != MYSQLND_NULL_LENGTH)
+ 	{
+ 		BAIL_IF_NO_MORE_DATA;
+ 		DBG_INF_FMT("Def found, length %lu, persistent=%u", len, packet->persistent_alloc);
++		BAIL_IF_NOT_ENOUGH_DATA(len);
+ 		meta->def = mnd_pemalloc(len + 1, packet->persistent_alloc);
+ 		if (!meta->def) {
+ 			SET_OOM_ERROR(*conn->error_info);
+@@ -1533,6 +1602,10 @@
+ 
+ 	end_field = (start_field = fields) + field_count;
+ 
++    if (row_buffer->app < 1 + (field_count + 9)/8) {
++        php_error_docref(NULL, E_WARNING, "Malformed binary row null bitmap");
++        DBG_RETURN(FAIL);
++    }
+ 	/* skip the first byte, not EODATA_MARKER -> 0x0, status */
+ 	p++;
+ 	null_ptr= p;
+@@ -1553,7 +1626,13 @@
+ 			statistic = STAT_BINARY_TYPE_FETCHED_NULL;
+ 		} else {
+ 			enum_mysqlnd_field_types type = fields_metadata[i].type;
+-			mysqlnd_ps_fetch_functions[type].func(current_field, &fields_metadata[i], 0, &p);
++			if (type >= MYSQL_TYPE_LAST || !mysqlnd_ps_fetch_functions[type].func ||
++                (size_t)(p - (zend_uchar *)row_buffer->ptr) > row_buffer->app) {
++                DBG_RETURN(FAIL);
++            }
++            mysqlnd_ps_fetch_functions[type].func(current_field, &fields_metadata[i],
++                row_buffer->app - (size_t)(p - (zend_uchar *)row_buffer->ptr), &p);
++            if (!p) DBG_RETURN(FAIL);
+ 
+ 			if (MYSQLND_G(collect_statistics)) {
+ 				switch (fields_metadata[i].type) {
+@@ -1628,7 +1707,12 @@
+ 
+ 	for (i = 0, current_field = start_field; current_field < end_field; current_field++, i++) {
+ 		/* php_mysqlnd_net_field_length() call should be after *this_field_len_pos = p; */
+-		const zend_ulong len = php_mysqlnd_net_field_length(&p);
++		uint64_t len;
++        if (!mysqlnd_read_field_length_checked(&p, packet_end, &len) ||
++            (len != MYSQLND_NULL_LENGTH && len > (uint64_t)(packet_end - p))) {
++            php_error_docref(NULL, E_WARNING, "Malformed server row packet");
++            DBG_RETURN(FAIL);
++        }
+ 
+ 		/* NULL or NOT NULL, this is the question! */
+ 		if (len == MYSQLND_NULL_LENGTH) {
+@@ -1851,7 +1935,11 @@
+ 	packet->header.size = data_size;
+ 	packet->row_buffer->app = data_size;
+ 
+-	if (ERROR_MARKER == (*(p = packet->row_buffer->ptr))) {
++	if (data_size == 0) {
++        ret = FAIL;
++        goto end;
++    }
++    if (ERROR_MARKER == (*(p = packet->row_buffer->ptr))) {
+ 		/*
+ 		   Error message as part of the result set,
+ 		   not good but we should not hang. See:
+@@ -1867,6 +1955,10 @@
+ 	} else if (EODATA_MARKER == *p && data_size < 8) { /* EOF */
+ 		packet->eof = TRUE;
+ 		p++;
++        if (data_size > 1 && data_size < 5) {
++            ret = FAIL;
++            goto end;
++        }
+ 		if (data_size > 1) {
+ 			packet->warning_count = uint2korr(p);
+ 			p += 2;
+@@ -1999,6 +2091,7 @@
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	data_size = packet->header.size;
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->error_code = uint1korr(p);
+ 	p++;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -2021,15 +2114,18 @@
+ 		DBG_RETURN(FAIL);
+ 	}
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(4);
+ 	packet->stmt_id = uint4korr(p);
+ 	p += 4;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* Number of columns in result set */
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	packet->field_count = uint2korr(p);
+ 	p += 2;
+ 	BAIL_IF_NO_MORE_DATA;
+ 
++	BAIL_IF_NOT_ENOUGH_DATA(2);
+ 	packet->param_count = uint2korr(p);
+ 	p += 2;
+ 	BAIL_IF_NO_MORE_DATA;
+@@ -2039,6 +2135,7 @@
+ 		p++;
+ 		BAIL_IF_NO_MORE_DATA;
+ 
++		BAIL_IF_NOT_ENOUGH_DATA(2);
+ 		packet->warning_count = uint2korr(p);
+ 	}
+ 
+@@ -2091,6 +2188,8 @@
+ 	*/
+ 
+ 	/* Should be always 0x0 or ERROR_MARKER for error */
++	BAIL_IF_NOT_ENOUGH_DATA(1);
++	BAIL_IF_NOT_ENOUGH_DATA(1);
+ 	packet->response_code = uint1korr(p);
+ 	p++;
+ 
+@@ -2116,6 +2215,7 @@
+ 		packet->new_auth_protocol_data_len = packet->header.size - (size_t) (p - buf);
+ 		if (packet->new_auth_protocol_data_len) {
+ 			packet->new_auth_protocol_data = mnd_emalloc(packet->new_auth_protocol_data_len);
++			BAIL_IF_NOT_ENOUGH_DATA(packet->new_auth_protocol_data_len);
+ 			memcpy(packet->new_auth_protocol_data, p, packet->new_auth_protocol_data_len);
+ 		}
+ 		DBG_INF_FMT("The server requested switching auth plugin to : %s", packet->new_auth_protocol);
+@@ -2208,6 +2308,7 @@
+ 
+ 	packet->public_key_len = packet->header.size - (p - buf);
+ 	packet->public_key = mnd_emalloc(packet->public_key_len + 1);
++	BAIL_IF_NOT_ENOUGH_DATA(packet->public_key_len);
+ 	memcpy(packet->public_key, p, packet->public_key_len);
+ 	packet->public_key[packet->public_key_len] = '\0';
+ 
+--- a/ext/mysqlnd/mysqlnd_wireprotocol.h
++++ b/ext/mysqlnd/mysqlnd_wireprotocol.h
+@@ -27,6 +27,27 @@
+ #define COMPRESSED_HEADER_SIZE 3
+ 
+ #define MYSQLND_NULL_LENGTH	(zend_ulong) ~0
++
++/* Bounded length-encoded integer reader. It never dereferences a truncated
++ * prefix or advances beyond the received packet. */
++static inline zend_bool mysqlnd_read_field_length_checked(zend_uchar **cursor,
++        const zend_uchar *end, uint64_t *value)
++{
++    zend_uchar *p = *cursor;
++    size_t need;
++    if (!p || p >= end) return 0;
++    need = *p < 252 ? 1 : (*p == 252 ? 3 : (*p == 253 ? 4 : (*p == 254 ? 9 : 0)));
++    if (!need || need > (size_t)(end - p)) return 0;
++    if (*p < 251) *value = *p;
++    else if (*p == 251) *value = MYSQLND_NULL_LENGTH;
++    else if (*p == 252) *value = uint2korr(p+1);
++    else if (*p == 253) *value = uint3korr(p+1);
++    else *value = uint8korr(p+1);
++    if (*p >= 252 && *value == MYSQLND_NULL_LENGTH) return 0;
++    *cursor += need;
++    return 1;
++}
++
+ 
+ /* Used in mysqlnd_debug.c */
+ PHPAPI extern const char mysqlnd_read_header_name[];

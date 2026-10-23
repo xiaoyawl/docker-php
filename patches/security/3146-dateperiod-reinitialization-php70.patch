@@ -1,0 +1,45 @@
+From: LookBack <admin@dstw.com>
+Subject: [PATCH] PHP7.0 release DatePeriod native state on repeated constructor
+
+Reference: signed Surý php7.4 7.4.33-31 patches 0112/0113/0115/0119/0122/0125/0146/0157.
+Adapt native PHP7.0 APIs; runtime and Windows validation are recorded separately.
+
+--- a/ext/date/php_date.c
++++ b/ext/date/php_date.c
+@@ -4425,6 +4425,15 @@
+ /* {{{ proto DatePeriod::__construct(DateTime $start, DateInterval $interval, int recurrences|DateTime $end)
+    Creates new DatePeriod object.
+ */
++static void date_period_reset(php_period_obj *period)
++{
++	if (period->start) timelib_time_dtor(period->start);
++	if (period->current) timelib_time_dtor(period->current);
++	if (period->end) timelib_time_dtor(period->end);
++	if (period->interval) timelib_rel_time_dtor(period->interval);
++	memset(period, 0, XtOffsetOf(php_period_obj, std));
++}
++
+ PHP_METHOD(DatePeriod, __construct)
+ {
+ 	php_period_obj   *dpobj;
+@@ -4449,7 +4458,7 @@
+ 	}
+ 
+ 	dpobj = Z_PHPPERIOD_P(getThis());
+-	dpobj->current = NULL;
++	date_period_reset(dpobj);
+ 
+ 	if (isostr) {
+ 		date_period_initialize(&(dpobj->start), &(dpobj->end), &(dpobj->interval), &recurrences, isostr, isostr_len);
+@@ -4473,6 +4482,11 @@
+ 	} else {
+ 		/* init */
+ 		intobj  = Z_PHPINTERVAL_P(interval);
++		if (!intobj->initialized) {
++			zend_restore_error_handling(&error_handling);
++			php_error_docref(NULL, E_WARNING, "The DateInterval object has not been correctly initialized by its constructor");
++			RETURN_FALSE;
++		}
+ 
+ 		/* start date */
+ 		dateobj = Z_PHPDATE_P(start);

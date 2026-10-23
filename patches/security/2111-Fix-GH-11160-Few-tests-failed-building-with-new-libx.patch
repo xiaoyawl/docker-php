@@ -1,0 +1,80 @@
+From: Niels Dossche <7771979+nielsdos@users.noreply.github.com>
+Date: Sat, 29 Apr 2023 21:07:50 +0200
+Subject: Fix GH-11160: Few tests failed building with new libxml 2.11.0
+
+It's possible to categorise the failures into 2 categories:
+  - Changed error message. In this case we either duplicate the test and
+    modify the error message. Or if the change in error message is
+    small, we use the EXPECTF matchers to make the test compatible with both
+    old and new versions of libxml2.
+  - Missing warnings. This is caused by a change in libxml2 where the
+    parser started using SAX APIs internally [1]. In this case the
+    error_type passed to php_libxml_internal_error_handler() changed from
+    PHP_LIBXML_ERROR to PHP_LIBXML_CTX_WARNING because it internally
+    started to use the SAX handlers instead of the generic handlers.
+    However, for the SAX handlers the current input stack is empty, so
+    nothing is actually printed. I fixed this by falling back to a
+    regular warning without a filename & line number reference, which
+    mimicks the old behaviour. Furthermore, this change now also shows
+    an additional warning in a test which was previously hidden.
+
+[1] https://gitlab.gnome.org/GNOME/libxml2/-/commit/9a82b94a94bd310db426edd453b0f38c6c8f69f5
+
+Closes GH-11162.
+
+(cherry picked from commit 7c0dfc5cf58d3c445b935fa14ea8f5f13568c419)
+(cherry picked from commit 78ae0886bd1a3e42c53c9ba65764b6e6357640b5)
+---
+ ext/dom/tests/DOMDocument_loadXML_error2.phpt      |  30 ----
+ .../tests/DOMDocument_loadXML_error2_gte2_11.phpt  |  34 ++++
+ .../tests/DOMDocument_loadXML_error2_pre2_11.phpt  |  33 ++++
+ ext/dom/tests/DOMDocument_load_error2.phpt         |  30 ----
+ ext/dom/tests/DOMDocument_load_error2_gte2_11.phpt |  34 ++++
+ ext/dom/tests/DOMDocument_load_error2_pre2_11.phpt |  33 ++++
+ ext/libxml/libxml.c                                |   2 +
+ ext/libxml/tests/bug61367-read_2.phpt              |   2 +-
+ .../tests/libxml_disable_entity_loader_2.phpt      |   2 +-
+ .../libxml_set_external_entity_loader_error1.phpt  |   2 +
+ ...bxml_set_external_entity_loader_variation2.phpt |   2 +
+ ext/openssl/tests/ServerClientTestCase.inc         |  65 ++-----
+ ext/standard/tests/http/ServerClientTestCase.inc   | 199 +++++++++++++++++++++
+ .../tests/http/ghsa-52jp-hrpf-2jff-001.phpt        |   2 +-
+ .../tests/http/ghsa-52jp-hrpf-2jff-002.phpt        |   2 +-
+ .../tests/http/ghsa-hgf5-96fm-v528-001.phpt        |   2 +-
+ .../tests/http/ghsa-hgf5-96fm-v528-002.phpt        |   2 +-
+ .../tests/http/ghsa-hgf5-96fm-v528-003.phpt        |   2 +-
+ .../tests/http/ghsa-pcmh-g36c-qc44-001.phpt        |   2 +-
+ .../tests/http/ghsa-pcmh-g36c-qc44-002.phpt        |   2 +-
+ .../tests/http/ghsa-v8xr-gpvj-cx9g-001.phpt        |   2 +-
+ .../tests/http/ghsa-v8xr-gpvj-cx9g-002.phpt        |   2 +-
+ .../tests/http/ghsa-v8xr-gpvj-cx9g-003.phpt        |   2 +-
+ .../tests/http/ghsa-v8xr-gpvj-cx9g-004.phpt        |   2 +-
+ .../tests/http/ghsa-v8xr-gpvj-cx9g-005.phpt        |   2 +-
+ ext/xml/tests/bug26614_libxml.phpt                 |  93 ----------
+ ext/xml/tests/bug26614_libxml_gte2_11.phpt         |  95 ++++++++++
+ ext/xml/tests/bug26614_libxml_pre2_11.phpt         |  94 ++++++++++
+ 28 files changed, 557 insertions(+), 217 deletions(-)
+ delete mode 100644 ext/dom/tests/DOMDocument_loadXML_error2.phpt
+ create mode 100644 ext/dom/tests/DOMDocument_loadXML_error2_gte2_11.phpt
+ create mode 100644 ext/dom/tests/DOMDocument_loadXML_error2_pre2_11.phpt
+ delete mode 100644 ext/dom/tests/DOMDocument_load_error2.phpt
+ create mode 100644 ext/dom/tests/DOMDocument_load_error2_gte2_11.phpt
+ create mode 100644 ext/dom/tests/DOMDocument_load_error2_pre2_11.phpt
+ create mode 100644 ext/standard/tests/http/ServerClientTestCase.inc
+ delete mode 100644 ext/xml/tests/bug26614_libxml.phpt
+ create mode 100644 ext/xml/tests/bug26614_libxml_gte2_11.phpt
+ create mode 100644 ext/xml/tests/bug26614_libxml_pre2_11.phpt
+
+diff --git a/ext/libxml/libxml.c b/ext/libxml/libxml.c
+index d343135..5d9c23e 100644
+--- a/ext/libxml/libxml.c
++++ b/ext/libxml/libxml.c
+@@ -574,6 +574,8 @@ static void php_libxml_ctx_error_level(int level, void *ctx, const char *msg)
+ 		} else {
+ 			php_error_docref(NULL, level, "%s in Entity, line: %d", msg, parser->input->line);
+ 		}
++	} else {
++		php_error_docref(NULL, E_WARNING, "%s", msg);
+ 	}
+ }
+ 

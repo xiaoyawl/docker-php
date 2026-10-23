@@ -1,0 +1,77 @@
+From: LookBack <mondeolove@gmail.com>
+Subject: PHP7.0 compatibility with libxml2 2.13, GCC15 and musl stdio
+
+--- a/ext/libxml/libxml.c
++++ b/ext/libxml/libxml.c
+@@ -486,7 +486,7 @@
+ 	return 1;
+ }
+ 
+-static void _php_list_set_error_structure(xmlErrorPtr error, const char *msg)
++static void _php_list_set_error_structure(const xmlError *error, const char *msg)
+ {
+ 	xmlError error_copy;
+ 	int ret;
+@@ -737,7 +737,7 @@
+ 	va_end(args);
+ }
+ 
+-PHP_LIBXML_API void php_libxml_structured_error_handler(void *userData, xmlErrorPtr error)
++PHP_LIBXML_API void php_libxml_structured_error_handler(void *userData, const xmlError *error)
+ {
+ 	_php_list_set_error_structure(error, NULL);
+ 
+--- a/ext/dom/dom_iterators.c
++++ b/ext/dom/dom_iterators.c
+@@ -42,7 +42,7 @@
+ 	xmlNotation *notation;
+ };
+ 
+-static void itemHashScanner (void *payload, void *data, xmlChar *name) /* {{{ */
++static void itemHashScanner (void *payload, void *data, const xmlChar *name) /* {{{ */
+ {
+ 	nodeIterator *priv = (nodeIterator *)data;
+ 
+--- a/ext/snmp/snmp.c
++++ b/ext/snmp/snmp.c
+@@ -2065,7 +2065,7 @@
+ }
+ /* }}} */
+ 
+-static HashTable *php_snmp_get_gc(zval *object, zval ***gc_data, int *gc_data_count) /* {{{ */
++static HashTable *php_snmp_get_gc(zval *object, zval **gc_data, int *gc_data_count) /* {{{ */
+ {
+ 	*gc_data = NULL;
+ 	*gc_data_count = 0;
+--- a/ext/zip/lib/mkstemp.c
++++ b/ext/zip/lib/mkstemp.c
+@@ -38,6 +38,9 @@
+ #include <ctype.h>
+ #include <errno.h>
+ #include <fcntl.h>
++#ifndef _WIN32
++#include <unistd.h>
++#endif
+ #ifdef _WIN32
+ #include <io.h>
+ #endif
+--- a/main/streams/cast.c
++++ b/main/streams/cast.c
+@@ -115,10 +115,13 @@
+ 	return 0;
+ }
+ # else
+-static int stream_cookie_seeker(void *cookie, zend_off_t position, int whence)
+-{
+-
+-	return php_stream_seek((php_stream *)cookie, position, whence);
++static int stream_cookie_seeker(void *cookie, off_t *position, int whence)
++{
++	int result = php_stream_seek((php_stream *)cookie, *position, whence);
++	if (result == 0) {
++		*position = php_stream_tell((php_stream *)cookie);
++	}
++	return result;
+ }
+ # endif
+ 

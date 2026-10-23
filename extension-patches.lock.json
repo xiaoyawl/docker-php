@@ -1,0 +1,9 @@
+{
+  "patches": [
+    {
+      "package": "swoole-4.3.6",
+      "file": "extension-patches/swoole-4.3.6/0001-zval-dtor-integer-flag.patch",
+      "sha256": "95b8ed7c3f14d1eff04ba766de9b1d91041925d52d29c033c858ff796fcb5710"
+    }
+  ]
+}
