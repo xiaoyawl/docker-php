@@ -1,0 +1,32 @@
+From: LookBack
+Subject: 拒绝套接字主机名内嵌NUL
+
+来源：PHP7.0已适配实现，针对PHP7.1旧API严格应用。
+
+--- a/ext/standard/fsock.c
++++ b/ext/standard/fsock.c
+@@ -51,7 +51,7 @@
+ 
+ 	RETVAL_FALSE;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|lz/z/d", &host, &host_len, &port, &zerrno, &zerrstr, &timeout) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p|lz/z/d", &host, &host_len, &port, &zerrno, &zerrstr, &timeout) == FAILURE) {
+ 		RETURN_FALSE;
+ 	}
+ 
+--- a/main/streams/xp_socket.c
++++ b/main/streams/xp_socket.c
+@@ -567,6 +567,13 @@
+ 
+ static inline char *parse_ip_address_ex(const char *str, size_t str_len, int *portno, int get_err, zend_string **err)
+ {
++	if (memchr(str, '\0', str_len)) {
++		if (get_err) {
++			*err = strpprintf(0, "The hostname must not contain null bytes");
++		}
++		return NULL;
++	}
++
+ 	char *colon;
+ 	char *host = NULL;
+ 

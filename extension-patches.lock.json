@@ -1,0 +1,9 @@
+{
+  "patches": [
+    {
+      "package": "mongodb-1.11.1",
+      "file": "extension-patches/mongodb-1.11.1/mongodb-system-mock-ini.patch",
+      "sha256": "073dd050ddc44e90fabd69d0e2a299628a040f83f1e22b80d2ff7f567711c668"
+    }
+  ]
+}

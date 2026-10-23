@@ -1,0 +1,709 @@
+{
+  "sources": [
+    {
+      "url": "https://www.php.net/distributions/php-7.1.33.tar.xz",
+      "file": "php-7.1.33.tar.xz",
+      "sha256": "bd7c0a9bd5433289ee01fd440af3715309faf583f75832b64fe169c100d52968"
+    },
+    {
+      "file": "libiconv-1.18.tar.gz",
+      "url": "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.18.tar.gz",
+      "sha256": "3b08f5f4f9b4eb82f151a7040bfd6fe6c6fb922efe4b1659c66ea933276965e8"
+    },
+    {
+      "file": "memcache-4.0.5.2.tgz",
+      "url": "https://pecl.php.net/get/memcache-4.0.5.2.tgz",
+      "sha256": "7b7667813baea003671f174bbec849e43ff235a8ea4ab7e36c3a0380c2a9ed63"
+    },
+    {
+      "file": "memcached-3.4.0.tgz",
+      "url": "https://pecl.php.net/get/memcached-3.4.0.tgz",
+      "sha256": "c163434eb0da97c8f45c7ad41d979d381f8b81c49402b1b90b063987fb37972e"
+    },
+    {
+      "file": "redis-5.3.7.tgz",
+      "url": "https://pecl.php.net/get/redis-5.3.7.tgz",
+      "sha256": "b958166ccda4f40bd17c6998f9e2239021ae644467cd8ad5c15def420aad65b0"
+    },
+    {
+      "file": "swoole-4.5.11.tgz",
+      "url": "https://pecl.php.net/get/swoole-4.5.11.tgz",
+      "sha256": "2d85752ee2b0944399c2901bb22832f196ba3f7ba4262c239d12ed494e2460dd"
+    },
+    {
+      "file": "xdebug-2.9.8.tgz",
+      "url": "https://pecl.php.net/get/xdebug-2.9.8.tgz",
+      "sha256": "f555b6cc58d96c9965af942d22e0f1818b7a477a410c76b1ab0eebe85a762f8a"
+    },
+    {
+      "file": "mongodb-1.11.1.tgz",
+      "url": "https://pecl.php.net/get/mongodb-1.11.1.tgz",
+      "sha256": "838a5050de50d51f959026bd8cec7349d8af37058c0fe07295a0bc960a82d7ef"
+    },
+    {
+      "file": "zstd-0.18.0.tgz",
+      "url": "https://pecl.php.net/get/zstd-0.18.0.tgz",
+      "sha256": "223d0f77eb5a5e73cf5e7a0652dd8fde7ffdcc843e7f30eeb3998283dec847b9"
+    },
+    {
+      "file": "event-3.1.6.tgz",
+      "url": "https://pecl.php.net/get/event-3.1.6.tgz",
+      "sha256": "5b74554c6370aae8c284c8110fe27e071d3f663953c3eb762ffc429b0a3c83a2"
+    },
+    {
+      "file": "apcu-5.1.28.tgz",
+      "url": "https://pecl.php.net/get/apcu-5.1.28.tgz",
+      "sha256": "ca9c1820810a168786f8048a4c3f8c9e3fd941407ad1553259fb2e30b5f057bf"
+    },
+    {
+      "file": "imagick-3.8.1.tgz",
+      "url": "https://pecl.php.net/get/imagick-3.8.1.tgz",
+      "sha256": "3a3587c0a524c17d0dad9673a160b90cd776e836838474e173b549ed864352ee"
+    },
+    {
+      "file": "hprose-1.8.0.tgz",
+      "url": "https://pecl.php.net/get/hprose-1.8.0.tgz",
+      "sha256": "8b5303192098c68c2c9d195f0055174085b8fb75036da243c44612943e85039b"
+    },
+    {
+      "file": "ioncube_loaders_lin_musl_x86-64.tar.gz",
+      "url": "https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin-musl_x86-64.tar.gz",
+      "sha256": "5c7d7913ceca745253d4bf99df3e7d11b16db34fca4fd6dc16feccd642ecdf8b"
+    },
+    {
+      "file": "loaders.linux-x86_64.tar.gz",
+      "url": "https://www.sourceguardian.com/loaders/download/loaders.linux-x86_64.tar.gz",
+      "sha256": "aeaf6b5cf8f27ff01fd05affebdec490e6f7a01284c000a63ae3ceb6dcb6e419",
+      "extract_dir": "sourceguardian",
+      "note": "官方下载地址不含版本号；厂商更新后摘要校验会失败并中止构建，需重新审查后更新锁定"
+    },
+    {
+      "file": "composer-2.2.30.phar",
+      "url": "https://getcomposer.org/download/2.2.30/composer.phar",
+      "sha256": "8c2b4478b64f8f7cdf1574838fdb0033b29049ca821dad452db7a3dcfcdbffc2",
+      "extract": false,
+      "note": "Composer 2.2 LTS 是支持 PHP 5.3–7.1 的版本"
+    }
+  ],
+  "patches": [
+    {
+      "file": "compat/0046-Fix-check-for-CURL-include-in-M-A-directory.patch",
+      "sha256": "27d8a1aaae8e46f8cd1891d627a84a4d39d50cbff2dbc10fcfc364ea846a796f"
+    },
+    {
+      "file": "compat/0047-Use-pkg-config-for-FreeType2-detection.patch",
+      "sha256": "0f50049dcb42c0b0099d1e6b7f4fd437fa8f6e1e6435ad16a7d6e9710e161c9e"
+    },
+    {
+      "file": "compat/0048-ext-intl-Use-pkg-config-to-detect-icu.patch",
+      "sha256": "6230907b9d9092df8b58d8a65416289335098c4826ed137aaed8facb8abfc968"
+    },
+    {
+      "file": "security/0049-Fix-rl_completion_matches-compilation-with-newer-lib.patch",
+      "sha256": "d2bc35ffd951f8453e36051e4cb0126aa81e650728eb0a6e44837312a34e1861"
+    },
+    {
+      "file": "security/0050-PATCH-Fixed-bug-62596-add-getallheaders-apache_reque.patch",
+      "sha256": "e2e9e20fd91214bd2f02b575aa4a997060724a35a08d6014c6ccc989518fc0e7"
+    },
+    {
+      "file": "security/0051-Fix-libmagic-buffer-overflow-issue-CVE-2019-18218.patch",
+      "sha256": "b222e1ee43c310a0b5b8672900b95de72d86b5476ff2abfeb2c00621df165a3f"
+    },
+    {
+      "file": "security/0053-Fix-78878-Buffer-underflow-in-bc_shift_addsub.patch",
+      "sha256": "1a8e6fbde7ea7bd2f6bc0546b6037be6422900a4b60ad0162c59e45486e29d01"
+    },
+    {
+      "file": "security/0054-Fix-78862-link-silently-truncates-after-a-null-byte-.patch",
+      "sha256": "65f871ecd3fddba826e904c0874b0c860357a73303892787417957641fcf2a1a"
+    },
+    {
+      "file": "security/0055-Fix-78863-DirectoryIterator-class-silently-truncates.patch",
+      "sha256": "b68d310748833405a15ccc54a98d18c78c53432a6b59f12cb1d5c15e339ae77e"
+    },
+    {
+      "file": "security/0056-Fix-bug-78793.patch",
+      "sha256": "cc0f7c12cf912501a9d4c1b2621fcb3a13bdd7cacf81afbef8ad33459d7c4752"
+    },
+    {
+      "file": "security/0057-Fixed-bug-78910.patch",
+      "sha256": "a3884aef384d99524a5df24187d2d881b038e87bccc397fa8f7ed7d39ce486bc"
+    },
+    {
+      "file": "security/0058-relax-tests.patch",
+      "sha256": "f040e63182ddbf7738967f0ed238849671e5dad4d99a282edd97c41464bbed5b"
+    },
+    {
+      "file": "security/0059-Fix-79091-heap-use-after-free-in-session_create_id.patch",
+      "sha256": "134ef988173929337694aee7a609e561d162ef7f1e31d7c555005cd7dfcea1f1"
+    },
+    {
+      "file": "security/0060-Fix-79099-OOB-read-in-php_strip_tags_ex.patch",
+      "sha256": "d9dbc5b34af8ce905140ce10a5e634b153737d2fd790ce2df3c52dd43c9e4a62"
+    },
+    {
+      "file": "security/0061-Fix-bug-79037-global-buffer-overflow-in-mbfl_filt_co.patch",
+      "sha256": "8f58b901e3cb775616c5436f6c4f2a073b182f3f94a0c7b0990748693760ae83"
+    },
+    {
+      "file": "security/0063-More-checks-for-php_strip_tags_ex.patch",
+      "sha256": "4292a023262f0e6dc47fde8761e43e628a9d503ef77f27da7f7fc9aea6d064da"
+    },
+    {
+      "file": "security/0064-Fix-77569-Write-Acess-Violation-in-DomImplementation.patch",
+      "sha256": "23fed2dad19124b54eddae1193fb9bb227b040c2713298aff9ceac665cd9d823"
+    },
+    {
+      "file": "security/0065-Fix-typo-in-recent-bugfix.patch",
+      "sha256": "0ff4bca5caef7de82816c5e6aaad3547df1e56dfd8609f3396eb2e1bd4f1bf53"
+    },
+    {
+      "file": "security/0066-Fix-bug-79221-Null-Pointer-Dereference-in-PHP-Sessio.patch",
+      "sha256": "4ed8cbe485975a90b6dea6871270b7309cf4d1e84c5a84f21bc6658d9e77adbf"
+    },
+    {
+      "file": "security/0067-Fix-bug-79082-Files-added-to-tar-with-Phar-buildFrom.patch",
+      "sha256": "fb20e5e17e25640866201fa6420c9d13a14e73bf8c3bb6ece78b728f64a83290"
+    },
+    {
+      "file": "security/0068-Mark-bug76348.phpt-as-online-test.patch",
+      "sha256": "e54325d6f8ba68de705955fb8c5a7f091a6c6144fd17d43b9963eb2adfdd99b3"
+    },
+    {
+      "file": "security/0070-renew-certs-for-openssl-tests.patch",
+      "sha256": "d63364571c3ab58ec48290b2d93f32b0e5f842ff8fa884df69b43936f364777b"
+    },
+    {
+      "file": "compat/0071-Use-pkg-config-for-PHP_SETUP_LIBXML.patch",
+      "sha256": "81f29e8fecd25e09d532053e86564fc7db8f4a53d9fca953111452870aa8f2e7"
+    },
+    {
+      "file": "security/0072-Fixed-bug-79282.patch",
+      "sha256": "49a709c3634114ea796667c519f15de4920dd40fe35c745040d2410794d10972"
+    },
+    {
+      "file": "security/0073-Fix-test.patch",
+      "sha256": "52a981f8a24bb0e302ee2ada7f1f6198cd07fed332ca604d3d7f2baa00979de4"
+    },
+    {
+      "file": "security/0074-fix-test.patch",
+      "sha256": "8c4e7a025e633a1def2cdb8f57fe64ccd020499a277389de2a56ea0e3de04f5d"
+    },
+    {
+      "file": "security/0075-Fix-bug-79329-get_headers-should-not-accept-0.patch",
+      "sha256": "9e19fcbd5a61763c65d295309f26dc725b2872be188d3045612c3952675b83b7"
+    },
+    {
+      "file": "security/0077-Fix-bug-79330-make-all-execution-modes-consistent-in.patch",
+      "sha256": "420ca33efef3379d5a9c7fb2573e7ff25aea9a0e586b5a394a82409a42dee521"
+    },
+    {
+      "file": "security/0078-Fix-bug-79465-use-unsigneds-as-indexes.patch",
+      "sha256": "330c057b60082d7c481c061a190f77b16b18a778f51fe661c25d403eef70fe5b"
+    },
+    {
+      "file": "security/0080-Fix-bug-76895.patch",
+      "sha256": "dfcd8c0c56ab2eec328bbd6b767ac9a34053a9be35d9583f0c65c23fc8b326d0"
+    },
+    {
+      "file": "security/0081-Fix-Bug-79296-ZipArchive-open-fails-on-empty-file.patch",
+      "sha256": "a90dfe61343ce3afc90809d8f2bec6231c10203b28360fb0044cdbe617123d75"
+    },
+    {
+      "file": "security/0082-Fix-78875-Long-filenames-cause-OOM-and-temp-files-ar.patch",
+      "sha256": "79abae11ed02cd792c822555cbfac2a2d975741ebdd48a5bf8c3588e4493b21a"
+    },
+    {
+      "file": "security/0083-Fix-78876-Long-variables-cause-OOM-and-temp-files-ar.patch",
+      "sha256": "0add45cc29653dcfcd98b5dd4022382e463892bb288d859962d3d9c1a36e81fc"
+    },
+    {
+      "file": "security/0085-Allow-numeric-UG-ID-in-FPM-listen.-owner-group.patch",
+      "sha256": "65aef98c51fabdae0f846ac07580b872f75d35f568baf2030b4190d66587e8eb"
+    },
+    {
+      "file": "security/0086-Allow-fpm-tests-to-be-run-with-long-socket-path.patch",
+      "sha256": "fbc3dd72432abb4167f23f7b11d634f3c7246a589210a62f7ceb89ad4fcdabfb"
+    },
+    {
+      "file": "security/0087-Skip-fpm-tests-not-designed-to-be-run-as-root.patch",
+      "sha256": "1d458b8734455f9162a9814dba1bdbda269171d7a8f04ed4d734d837d793e3fa"
+    },
+    {
+      "file": "security/0088-Fix-79797-Use-of-freed-hash-key-in-the-phar_parse_zi.patch",
+      "sha256": "8fc8c7d97f322f8d3428df32ad9c84c68fbbdd244f2d0a14fa564ea0b071b8a3"
+    },
+    {
+      "file": "security/0089-Fix-79877-getimagesize-function-silently-truncates-a.patch",
+      "sha256": "2a31232d35561df93ad7fd67e01e5b6cda1e6d4321badca3276dd220fdeb293c"
+    },
+    {
+      "file": "security/0090-Fix-bug-79601-Wrong-ciphertext-tag-in-AES-CCM-encryp.patch",
+      "sha256": "05ecf72eba8a3121e7620dd9a0a3c6b109903c7df50257473213cd3cd485f753"
+    },
+    {
+      "file": "security/0091-Fix-bug-78079-openssl_encrypt_ccm.phpt-fails-with-Op.patch",
+      "sha256": "64f51d83a4468760aa1e51ef6c2e87bf3f0a04916cd1a2cc62d3d62f4765ff20"
+    },
+    {
+      "file": "security/0092-Do-not-decode-cookie-names-anymore.patch",
+      "sha256": "dcdec009ab997b554c1bc3a58819b4ee00e4a8472e75ed7373b829f26bccfe6f"
+    },
+    {
+      "file": "security/0096-Fix-77423-parse_url-will-deliver-a-wrong-host-to-use.patch",
+      "sha256": "c006ba3018a81b9a51b96276753e5f42b6616d70a47c37d4916cd77f0628ea78"
+    },
+    {
+      "file": "security/0098-Alternative-fix-for-bug-77423.patch",
+      "sha256": "761aa99be2e2d7effda75da820b8ed6d14edf81328cd9d6ecf9fba7fa615ed29"
+    },
+    {
+      "file": "security/0099-Fix-bug-80672-Null-Dereference-in-SoapClient.patch",
+      "sha256": "2183b75bbd5c18227890539d0352318af53ca9bc977c71fefdd98c536326dd0d"
+    },
+    {
+      "file": "security/0100-Fix-build.patch",
+      "sha256": "ff350be61d65d1ec16a43e9c8d3a97172056d32278e2469beb8564cdaa077d00"
+    },
+    {
+      "file": "security/0101-Use-libenchant-2-when-available.patch",
+      "sha256": "23c45cdb5da0c91b2ac08e1c7bfde6c793b456e3347a63348748b1721d6bc44b"
+    },
+    {
+      "file": "security/0102-remove-deprecated-call-and-deprecate-function-to-be-.patch",
+      "sha256": "5650b67349afee5e58ad63cde113ca6beaa7bcdbc9599cfd4262a92e67407010"
+    },
+    {
+      "file": "security/0103-Show-packaging-credits.patch",
+      "sha256": "373034547c91266355b62b96164cc31e589e1cb345e37a765cb8b7bb22a92a0d"
+    },
+    {
+      "file": "security/0104-Allow-printing-credits-buffer-larger-than-4k.patch",
+      "sha256": "2076612f8577f9acffa64688e53130d953c8542738e8bcbf25fd74ca2a49e10c"
+    },
+    {
+      "file": "security/0105-Fix-80710-imap_mail_compose-header-injection.patch",
+      "sha256": "6f9d6af3aeec9ebfd04986036e827c3e8a226037097ff072050ec55d9b7343a6"
+    },
+    {
+      "file": "security/0107-Don-t-close-the-credits-buffer-file-descriptor-too-e.patch",
+      "sha256": "431e69ae920bf7d34b22d7dc04ebbb6de1a1827664043afc3ccb5ddf5d02c6e6"
+    },
+    {
+      "file": "security/0108-Fix-81122-SSRF-bypass-in-FILTER_VALIDATE_URL.patch",
+      "sha256": "3cd3bbfe64a00e4dc644f8fd468b5e65f0e72a05ed12e1e7abfab5277b1708bf"
+    },
+    {
+      "file": "security/0109-Fix-warning.patch",
+      "sha256": "98eb93dd38f838eb8b6386aba96353bb6bc91f7d77332a2382637eb752280586"
+    },
+    {
+      "file": "security/0110-Fix-76452-Crash-while-parsing-blob-data-in-firebird_.patch",
+      "sha256": "48664953bef4138d6e8e9dcbbb7f9271e026b73848c907d3bc2986f7f2698040"
+    },
+    {
+      "file": "security/0111-Fix-76450-SIGSEGV-in-firebird_stmt_execute.patch",
+      "sha256": "e4d1af66c0c7af0190395e0985dcd2a5cee2d4e609435345979aa3a3e8797e0d"
+    },
+    {
+      "file": "security/0112-Fix-76449-SIGSEGV-in-firebird_handle_doer.patch",
+      "sha256": "86e6c966030eaa5e7a2dd6db13680d2d879f149ef90fd48c0490114284a8337b"
+    },
+    {
+      "file": "security/0113-Fix-76448-Stack-buffer-overflow-in-firebird_info_cb.patch",
+      "sha256": "4c41839554fb5064cb001e7e3164c632d4440f27b88798b83eeeb27143bd23ae"
+    },
+    {
+      "file": "security/0115-Fix-81211-Symlinks-are-followed-when-creating-PHAR-a.patch",
+      "sha256": "44ee60452023ab2e4fc7b56989095071fb6629a4cf10e06ae89e82f893e8618b"
+    },
+    {
+      "file": "security/0116-Fix-test.patch",
+      "sha256": "072bf9d152ee150e14f3ba59a0c03de43dc2e00aadbe902cbce1cf74e5368a53"
+    },
+    {
+      "file": "security/0118-Fix-bug-81026-PHP-FPM-oob-R-W-in-root-process-leadin.patch",
+      "sha256": "2f26c3aa37dafd661a9e5bf8e06edaf314a43e01df8cfa3909b25855af7ec5c9"
+    },
+    {
+      "file": "security/0121-Fix-81420-ZipArchive-extractTo-extracts-outside-of-d.patch",
+      "sha256": "43b860fa779a80d6aa0e2114a7bc48509d1016b58fb12a88709a83fe49084aca"
+    },
+    {
+      "file": "security/0123-Fix-79971-special-character-is-breaking-the-path-in-.patch",
+      "sha256": "4deb94e6b9387f9b66702ade37b13b470df93c99f00e14fe085aaf522d202627"
+    },
+    {
+      "file": "security/0125-fix-new-tests.patch",
+      "sha256": "4abf0deb24ed0ac10d3523efc571c2e0627a747b9c8bc20baff718395420e649"
+    },
+    {
+      "file": "compat/0126-Add-minimal-OpenSSL-3.0-patch.patch",
+      "sha256": "5d5071cc6e233575b8874fdcdb4e689f4392be5a42f9cd475d7f5da315a1abbb"
+    },
+    {
+      "file": "compat/0127-Use-true-false-instead-of-TRUE-FALSE-in-intl.patch",
+      "sha256": "094d0fbdcbc47d7b99984ccb42303a9603cf3cb890c7fe4be46dbfe5ddc4afb4"
+    },
+    {
+      "file": "compat/0128-Change-UBool-to-bool-for-equality-operators-in-ICU-7.patch",
+      "sha256": "a39f9e8e3ca1133c5d5346bf1d7e591b17bdcac2f6a23dc8db0b76d33e62a447"
+    },
+    {
+      "file": "security/0129-Fix-81720-Uninitialized-array-in-pg_query_params-lea.patch",
+      "sha256": "f0f57b0950f05287d26ad7a93f18c63839ef59b012491340bf57444e7150be9e"
+    },
+    {
+      "file": "security/0130-Fix-bug-81719-mysqlnd-pdo-password-buffer-overflow.patch",
+      "sha256": "b1cd186f4313da870027a2feb7df07b8ac98a601c2c839d9488a3acc17413e35"
+    },
+    {
+      "file": "compat/0132-Fix-bug-79589-ssl3_read_n-unexpected-eof-while-readi.patch",
+      "sha256": "f2cf06260d8c386a653f2c29f050c7af5046d60d042b96b68a79a0005abaf75d"
+    },
+    {
+      "file": "security/0133-Fix-81727-Don-t-mangle-HTTP-variable-names-that-clas.patch",
+      "sha256": "b24a9f2f9cf0143e21af3cfdd910f1d19b1097ebed05ed199bf6b859e66b0a1f"
+    },
+    {
+      "file": "security/0134-Fix-81726-phar-wrapper-DOS-when-using-quine-gzip-fil.patch",
+      "sha256": "10120593e606b1f9b0df0c3ced11d23c99c02551feb2828ba20189233ca5db6b"
+    },
+    {
+      "file": "security/0135-Fix-regression-introduced-by-fixing-bug-81726.patch",
+      "sha256": "61f4b16cfcd4817f4d47ae52f4042813e0aaf0296592e8deba9b722a905536a0"
+    },
+    {
+      "file": "security/0137-Fix-81740-PDO-quote-may-return-unquoted-string.patch",
+      "sha256": "d2424ba6cd7879ac7c46f759337685d2c283518ff701ef77d923ba42420c35ed"
+    },
+    {
+      "file": "security/0139-crypt-Fix-validation-of-malformed-BCrypt-hashes.patch",
+      "sha256": "63abd849b9ea5099f52892f8c160c71c4d0ab4d182a9f78b78e2eff8a896a157"
+    },
+    {
+      "file": "security/0140-crypt-Fix-possible-buffer-overread-in-php_crypt.patch",
+      "sha256": "a59a6ad7ce1854fc4ebe2b85b0417c3fb979b65d87b4683e47a7f2c5181c27b6"
+    },
+    {
+      "file": "security/0141-Fix-array-overrun-when-appending-slash-to-paths.patch",
+      "sha256": "d0ca570eaf6ae363e166bef06af11661aeaa1eddd2323fb3244039e45da41c46"
+    },
+    {
+      "file": "security/0143-Fix-missing-randomness-check-and-insufficient-random.patch",
+      "sha256": "63279de810d5b328f4e1de2b6b89a00b192d8acd2682e74f18df019622d9db41"
+    },
+    {
+      "file": "security/0144-Fix-GH-11382-add-missing-hash-header-for-bin2hex.patch",
+      "sha256": "e4dc66157c7605d59835701f51a8e6a4796e562345e9758d70aacaeabe072f8e"
+    },
+    {
+      "file": "security/0146-Fix-buffer-mismanagement-in-phar_dir_read.patch",
+      "sha256": "c8408da84a685f189d6f81d182e78b6e3bd9e3daa382ec72d5434458069c1b30"
+    },
+    {
+      "file": "security/0147-Sanitize-libxml2-globals-before-parsing.patch",
+      "sha256": "9a7223f74b84d7f3c24d2d66834c195cc94ace9381f76a78beb0c70bc5268b42"
+    },
+    {
+      "file": "security/0149-Fixed-bug-79412-Opcache-chokes-and-uses-100-CPU-on-s.patch",
+      "sha256": "bae37cef402a30d76a8ad16c820912f7edc8c717f72e90fb0d3ff50c2dd84887"
+    },
+    {
+      "file": "compat/0150-Add-missing-header-includes.patch",
+      "sha256": "37059f016a7676a2c22e735ab94aaa184425a10fa046f5916458808c256364fd"
+    },
+    {
+      "file": "security/0151-Fix-GHSA-wpj3-hf5j-x4v4-__Host-__Secure-cookie-bypas.patch",
+      "sha256": "35d43d9af48503325159bf820c98b6cbe23de63bcd318ceb7333b23b3d0d55aa"
+    },
+    {
+      "file": "security/0153-Fix-bug-GHSA-q6x7-frmf-grcw-password_verify-can-erro.patch",
+      "sha256": "f7c6b5381309a66a1938345c90b5d4a3e95aff6d4ff68702d8a9ab1e99ed4bc9"
+    },
+    {
+      "file": "security/0155-Fix-GHSA-w8qr-v226-r27w.patch",
+      "sha256": "2943d69a8e307dc072938379f5fc11441ce4a7c5dad64d08aaf97c25b71b37b9"
+    },
+    {
+      "file": "security/0157-Fix-GHSA-3qgc-jrrr-25jv.patch",
+      "sha256": "693a997f9ea2f67b5f133df252a0f1036251640355af13a43614b15e2c2b4dea"
+    },
+    {
+      "file": "security/0159-Fix-GHSA-9pqp-7h25-4f32.patch",
+      "sha256": "9188709e28b1c95155c1314576501118e3697c393d366c9dce2306ab39169753"
+    },
+    {
+      "file": "security/0160-Fix-GHSA-p99j-rfp4-xqvq.patch",
+      "sha256": "e0398be9b0bc7a72a6d7d64c38c3374e655dff94976cfc8646c0c2d52e1fed56"
+    },
+    {
+      "file": "security/0161-Fix-GHSA-94p6-54jq-9mwp.patch",
+      "sha256": "f8bfd893d49b6bbf059f603753f4a32caa7117eb8efde7e0823e0802629431ed"
+    },
+    {
+      "file": "security/0162-Skip-GHSA-9pqp-7h25-4f32-test-on-Windows.patch",
+      "sha256": "99596488587e8bff1380c1c9173f5c9e4a17998a7e3ab9d4a5a502aa83595cde"
+    },
+    {
+      "file": "security/0164-adapt-GHSA-9pqp-7h25-4f32-test-for-7.x.patch",
+      "sha256": "579c3ec7acf287aaca6814a37f503a44081b46e6597c838fc85b5df5e9123ebb"
+    },
+    {
+      "file": "security/0165-Fix-GHSA-5hqh-c84r-qjcv-Integer-overflow-in-the-dbli.patch",
+      "sha256": "7692f0a7749606d300be675748b518750da3b29def96b2a2522fbee78b5b4aba"
+    },
+    {
+      "file": "security/0166-Fix-GHSA-5hqh-c84r-qjcv-Integer-overflow-in-the-fire.patch",
+      "sha256": "8e90f8aaa4b09f7d62bac68280289b7c88df7f1a1f71e7bbc7fede6901cd7e5e"
+    },
+    {
+      "file": "security/0167-backport-ZSTR_MAX_LEN.patch",
+      "sha256": "5058b7faa2d77ff6fa931d7752c64d31970e043b9b8acad7d0462e866d1a3998"
+    },
+    {
+      "file": "security/0168-Fix-GHSA-c5f2-jwm7-mmq2-stream-HTTP-fulluri-CRLF-inj.patch",
+      "sha256": "883af6022ffda59b72d933d67c276fffc7242d40d44da7f0c7dda58cb076636c"
+    },
+    {
+      "file": "security/0169-Fix-GHSA-g665-fm4p-vhff-OOB-access-in-ldap_escape.patch",
+      "sha256": "8b9e6fad17a4d6631976d34c580a12cd58503ac13c61adbf317f89f5b94a9f4b"
+    },
+    {
+      "file": "security/0170-Fix-GHSA-r977-prxv-hc43.patch",
+      "sha256": "861ec73784da8beccdb9f2e4c0797671f66b7a0c5180840c750ed85045eac6dd"
+    },
+    {
+      "file": "security/0171-Fix-74267-segfault-with-streams-and-invalid-data.patch",
+      "sha256": "06b4550a9dec51b2f5a6dde00ffeb31023953423424475b7d6314ff9e14d1978"
+    },
+    {
+      "file": "security/0172-Fix-GHSA-4w77-75f9-2c8w.patch",
+      "sha256": "9ac370d98f12876c55c20fed4068fc42f0761b2e83f7a19a1092bc963c885e02"
+    },
+    {
+      "file": "compat/0174-Force-POSIX-readdir_r-semantics.patch",
+      "sha256": "d3355a79b5721326c6df5150201f96a2b24581279d58a8a85ca3dbc673c0394f"
+    },
+    {
+      "file": "compat/0175-Add-ifdef-guards-to-main-php_config.h.in.patch",
+      "sha256": "31e771c7c03d7f6247a895d61036f22bbed556c07938f660cef5fac7bd629b99"
+    },
+    {
+      "file": "compat/0178-Use-ZEND_ATTRIBUTE_UNUSED-instead-of-ATTRIBUTE_UNUSE.patch",
+      "sha256": "556cfdd1e213e5c52139b8d89ed02ade80824eaa33a925d9de8a056226f01c9e"
+    },
+    {
+      "file": "security/0179-GHSA-85c2-q967-79q5-soap-Fix-stale-SOAP_GLOBAL-ref_m.patch",
+      "sha256": "aceb7fcad1ba1858e571ea43cebf9c051db19860b4e8be58a6b91c1274643b5f"
+    },
+    {
+      "file": "security/0180-GHSA-m33r-qmcv-p97q-soap-Fix-use-after-free-after-he.patch",
+      "sha256": "ae6ed6c4855d82b2e6184b558af7406409520413582474a5cec118e68c20005a"
+    },
+    {
+      "file": "security/0181-GHSA-hmxp-6pc4-f3vv-soap-Fix-broken-Apache-map-value.patch",
+      "sha256": "df22fb58d246054010c42500063de553887c6369f3319b50837e45398397cc52"
+    },
+    {
+      "file": "security/0182-GHSA-96wq-48vp-hh57-metaphone-Fix-signed-integer-ove.patch",
+      "sha256": "fa49edfdfb4fc989865a8bf8c79deecd3a938cdac9a1a67b49d1cfe79d88d0b5"
+    },
+    {
+      "file": "security/0183-GHSA-7qg2-v9fj-4mwv-fpm-XSS-within-status-endpoint.patch",
+      "sha256": "db4dc7567fffdbd597a7c458484358a91111a83c696b1d9b0403c1991703c3e0"
+    },
+    {
+      "file": "security/0185-ext-openssl-openssl_encrypt-zend-mm-heap-overflow-on.patch",
+      "sha256": "11d44bef7021ccd76a607a09f526943253b8cb4b83e37d3c2e8e6b90208f158c"
+    },
+    {
+      "file": "security/0186-Avoid-state-corruption-via-bailout.patch",
+      "sha256": "3190302400beebde281cfe67f1d3fd505057e4563599b56aee203224f9b814b9"
+    },
+    {
+      "file": "security/2102-Fix-MySQLnd-possible-buffer-over-read-in-auth_protoc.patch",
+      "sha256": "3a4a76130ecd1c93745c5fc9d7b0abfddf4578f55fc04acf18178cd265334ed4"
+    },
+    {
+      "file": "compat/2112-Backport-0a39890c-Fix-libxml2-2.12-build-due-to-API-.patch",
+      "sha256": "c427ef648126d7b6a94e363c1f717035aae5ef62a3bf7be2b13b179ff87261ea"
+    },
+    {
+      "file": "security/2115-Fix-GHSA-wg4p-4hqh-c3g9.patch",
+      "sha256": "f6c0725eceef3d87da406996e19bd9b8ed0e7fba3fba3f8ec2e26d306a7d1239"
+    },
+    {
+      "file": "compat/2116-Fix-GH-12702-libxml2-2.12.0-issue-building-from-src.patch",
+      "sha256": "c864f5fe69c75a27d1f86af1ceda62347b46f9cda9461acd2aac1325668836f5"
+    },
+    {
+      "file": "security/2118-Fix-GHSA-453j-q27h-5p8x.patch",
+      "sha256": "204e36693ccd87a3801b929d78ed5910576794b5ef8fd783e87b824737f8e83f"
+    },
+    {
+      "file": "security/2139-Fix-heap-buffer-overflow-in-convert-stream-filters-w.patch",
+      "sha256": "39074e6b961352b59f9947c08803e11d722a513beee863cfdf49ab5f940d3280"
+    },
+    {
+      "file": "security/2140-libgd-patch-for-CVE-2026-9672.patch",
+      "sha256": "cb16012578d1321e09ad77a4b2bd5e3a9b900b837a34177f97d0f32655f6dbec"
+    },
+    {
+      "file": "security/2141-Fix-GHSA-62xp-839h-2637-FastCGI-allowed_clients-comp.patch",
+      "sha256": "4c5a307059cbfa4336eb402c6c636d04a5c4807e967d68360da9b02c11da08bb"
+    },
+    {
+      "file": "security/2143-Fix-GHSA-vc5h-9ppw-p5f3-phar-circular-symlink-crash.patch",
+      "sha256": "0c4137da3541a9fb630fe0243ff1f1e579f368814e92de73e2f0afe342ac616d"
+    },
+    {
+      "file": "compat/2144-logtool-changes-from-8.2.patch",
+      "sha256": "601dcb3df84b30b5d01b7e5421f5b392ccc30a09440bc3d77a89c53b407ce757"
+    },
+    {
+      "file": "security/2150-re-add-new-tests-as-XFAIL-because-of-partial-fix.patch",
+      "sha256": "3e9e6cec04bdd85c2cbc140cc7a9cb9f9c89c1d3335585db13baccb7271a3546"
+    },
+    {
+      "file": "security/2151-fix-new-tests-expectations-warnings-raised-instead-o.patch",
+      "sha256": "4bcd57d270c9c217b653b12dffa3d2522d23793e1ef0e190e5d08d4bc082132f"
+    },
+    {
+      "file": "security/2154-Fix-GHSA-rgrp-mwpx-f6rm-unbounded-recursion-in-ext-s.patch",
+      "sha256": "b5265d0556b47d24a62f41a9501e6920b4832802a04fc7de10830241c9a4d846"
+    },
+    {
+      "file": "security/2158-Fix-GHSA-ch8v-r6jh-4vvr-encode-0xFF-in-FILTER_SANITI.patch",
+      "sha256": "cee922f3cb02b5941447ef0154692626027e408b9dca1be6398fe7d2632d9663"
+    },
+    {
+      "file": "compat/9000-alpine324-compat.patch",
+      "sha256": "74047e50ef53986177a4736c6a92f9e107eb39168eac476c178130bb8e326b28"
+    },
+    {
+      "file": "security/3101-mysqlnd-protocol-bounds-php71.patch",
+      "sha256": "a1cc353d1174a8ce989de106c0cdf95f9ec30c8013966114caafabd90dbde042"
+    },
+    {
+      "file": "security/3149-mysqlnd-length-decoder-php71.patch",
+      "sha256": "9a13921fb69f80e058b8a060e525500336445eedc815496cc1c7b06da5e61fd2"
+    },
+    {
+      "file": "security/3120-pgsql-escaping-errors-php71.patch",
+      "sha256": "8dbf1dc661d89a0e2607645ded2007de72561a8b1e0d83550969f8184e8e79a9"
+    },
+    {
+      "file": "security/3107-http-wrapper-modern-security.patch",
+      "sha256": "5cecaf7defc055d88f8d08dae490f24634827127fe6e3c62e1970fc6f26afc36"
+    },
+    {
+      "file": "security/3155-soap-http-allocation-bounds.patch",
+      "sha256": "d422149168dddca93200834f5cf6344a76f163c30428366876ab378364ed3091"
+    },
+    {
+      "file": "security/3156-phar-tar-entry-validation.patch",
+      "sha256": "ad107c119d5c11f7e0f4f9b3a02a1eb5398d1114e4fda70aeddef36c9a0258d1"
+    },
+    {
+      "file": "security/3145-tls-san-wildcard-validation.patch",
+      "sha256": "c8363ee91b67588f2a8bcdd52573df2dc0ad81a0c5992d25dc96c5e5e11c2621"
+    },
+    {
+      "file": "security/3122-image-app-chunk-read.patch",
+      "sha256": "3cacdf724d3639c209c5483ad89c505dea0f64dc1874799c9c59089f02fe8181"
+    },
+    {
+      "file": "security/3125-network-nul-parameters.patch",
+      "sha256": "ded436ac505461d0c21ca40291d7fcdecbb28170678d7edcf3ae73fef05157c8"
+    },
+    {
+      "file": "security/3146-date-period-reset.patch",
+      "sha256": "67de8d2c3c9c109e7ef192b1bb9a7e639e85799d0c40a69be00023229a300ef1"
+    },
+    {
+      "file": "security/3136-ctype-unsigned-inputs.patch",
+      "sha256": "ede32ffe1e25e802d8dfc4aaea7bd6d76fa292da4ad036a40f0bc617ffccbe67"
+    },
+    {
+      "file": "security/3157-windows-reserved-device-paths.patch",
+      "sha256": "e7edca24e894da60ab2cf0010494c4f8b66120bd4502a622fb8e5337a9a250c6"
+    },
+    {
+      "file": "security/3119-socket-hostname-nul.patch",
+      "sha256": "a829013ad24ad50ba68ef16600aadbb720e6048c17f08f03a48dc8eaf425e065"
+    },
+    {
+      "file": "security/3142-pgsql-dml-literal.patch",
+      "sha256": "ea2c4f7ee66a6867380133716822d89df01aa3f38a3e74aba219c5a2c9428bfd"
+    },
+    {
+      "file": "compat/3113-libxml213-runtime-compat.patch",
+      "sha256": "4f3157fe8b0caa6d68e5424756ab112bec94c2b28ef84780b0dd8cef33d8cac9"
+    },
+    {
+      "file": "security/9001-system-gd-antialias.patch",
+      "sha256": "9c690dbbc9f9e42cb14c43c62fc7cb905303f614d60037057a42479128d04bd1"
+    },
+    {
+      "file": "security/9002-system-gd-flip-constants.patch",
+      "sha256": "83ccf10b741f5b8f3e2022559bdd7c9a5a9f215a577384d5b4c947436468780e"
+    },
+    {
+      "file": "security/3150-mysqlnd-actual-packet-message-bounds.patch",
+      "sha256": "91c1485d035503e2eefc6c78db286bc26d6e9120304d21998fc6713e5de2b68e"
+    },
+    {
+      "file": "security/3151-mysqlnd-full-width-length-values.patch",
+      "sha256": "a6fce820fcdb8dce21ffc50301e9e69c22eb629cf8b1b3a74f60a24bdaf223aa"
+    },
+    {
+      "file": "compat/3204-fpm-implicit-ipv4-fallback-php71.patch",
+      "sha256": "b35c4e29855cbf9393596a91cb0f56f6016072677c2f0e7b8f4cef1722063814",
+      "change": "U9：FPM 隐式 listen 在 IPv6 不可用时回退 0.0.0.0，与 7.0 的 3204 相同改动（来源 7.2.34 官方 fpm_sockets.c）"
+    }
+  ],
+  "patch_source": {
+    "url": "https://packages.sury.org/php/pool/main/p/php7.1/php7.1_7.1.33-80+0~20261021.127+debian12~1.gbp7a3318.debian.tar.xz",
+    "sha256": "f9822787ca4c1f01a14e5520d703f7aac9bfcd5fdd18db946814506e5c4db84c",
+    "signature_verified": true,
+    "signing_fingerprint": "15058500A0235D97F5D10063B188E2B695BD4743",
+    "trust_origin": "公钥来自 packages.sury.org 官方 HTTPS，固定指纹；验证 InRelease→Sources→补丁包摘要链"
+  },
+  "reference_patch_sources": [
+    {
+      "package": "php7.4",
+      "url": "https://packages.sury.org/php/pool/main/p/php7.4/php7.4_7.4.33-31+0~20261021.121+debian12~1.gbpe9c428.debian.tar.xz",
+      "sha256": "4747b79a87b89a2591497704df4b80e68c7e78b64fbf23c205dca331ebf83496",
+      "size": 213716,
+      "purpose": "PHP 2025/2026 安全修复的公开移植参考；不使用 PHP7 二进制或第三方扩展"
+    }
+  ],
+  "binary_loaders": [
+    {
+      "name": "ionCube Loader",
+      "php": "7.1",
+      "version": "15.5.1",
+      "file": "ioncube_loader_lin-musl_7.1.so",
+      "sha256": "b93d7d781e2d22680eb55dcb76605d8c1f3118fb6045a8699938a7e25cfb1d8b",
+      "platform": "linux/amd64",
+      "libc_mode": "musl-native",
+      "license": "ioncube/LICENSE.txt",
+      "license_sha256": "8050ac3dea9472fc31eb53b4dbfb5dd7b4379491ed80d36666fdaa1ed31e90c9",
+      "dir": "ioncube"
+    },
+    {
+      "name": "SourceGuardian Loader",
+      "php": "7.1",
+      "version": "17.0.0",
+      "file": "ixed.7.1.lin",
+      "sha256": "2072b87cedb416faae5db6396d2bb861d6b91c16e41e98d1972f99474112645e",
+      "platform": "linux/amd64",
+      "libc_mode": "gcompat-libc.so.6-and-libudev-zero",
+      "license": "sourceguardian/SourceGuardian Loader License.pdf",
+      "license_sha256": "3c6512267e5a21acd904e0e531442b573c43543b761ef2fa76da5d6392193c23",
+      "dir": "sourceguardian"
+    }
+  ]
+}

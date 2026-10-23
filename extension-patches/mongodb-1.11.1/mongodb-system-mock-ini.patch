@@ -1,0 +1,41 @@
+Subject: 系统libmongoc构建关闭仅供上游测试的私有mock服务ID接口
+
+--- a/src/phongo_ini.c
++++ b/src/phongo_ini.c
+@@ -31,7 +31,9 @@
+ #undef MONGOC_LOG_DOMAIN
+ #define MONGOC_LOG_DOMAIN "PHONGO"
+ 
++#ifndef HAVE_SYSTEM_LIBMONGOC
+ extern bool mongoc_global_mock_service_id;
++#endif
+ 
+ ZEND_EXTERN_MODULE_GLOBALS(mongodb)
+ 
+@@ -116,6 +118,7 @@
+ 	return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+ }
+ 
++#ifndef HAVE_SYSTEM_LIBMONGOC
+ static PHP_INI_MH(OnUpdateMockServiceId)
+ {
+ 	mongoc_global_mock_service_id = zend_ini_parse_bool(new_value);
+@@ -132,6 +135,8 @@
+ 	}
+ }
+ 
++#endif
++
+ void phongo_display_ini_entries(ZEND_MODULE_INFO_FUNC_ARGS)
+ {
+ 	DISPLAY_INI_ENTRIES();
+@@ -141,7 +146,9 @@
+ {
+ 	PHP_INI_BEGIN()
+ 		STD_PHP_INI_ENTRY("mongodb.debug", "", PHP_INI_ALL, OnUpdateDebug, debug, zend_mongodb_globals, mongodb_globals)
++#ifndef HAVE_SYSTEM_LIBMONGOC
+ 		PHP_INI_ENTRY_EX("mongodb.mock_service_id", "0", PHP_INI_ALL, OnUpdateMockServiceId, DisplayMockServiceId)
++#endif
+ 	PHP_INI_END()
+ 
+ 	REGISTER_INI_ENTRIES();

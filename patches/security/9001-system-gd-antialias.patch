@@ -1,0 +1,68 @@
+Subject: 保留外部GD的imageantialias公开接口，沿用上游trueColor/AA实现
+
+--- a/ext/gd/gd.c
++++ b/ext/gd/gd.c
+@@ -777,12 +777,11 @@
+ 	ZEND_ARG_INFO(0, mode)
+ ZEND_END_ARG_INFO()
+ 
+-#ifdef HAVE_GD_BUNDLED
+ ZEND_BEGIN_ARG_INFO(arginfo_imageantialias, 0)
+ 	ZEND_ARG_INFO(0, im)
+ 	ZEND_ARG_INFO(0, on)
+ ZEND_END_ARG_INFO()
+-#endif
++
+ 
+ ZEND_BEGIN_ARG_INFO(arginfo_imagecrop, 0)
+ 	ZEND_ARG_INFO(0, im)
+@@ -875,9 +874,8 @@
+ 	PHP_FE(imagerotate,     						arginfo_imagerotate)
+ 	PHP_FE(imageflip,								arginfo_imageflip)
+ 
+-#ifdef HAVE_GD_BUNDLED
+ 	PHP_FE(imageantialias,							arginfo_imageantialias)
+-#endif
++
+ 	PHP_FE(imagecrop,								arginfo_imagecrop)
+ 	PHP_FE(imagecropauto,							arginfo_imagecropauto)
+ 	PHP_FE(imagescale,								arginfo_imagescale)
+@@ -4560,7 +4558,6 @@
+ }
+ /* }}} */
+ 
+-#ifdef HAVE_GD_BUNDLED
+ /* {{{ proto bool imageantialias(resource im, bool on)
+    Should antialiased functions used or not*/
+ PHP_FUNCTION(imageantialias)
+@@ -4576,11 +4573,17 @@
+ 	if ((im = (gdImagePtr)zend_fetch_resource(Z_RES_P(IM), "Image", le_gd)) == NULL) {
+ 		RETURN_FALSE;
+ 	}
++#ifdef HAVE_GD_BUNDLED
+ 	gdImageAntialias(im, alias);
++#else
++	if (im->trueColor) {
++		im->AA = alias;
++	}
++#endif
+ 	RETURN_TRUE;
+ }
+ /* }}} */
+-#endif
++
+ 
+ /* {{{ proto void imagecrop(resource im, array rect)
+    Crop an image using the given coordinates and size, x, y, width and height. */
+--- a/ext/gd/php_gd.h
++++ b/ext/gd/php_gd.h
+@@ -123,9 +123,7 @@
+ 
+ PHP_FUNCTION(imageflip);
+ 
+-#ifdef HAVE_GD_BUNDLED
+ PHP_FUNCTION(imageantialias);
+-#endif
+ 
+ PHP_FUNCTION(imagecrop);
+ PHP_FUNCTION(imagecropauto);

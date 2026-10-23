@@ -1,0 +1,2099 @@
+From: LookBack
+Subject: 移植GHSA-r6x9-5r99-36j7 MySQLnd包长度边界
+
+来源：已签名Surý PHP7.4 0149；PHP7.1没有cached_sha2认证包。
+旧版chunk实际报文长度保持app；fake_server辅助器不从新版混合更新。
+字段元数据保留7.1 offsets遍历并检查每个长度及13字节固定元数据块。
+
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-auth-packet-affected-rows-2-bytes.phpt
+@@ -0,0 +1,32 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - auth packet with affected rows on 2 bytes)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('auth_affected_rows_2_bytes');
++$process->wait();
++
++$conn = new mysqli( $servername, $username, $password, "", 33305 );
++echo "[*] connect_errno: ", $conn->connect_errno, "\n";
++
++$conn->close();
++
++$process->terminate();
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - OK Auth Response [affected rows on 2 bytes]: 0900000200fc34120002000000
++[*] connect_errno: 0
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-auth-packet-affected-rows-8-bytes.phpt
+@@ -0,0 +1,32 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - auth packet with affected rows on 8 bytes)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('auth_affected_rows_8_bytes');
++$process->wait();
++
++$conn = new mysqli( $servername, $username, $password, "", 33305 );
++echo "[*] connect_errno: ", $conn->connect_errno, "\n";
++
++$conn->close();
++
++$process->terminate();
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - OK Auth Response [affected rows on 8 bytes]: 0f00000200fe01000000000000000002000000
++[*] connect_errno: 0
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-auth-packet-affected-rows-null-length.phpt
+@@ -0,0 +1,32 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - auth packet with affected rows as NULL length)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('auth_affected_rows_null_length');
++$process->wait();
++
++$conn = new mysqli( $servername, $username, $password, "", 33305 );
++echo "[*] connect_errno: ", $conn->connect_errno, "\n";
++
++$conn->close();
++
++$process->terminate();
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - OK Auth Response [affected rows as NULL length]: 0700000200fb0002000000
++[*] connect_errno: 0
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-cached-sha2-empty.phpt
+@@ -0,0 +1,45 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - cached sha2 result with empty packet)
++--EXTENSIONS--
++mysqli
++--SKIPIF--
++<?php
++if (!extension_loaded("openssl"))
++    die("skip mysqlnd is built without SSL support, so the caching_sha2_password plugin is not available");
++?>
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "secret";
++
++$process = run_fake_server_in_background('cached_sha2_result_empty');
++$process->wait();
++
++echo "[*] Connecting to the fake server...\n";
++$conn = new mysqli($servername, $username, $password, "", 33305);
++echo "[*] connect_errno: ", $conn->connect_errno, "\n";
++
++$conn->close();
++
++$process->terminate(true);
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connecting to the fake server...
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c64310063616368696e675f736861325f70617373776f7264
++[*] Received: 8900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400204829cef922c9e8d5c6b4a4299cb857d65b18323a1b833559f3aa6a0b462994be63616368696e675f736861325f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Malicious Cached SHA2 Result [empty packet]: 000000020700000300000002000000
++
++Warning: mysqli::__construct(): Premature end of data (mysqlnd_wireprotocol.c:%d) in %s on line %d
++
++Warning: mysqli::__construct(): SHA256_PK_REQUEST_RESPONSE packet shorter than expected in %s on line %d
++[*] connect_errno: 0
++[*] Received: 0100000001
++[*] Server finished
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-cached-sha2-fast-auth.phpt
+@@ -0,0 +1,41 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - cached sha2 result for a successful fast auth)
++--EXTENSIONS--
++mysqli
++--SKIPIF--
++<?php
++if (!extension_loaded("openssl"))
++    die("skip mysqlnd is built without SSL support, so the caching_sha2_password plugin is not available");
++?>
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "secret";
++
++$process = run_fake_server_in_background('cached_sha2_result_fast_auth');
++$process->wait();
++
++echo "[*] Connecting to the fake server...\n";
++$conn = new mysqli($servername, $username, $password, "", 33305);
++echo "[*] connect_errno: ", $conn->connect_errno, "\n";
++
++$conn->close();
++
++$process->terminate(true);
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connecting to the fake server...
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c64310063616368696e675f736861325f70617373776f7264
++[*] Received: 8900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400204829cef922c9e8d5c6b4a4299cb857d65b18323a1b833559f3aa6a0b462994be63616368696e675f736861325f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Cached SHA2 Result [fast auth]: 0200000201030700000300000002000000
++[*] connect_errno: 0
++[*] Received: 0100000001
++[*] Server finished
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-cached-sha2-len.phpt
+@@ -0,0 +1,45 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - cached sha2 result shorter than expected)
++--EXTENSIONS--
++mysqli
++--SKIPIF--
++<?php
++if (!extension_loaded("openssl"))
++    die("skip mysqlnd is built without SSL support, so the caching_sha2_password plugin is not available");
++?>
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "secret";
++
++$process = run_fake_server_in_background('cached_sha2_result_len');
++$process->wait();
++
++echo "[*] Connecting to the fake server...\n";
++$conn = new mysqli($servername, $username, $password, "", 33305);
++echo "[*] connect_errno: ", $conn->connect_errno, "\n";
++
++$conn->close();
++
++$process->terminate(true);
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connecting to the fake server...
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c64310063616368696e675f736861325f70617373776f7264
++[*] Received: 8900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400204829cef922c9e8d5c6b4a4299cb857d65b18323a1b833559f3aa6a0b462994be63616368696e675f736861325f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Malicious Cached SHA2 Result [packet too short]: 01000002010700000300000002000000
++
++Warning: mysqli::__construct(): Premature end of data (mysqlnd_wireprotocol.c:%d) in %s on line %d
++
++Warning: mysqli::__construct(): SHA256_PK_REQUEST_RESPONSE packet shorter than expected in %s on line %d
++[*] connect_errno: 0
++[*] Received: 0100000001
++[*] Server finished
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-cached-sha2-switch-unterminated.phpt
+@@ -0,0 +1,40 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - cached sha2 result with an unterminated plugin name)
++--EXTENSIONS--
++mysqli
++--SKIPIF--
++<?php
++if (!extension_loaded("openssl"))
++    die("skip mysqlnd is built without SSL support, so the caching_sha2_password plugin is not available");
++?>
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "secret";
++
++$process = run_fake_server_in_background('cached_sha2_switch_unterminated');
++$process->wait();
++
++$conn = new mysqli( $servername, $username, $password, "", 33305 );
++echo "[*] connect_errno: ", $conn->connect_errno, "\n";
++$conn->close();
++
++$process->terminate();
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c64310063616368696e675f736861325f70617373776f7264
++[*] Received: 8900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400204829cef922c9e8d5c6b4a4299cb857d65b18323a1b833559f3aa6a0b462994be63616368696e675f736861325f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Malicious Cached SHA2 Result [plugin name not terminated]: 16000002fe6d7973716c5f6e61746976655f70617373776f72640700000300000002000000
++
++Warning: mysqli::__construct(): Premature end of data (mysqlnd_wireprotocol.c:%d) in %s on line %d
++
++Warning: mysqli::__construct(): SHA256_PK_REQUEST_RESPONSE packet shorter than expected in %s on line %d
++[*] connect_errno: 0
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-chg-user-empty.phpt
+@@ -0,0 +1,43 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - change user response with empty packet)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('chg_user_response_empty');
++$process->wait();
++
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++echo "[*] Changing user on the fake server...\n";
++var_dump($conn->change_user("root2", "", ""));
++
++$conn->close();
++
++$process->terminate(true);
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Changing user on the fake server...
++[*] Received: 4e00000011726f6f743200000008006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Malicious Change User Response [empty packet]: 00000001
++
++Warning: mysqli::change_user(): Premature end of data (mysqlnd_wireprotocol.c:%d) in %s on line %d
++
++Warning: mysqli::change_user(): CHANGE_USER packet shorter than expected in %s on line %d
++bool(false)
++[*] Received: 0100000001
++[*] Server finished
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-chg-user-len.phpt
+@@ -0,0 +1,43 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - change user response shorter than expected)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('chg_user_response_len');
++$process->wait();
++
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++echo "[*] Changing user on the fake server...\n";
++var_dump($conn->change_user("root2", "", ""));
++
++$conn->close();
++
++$process->terminate(true);
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Changing user on the fake server...
++[*] Received: 4e00000011726f6f743200000008006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Malicious Change User Response [packet too short]: 0100000100
++
++Warning: mysqli::change_user(): Premature end of data (mysqlnd_wireprotocol.c:%d) in %s on line %d
++
++Warning: mysqli::change_user(): CHANGE_USER packet shorter than expected in %s on line %d
++bool(false)
++[*] Received: 0100000001
++[*] Server finished
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-query-row-eof-short.phpt
+@@ -0,0 +1,47 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - row packet with an EOF shorter than the status it announces)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('query_response_row_eof_short');
++$process->wait();
++
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++echo "[*] Query the fake server...\n";
++$result = $conn->query("SELECT strval, strval FROM data");
++
++if ($result->num_rows > 0) {
++    while ($row = $result->fetch_row()) {
++        var_dump($row);
++    }
++}
++$conn->close();
++
++$process->terminate();
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Query the fake server...
++[*] Received: 200000000353454c4543542073747276616c2c2073747276616c2046524f4d2064617461
++[*] Sending - Malicious Query Response [short EOF row packet]: 01000001023200000203646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd01100000003200000303646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd011000000005000004fe000022000a0000050474657374047465737403000006fe0000
++array(2) {
++  [0]=>
++  string(4) "test"
++  [1]=>
++  string(4) "test"
++}
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-query-row-field-len-2-bytes.phpt
+@@ -0,0 +1,49 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - text protocol row field length on 2 bytes)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('query_response_row_field_len_2_bytes');
++$process->wait();
++
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++echo "[*] Query the fake server...\n";
++$result = $conn->query("SELECT strval, strval FROM data");
++
++if ($result->num_rows > 0) {
++    while ($row = $result->fetch_row()) {
++        var_dump($row);
++    }
++}
++$conn->close();
++
++$process->terminate(true);
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Query the fake server...
++[*] Received: 200000000353454c4543542073747276616c2c2073747276616c2046524f4d2064617461
++[*] Sending - Query Response for data strval field [length on 2 bytes]: 01000001023200000203646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd01100000003200000303646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd011000000005000004fe000022000c0000050474657374fc04007465737405000006fe00002200
++array(2) {
++  [0]=>
++  string(4) "test"
++  [1]=>
++  string(4) "test"
++}
++[*] Received: 0100000001
++[*] Server finished
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-query-row-field-len.phpt
+@@ -0,0 +1,47 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - text protocol row field length prefix)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('query_response_row_field_len');
++$process->wait();
++
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++echo "[*] Query the fake server...\n";
++$sql = "SELECT strval, strval FROM data";
++
++$result = $conn->query($sql);
++
++if ($result->num_rows > 0) {
++    while ($row = $result->fetch_assoc()) {
++        var_dump($row['strval']);
++    }
++}
++$conn->close();
++
++$process->terminate(true);
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Query the fake server...
++[*] Received: 200000000353454c4543542073747276616c2c2073747276616c2046524f4d2064617461
++[*] Sending - Malicious Query Response for data strval field [field length over-read]: 01000001023200000203646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd01100000003200000303646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd011000000005000004fe00002200060000050474657374fc05000006fe00002200
++
++Warning: mysqli_result::fetch_assoc(): Malformed server packet. Field length pointing after end of packet in %s on line %d
++[*] Received: 0100000001
++[*] Server finished
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-query-row-field-null.phpt
+@@ -0,0 +1,49 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - text protocol row with a NULL field)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('query_response_row_field_null');
++$process->wait();
++
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++echo "[*] Query the fake server...\n";
++$result = $conn->query("SELECT strval, strval FROM data");
++
++if ($result->num_rows > 0) {
++    while ($row = $result->fetch_row()) {
++        var_dump($row);
++    }
++}
++$conn->close();
++
++$process->terminate(true);
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Query the fake server...
++[*] Received: 200000000353454c4543542073747276616c2c2073747276616c2046524f4d2064617461
++[*] Sending - Query Response for data strval field [NULL]: 01000001023200000203646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd01100000003200000303646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd011000000005000004fe00002200060000050474657374fb05000006fe00002200
++array(2) {
++  [0]=>
++  string(4) "test"
++  [1]=>
++  NULL
++}
++[*] Received: 0100000001
++[*] Server finished
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-rset-header-field-len.phpt
+@@ -0,0 +1,50 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - rset header read field length)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('query_rset_header_field_over_read');
++$process->wait();
++
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++echo "[*] Query the fake server...\n";
++$sql = "SELECT strval, strval FROM data";
++
++$result = $conn->query($sql);
++
++if ($result && $result->num_rows > 0) {
++    while ($row = $result->fetch_assoc()) {
++        var_dump($row['strval']);
++    }
++}
++$conn->close();
++
++$process->terminate(true);
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Query the fake server...
++[*] Received: 200000000353454c4543542073747276616c2c2073747276616c2046524f4d2064617461
++[*] Sending - Malicious Query Response for data strval field [length overflow]: 01000001fd3200000203646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd01100000003200000303646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd011000000005000004fe000022000a0000050474657374047465737405000006fe00002200
++
++Warning: mysqli::query(): Premature end of data (mysqlnd_wireprotocol.c:%d) in %s on line %d
++
++Warning: mysqli::query(): RSET_HEADER packet shorter than expected in %s on line %d
++
++Warning: mysqli::query(): Error reading result set's header in %s on line %d
++[*] Server finished
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-rset-header-upsert-affected-rows.phpt
+@@ -0,0 +1,50 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - rset header upsert affected_rows)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('upsert_rset_header_affected_rows_over_read');
++$process->wait();
++
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++// Construct the SQL query directly
++$sql = "UPDATE data SET strval = 'test' WHERE id = 1";
++
++// Execute the query
++$result = $conn->query($sql);
++if ($result) {
++    echo "Affected rows: " . $conn->affected_rows . "\n";
++    echo "Info: " . $conn->info . "\n";
++}
++
++// Close the connection
++$conn->close();
++
++$process->terminate(true);
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Received: 2d000000035550444154452064617461205345542073747276616c203d20277465737427205748455245206964203d2031
++[*] Sending - Malicious Upsert Response [affected rows overflow]: 0200000100fd
++
++Warning: mysqli::query(): Premature end of data (mysqlnd_wireprotocol.c:%d) in %s on line %d
++
++Warning: mysqli::query(): RSET_HEADER packet shorter than expected in %s on line %d
++
++Warning: mysqli::query(): Error reading result set's header in %s on line %d
++[*] Server finished
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-rset-header-upsert-len.phpt
+@@ -0,0 +1,48 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - rset header upsert packet length)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('upsert_rset_header_packet_len_over_read');
++$process->wait();
++
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++// Construct the SQL query directly
++$sql = "UPDATE data SET strval = 'test' WHERE id = 1";
++
++// Execute the query
++$result = $conn->query($sql);
++if ($result) {
++    echo "Affected rows: " . $conn->affected_rows . "\n";
++    echo "Info: " . $conn->info . "\n";
++}
++
++// Close the connection
++$conn->close();
++
++$process->terminate(true);
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Received: 2d000000035550444154452064617461205345542073747276616c203d20277465737427205748455245206964203d2031
++[*] Sending - Malicious Upsert Response [affected rows overflow]: 3000000100fd000002000028526f7773206d6174636865643a203120204368616e6765643a203020205761726e696e67733a2030
++
++Warning: mysqli::query(): RSET_HEADER packet additional data length is past 82 bytes the packet size in %s on line %d
++
++Warning: mysqli::query(): Error reading result set's header in %s on line %d
++[*] Server finished
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-sha256-pk-empty.phpt
+@@ -0,0 +1,47 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - sha256 public key response with empty packet)
++--EXTENSIONS--
++mysqli
++--SKIPIF--
++<?php
++if (!extension_loaded("openssl"))
++    die("skip mysqlnd is built without SSL support, so the sha256_password plugin is not available");
++?>
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "secret";
++
++$process = run_fake_server_in_background('sha256_pk_response_empty');
++$process->wait();
++
++echo "[*] Connecting to the fake server...\n";
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++$conn->close();
++
++$process->terminate(true);
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connecting to the fake server...
++[*] Connection established
++[*] Sending - Server Greeting: 520000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431007368613235365f70617373776f7264
++[*] Received: 0100000101
++[*] Sending - Malicious SHA256 PK Response [empty packet]: 00000002
++
++Warning: mysqli::__construct(): Premature end of data (mysqlnd_wireprotocol.c:%d) in %s on line %d
++
++Warning: mysqli::__construct(): SHA256_PK_REQUEST_RESPONSE packet shorter than expected in %s on line %d
++
++Warning: Error while receiving public key. PID=%d in %s on line %d
++[*] Received: 6300000385a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400007368613235365f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000400000002000000
++[*] Received: 0100000001
++[*] Server finished
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-sha256-pk-len.phpt
+@@ -0,0 +1,47 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - sha256 public key response shorter than expected)
++--EXTENSIONS--
++mysqli
++--SKIPIF--
++<?php
++if (!extension_loaded("openssl"))
++    die("skip mysqlnd is built without SSL support, so the sha256_password plugin is not available");
++?>
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "secret";
++
++$process = run_fake_server_in_background('sha256_pk_response_len');
++$process->wait();
++
++echo "[*] Connecting to the fake server...\n";
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++$conn->close();
++
++$process->terminate(true);
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connecting to the fake server...
++[*] Connection established
++[*] Sending - Server Greeting: 520000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431007368613235365f70617373776f7264
++[*] Received: 0100000101
++[*] Sending - Malicious SHA256 PK Response [packet too short]: 0100000200
++
++Warning: mysqli::__construct(): Premature end of data (mysqlnd_wireprotocol.c:%d) in %s on line %d
++
++Warning: mysqli::__construct(): SHA256_PK_REQUEST_RESPONSE packet shorter than expected in %s on line %d
++
++Warning: Error while receiving public key. PID=%d in %s on line %d
++[*] Received: 6300000385a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400007368613235365f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000400000002000000
++[*] Received: 0100000001
++[*] Server finished
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-stmt-response-field-len-faulty.phpt
+@@ -0,0 +1,38 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - stmt field length exceeding the packet)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('stmt_response_field_len_faulty');
++$process->wait();
++
++$conn = new mysqli( $servername, $username, $password, "", 33305 );
++
++echo "[*] Preparing statement on the fake server...\n";
++$conn->prepare("SELECT item FROM items");
++
++$conn->close();
++
++$process->terminate();
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Preparing statement on the fake server...
++[*] Received: 170000001653454c454354206974656d2046524f4d206974656d73
++[*] Sending - Stmt prepare items: 0c0000010001000000010000000000003000000203646566087068705f74657374056974656d73056974656d73046974656dfe6974656d0ce000c8000000fd01100000001f000003fe00000200
++
++Warning: mysqli::prepare(): Protocol error. Server sent NULL_LENGTH. The server is faulty in %s on line %d
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-stmt-response-field-len-premature.phpt
+@@ -0,0 +1,42 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - stmt field length over-reading into fixed block)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('stmt_response_field_len_premature');
++$process->wait();
++
++$conn = new mysqli( $servername, $username, $password, "", 33305 );
++
++echo "[*] Preparing statement on the fake server...\n";
++$conn->prepare("SELECT item FROM items");
++
++$conn->close();
++
++$process->terminate();
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Preparing statement on the fake server...
++[*] Received: 170000001653454c454354206974656d2046524f4d206974656d73
++[*] Sending - Malicious Stmt Prepare items [Field length over-read]: 0c0000010001000000010000000000003000000203646566087068705f74657374056974656d73056974656d73046974656d0c6974656d0ce000c8000000fd011000000005000003fe00000200
++
++Warning: mysqli::prepare(): Protocol error. Server sent false length. Expected 12 in %s on line %d
++
++Warning: mysqli::prepare(): Premature end of data (mysqlnd_wireprotocol.c:%d) in %s on line %d
++
++Warning: mysqli::prepare(): Result set field packet shorter than expected in %s on line %d
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-stmt-response-row-status.phpt
+@@ -0,0 +1,40 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - stmt response)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('stmt_response_row_over_read_status');
++$process->wait();
++
++$conn = new mysqli( $servername, $username, $password, "", 33305 );
++
++echo "[*] Preparing statement on the fake server...\n";
++$conn->prepare("SELECT item FROM items");
++
++$conn->close();
++
++$process->terminate();
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Preparing statement on the fake server...
++[*] Received: 170000001653454c454354206974656d2046524f4d206974656d73
++[*] Sending - Stmt prepare items: 0c0000010001000000010000000000003000000203646566087068705f74657374056974656d73056974656d73046974656d046974656d0ce000c8000000fd011000000004000003fe000002
++
++Warning: mysqli::prepare(): Premature end of data (mysqlnd_wireprotocol.c:%d) in %s on line %d
++
++Warning: mysqli::prepare(): EOF packet shorter than expected in %s on line %d
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-stmt-row-short-length-date.phpt
+@@ -0,0 +1,45 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - stmt row date field length too short for the type)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('stmt_response_row_short_length_date');
++$process->wait();
++
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++echo "[*] Prepare and execute on the fake server...\n";
++$stmt = $conn->prepare("SELECT strval, datval FROM data");
++$stmt->execute();
++$result = $stmt->get_result();
++while ($row = $result->fetch_row()) {
++    var_dump($row);
++}
++$stmt->close();
++$conn->close();
++
++$process->terminate();
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Prepare and execute on the fake server...
++[*] Received: 200000001653454c4543542073747276616c2c2064617476616c2046524f4d2064617461
++[*] Sending - Stmt prepare data datval: 0c0000010001000000020000000000003200000203646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd01100000003200000303646566087068705f74657374046461746104646174610664617476616c0664617476616c0c3f000a0000000a811000000005000004fe00000200
++[*] Received: 0a00000017010000000001000000
++[*] Sending - Malicious Stmt Response for data datval [length too short]: 01000001023200000203646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd01100000003200000303646566087068705f74657374046461746104646174610664617476616c0664617476616c0c3f000a0000000a811000000005000004fe00002200090000050000047465737401de05000006fe00002200
++
++Warning: mysqli_result::fetch_row(): Malformed server packet. Field length is too short for the field type in %s on line %d
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-stmt-row-short-length-datetime.phpt
+@@ -0,0 +1,45 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - stmt row datetime field length too short for the type)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('stmt_response_row_short_length_datetime');
++$process->wait();
++
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++echo "[*] Prepare and execute on the fake server...\n";
++$stmt = $conn->prepare("SELECT strval, dtival FROM data");
++$stmt->execute();
++$result = $stmt->get_result();
++while ($row = $result->fetch_row()) {
++    var_dump($row);
++}
++$stmt->close();
++$conn->close();
++
++$process->terminate();
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Prepare and execute on the fake server...
++[*] Received: 200000001653454c4543542073747276616c2c2064746976616c2046524f4d2064617461
++[*] Sending - Stmt prepare data dtival: 0c0000010001000000020000000000003200000203646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd01100000003200000303646566087068705f74657374046461746104646174610664746976616c0664746976616c0c3f00130000000c811000000005000004fe00000200
++[*] Received: 0a00000017010000000001000000
++[*] Sending - Malicious Stmt Response for data dtival [length too short]: 01000001023200000203646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd01100000003200000303646566087068705f74657374046461746104646174610664746976616c0664746976616c0c3f00130000000c811000000005000004fe00002200090000050000047465737401de05000006fe00002200
++
++Warning: mysqli_result::fetch_row(): Malformed server packet. Field length is too short for the field type in %s on line %d
++done!
+--- /dev/null
++++ b/ext/mysqli/tests/ghsa-r6x9-5r99-36j7-stmt-row-short-length-time.phpt
+@@ -0,0 +1,45 @@
++--TEST--
++GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd_writeprotocol.c - stmt row time field length too short for the type)
++--EXTENSIONS--
++mysqli
++--FILE--
++<?php
++require_once 'fake_server.inc';
++
++$servername = "127.0.0.1";
++$username = "root";
++$password = "";
++
++$process = run_fake_server_in_background('stmt_response_row_short_length_time');
++$process->wait();
++
++$conn = new mysqli($servername, $username, $password, "", 33305);
++
++echo "[*] Prepare and execute on the fake server...\n";
++$stmt = $conn->prepare("SELECT strval, timval FROM data");
++$stmt->execute();
++$result = $stmt->get_result();
++while ($row = $result->fetch_row()) {
++    var_dump($row);
++}
++$stmt->close();
++$conn->close();
++
++$process->terminate();
++
++print "done!";
++?>
++--EXPECTF--
++[*] Server started
++[*] Connection established
++[*] Sending - Server Greeting: 580000000a352e352e352d31302e352e31382d4d6172696144420003000000473e3f6047257c6700fef7080200ff81150000000000000f0000006c6b55463f49335f686c6431006d7973716c5f6e61746976655f70617373776f7264
++[*] Received: 6900000185a21a00000000c0080000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f7264002c0c5f636c69656e745f6e616d65076d7973716c6e640c5f7365727665725f686f7374093132372e302e302e31
++[*] Sending - Server OK: 0700000200000002000000
++[*] Prepare and execute on the fake server...
++[*] Received: 200000001653454c4543542073747276616c2c2074696d76616c2046524f4d2064617461
++[*] Sending - Stmt prepare data timval: 0c0000010001000000020000000000003200000203646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd01100000003200000303646566087068705f74657374046461746104646174610674696d76616c0674696d76616c0c3f000a0000000b811000000005000004fe00000200
++[*] Received: 0a00000017010000000001000000
++[*] Sending - Malicious Stmt Response for data timval [length too short]: 01000001023200000203646566087068705f74657374046461746104646174610673747276616c0673747276616c0ce000c8000000fd01100000003200000303646566087068705f74657374046461746104646174610674696d76616c0674696d76616c0c3f000a0000000b811000000005000004fe00002200090000050000047465737401de05000006fe00002200
++
++Warning: mysqli_result::fetch_row(): Malformed server packet. Field length is too short for the field type in %s on line %d
++done!
+--- a/ext/mysqlnd/mysqlnd_ps.c
++++ b/ext/mysqlnd/mysqlnd_ps.c
+@@ -348,6 +348,8 @@
+ 			if (stmt->result) {
+ 				stmt->result->m.free_result_contents(stmt->result);
+ 				mnd_pefree(stmt->result, stmt->result->persistent);
++				conn->m->free_reference(conn);
++				mnd_efree(stmt->execute_cmd_buffer.buffer);
+ 				/* XXX: This will crash, because we will null also the methods.
+ 					But seems it happens in extreme cases or doesn't. Should be fixed by exporting a function
+ 					(from mysqlnd_driver.c?) to do the reset.
+--- a/ext/mysqlnd/mysqlnd_ps_codec.c
++++ b/ext/mysqlnd/mysqlnd_ps_codec.c
+@@ -64,7 +64,9 @@
+ 		return 0;
+ 	}
+ 	size_t length_len = *row - p;
+-	if (length_len > pack_len || length > pack_len - length_len) {
++	/* This assert should never fire, otherwise we invoked UB earlier */
++	ZEND_ASSERT(length_len <= pack_len);
++	if (length > pack_len - length_len) {
+ 		ps_fetch_over_read_error(row);
+ 		return 1;
+ 	}
+@@ -76,6 +78,18 @@
+ {
+ 	if (pack_len > 0 && length > pack_len) {
+ 		ps_fetch_over_read_error(row);
++		return 1;
++	}
++	return 0;
++}
++
++/* The declared length has to cover the fixed offsets that the field type reads. */
++static inline zend_bool ps_fetch_is_length_too_short(const zend_uchar ** row, const zend_ulong length,
++		const unsigned int min_length)
++{
++	if (UNEXPECTED(length < min_length)) {
++		php_error_docref(NULL, E_WARNING, "Malformed server packet. Field length is too short for the field type");
++		*row = NULL;
+ 		return 1;
+ 	}
+ 	return 0;
+@@ -264,8 +278,12 @@
+ 	const zend_uchar *p = *row;
+ 	DBG_ENTER("ps_fetch_time");
+ 
+-	if ((length = php_mysqlnd_net_field_length(row))) {
++	if ((length = php_mysqlnd_net_field_length(row, pack_len))) {
+ 		if (UNEXPECTED(ps_fetch_is_packet_over_read_with_variable_length(pack_len, row, p, length))) {
++			return;
++		}
++
++		if (UNEXPECTED(ps_fetch_is_length_too_short(row, length, 8))) {
+ 			return;
+ 		}
+ 
+@@ -278,7 +296,7 @@
+ 		t.hour			= (unsigned int) to[5];
+ 		t.minute		= (unsigned int) to[6];
+ 		t.second		= (unsigned int) to[7];
+-		t.second_part	= (length > 8) ? (zend_ulong) sint4korr(to+8) : 0;
++		t.second_part	= (length >= 12) ? (zend_ulong) sint4korr(to+8) : 0;
+ 		t.year			= t.month= 0;
+ 		if (t.day) {
+ 			/* Convert days to hours at once */
+@@ -312,8 +330,12 @@
+ 	const zend_uchar *p = *row;
+ 	DBG_ENTER("ps_fetch_date");
+ 
+-	if ((length = php_mysqlnd_net_field_length(row))) {
++	if ((length = php_mysqlnd_net_field_length(row, pack_len))) {
+ 		if (UNEXPECTED(ps_fetch_is_packet_over_read_with_variable_length(pack_len, row, p, length))) {
++			return;
++		}
++
++		if (UNEXPECTED(ps_fetch_is_length_too_short(row, length, 4))) {
+ 			return;
+ 		}
+ 
+@@ -328,7 +350,7 @@
+ 		t.month = (unsigned int) to[2];
+ 		t.day	= (unsigned int) to[3];
+ 
+-		(*row)+= length;
++		(*row) += length;
+ 	} else {
+ 		memset(&t, 0, sizeof(t));
+ 		t.time_type = MYSQLND_TIMESTAMP_DATE;
+@@ -354,8 +376,12 @@
+ 	const zend_uchar *p = *row;
+ 	DBG_ENTER("ps_fetch_datetime");
+ 
+-	if ((length = php_mysqlnd_net_field_length(row))) {
++	if ((length = php_mysqlnd_net_field_length(row, pack_len))) {
+ 		if (UNEXPECTED(ps_fetch_is_packet_over_read_with_variable_length(pack_len, row, p, length))) {
++			return;
++		}
++
++		if (UNEXPECTED(ps_fetch_is_length_too_short(row, length, 4))) {
+ 			return;
+ 		}
+ 
+@@ -368,16 +394,16 @@
+ 		t.month = (unsigned int) to[2];
+ 		t.day	 = (unsigned int) to[3];
+ 
+-		if (length > 4) {
++		if (length >= 7) {
+ 			t.hour	 = (unsigned int) to[4];
+ 			t.minute = (unsigned int) to[5];
+ 			t.second = (unsigned int) to[6];
+ 		} else {
+ 			t.hour = t.minute = t.second= 0;
+ 		}
+-		t.second_part = (length > 7) ? (zend_ulong) sint4korr(to+7) : 0;
+-
+-		(*row)+= length;
++		t.second_part = (length >= 11) ? (zend_ulong) sint4korr(to+7) : 0;
++
++		(*row) += length;
+ 	} else {
+ 		memset(&t, 0, sizeof(t));
+ 		t.time_type = MYSQLND_TIMESTAMP_DATETIME;
+@@ -402,7 +428,7 @@
+ 	  to write \0 to the row buffer
+ 	*/
+ 	const zend_uchar *p = *row;
+-	const zend_ulong length = php_mysqlnd_net_field_length(row);
++	const zend_ulong length = php_mysqlnd_net_field_length(row, pack_len);
+ 	if (UNEXPECTED(ps_fetch_is_packet_over_read_with_variable_length(pack_len, row, p, length))) {
+ 		return;
+ 	}
+@@ -422,7 +448,7 @@
+ ps_fetch_bit(zval * zv, const MYSQLND_FIELD * const field, const unsigned int pack_len, const zend_uchar ** row)
+ {
+ 	const zend_uchar *p = *row;
+-	const zend_ulong length = php_mysqlnd_net_field_length(row);
++	const zend_ulong length = php_mysqlnd_net_field_length(row, pack_len);
+ 	if (UNEXPECTED(ps_fetch_is_packet_over_read_with_variable_length(pack_len, row, p, length))) {
+ 		return;
+ 	}
+--- a/ext/mysqlnd/mysqlnd_wireprotocol.c
++++ b/ext/mysqlnd/mysqlnd_wireprotocol.c
+@@ -26,12 +26,15 @@
+ #include "mysqlnd_statistics.h"
+ #include "mysqlnd_debug.h"
+ 
+-#define BAIL_IF_NO_MORE_DATA \
+-	if ((size_t)(p - begin) > packet->header.size) { \
++#define BAIL_PREMATURE_END do { \
+ 		php_error_docref(NULL, E_WARNING, "Premature end of data (mysqlnd_wireprotocol.c:%u)", __LINE__); \
+ 		goto premature_end; \
+-	} \
+-
++	} while (0)
++#define BAIL_IF_NOT_ENOUGH_DATA_EX(min_required_bytes) \
++	if (UNEXPECTED((size_t)(p - begin) + (min_required_bytes) > packet->header.size)) { \
++		BAIL_PREMATURE_END; \
++	}
++#define BAIL_IF_NOT_ENOUGH_DATA BAIL_IF_NOT_ENOUGH_DATA_EX(1)
+ 
+ static const char *unknown_sqlstate= "HY000";
+ const char * const mysqlnd_empty_string = "";
+@@ -92,9 +95,13 @@
+ /* {{{ php_mysqlnd_net_field_length
+    Get next field's length */
+ zend_ulong
+-php_mysqlnd_net_field_length(const zend_uchar **packet)
++php_mysqlnd_net_field_length(const zend_uchar **packet, size_t remaining_size)
+ {
+ 	register const zend_uchar *p= (const zend_uchar *)*packet;
++
++	if (UNEXPECTED(remaining_size == 0)) {
++		return MYSQLND_INVALID_NET_FIELD_LENGTH;
++	}
+ 
+ 	if (*p < 251) {
+ 		(*packet)++;
+@@ -106,14 +113,23 @@
+ 			(*packet)++;
+ 			return MYSQLND_NULL_LENGTH;
+ 		case 252:
+-			(*packet) += 3;
+-			return (zend_ulong) uint2korr(p+1);
++			if (EXPECTED(remaining_size >= 3)) {
++				(*packet) += 3;
++				return (zend_ulong) uint2korr(p+1);
++			}
++			return MYSQLND_INVALID_NET_FIELD_LENGTH;
+ 		case 253:
+-			(*packet) += 4;
+-			return (zend_ulong) uint3korr(p+1);
++			if (EXPECTED(remaining_size >= 4)) {
++				(*packet) += 4;
++				return (zend_ulong) uint3korr(p+1);
++			}
++			return MYSQLND_INVALID_NET_FIELD_LENGTH;
+ 		default:
+-			(*packet) += 9;
+-			return (zend_ulong) uint4korr(p+1);
++			if (EXPECTED(remaining_size >= 9)) {
++				(*packet) += 9;
++				return (zend_ulong) uint4korr(p+1);
++			}
++			return MYSQLND_INVALID_NET_FIELD_LENGTH;
+ 	}
+ }
+ /* }}} */
+@@ -121,29 +137,53 @@
+ 
+ /* {{{ php_mysqlnd_net_field_length_ll
+    Get next field's length */
+-uint64_t
+-php_mysqlnd_net_field_length_ll(const zend_uchar **packet)
++MYSQLND_OPTIONAL_UINT64_T
++php_mysqlnd_net_field_length_ll(const zend_uchar **packet, size_t remaining_size)
+ {
+ 	register const zend_uchar *p = (zend_uchar *)*packet;
++
++	MYSQLND_OPTIONAL_UINT64_T result;
++	result.has_value = 0;
++	result.value = 0;
++
++	if (UNEXPECTED(remaining_size == 0)) {
++		return result;
++	}
+ 
+ 	if (*p < 251) {
+ 		(*packet)++;
+-		return (uint64_t) *p;
++		result.value = (uint64_t) *p;
++		result.has_value = 1;
++		return result;
+ 	}
+ 
+ 	switch (*p) {
+ 		case 251:
+ 			(*packet)++;
+-			return (uint64_t) MYSQLND_NULL_LENGTH;
++			result.value = MYSQLND_NULL_LENGTH;
++			result.has_value = 1;
++			return result;
+ 		case 252:
+-			(*packet) += 3;
+-			return (uint64_t) uint2korr(p + 1);
++			if (EXPECTED(remaining_size >= 3)) {
++				(*packet) += 3;
++				result.value = (uint64_t) uint2korr(p+1);
++				result.has_value = 1;
++			}
++			return result;
+ 		case 253:
+-			(*packet) += 4;
+-			return (uint64_t) uint3korr(p + 1);
++			if (EXPECTED(remaining_size >= 4)) {
++				(*packet) += 4;
++				result.value = (uint64_t) uint3korr(p+1);
++				result.has_value = 1;
++			}
++			return result;
+ 		default:
+-			(*packet) += 9;
+-			return (uint64_t) uint8korr(p + 1);
++			if (EXPECTED(remaining_size >= 9)) {
++				(*packet) += 9;
++				result.value = uint8korr(p+1);
++				result.has_value = 1;
++			}
++			return result;
+ 	}
+ }
+ /* }}} */
+@@ -340,22 +380,14 @@
+ 	if (FAIL == mysqlnd_read_packet_header_and_body(&(packet->header), pfc, vio, stats, error_info, connection_state, buf, sizeof(buf), "greeting", PROT_GREET_PACKET)) {
+ 		DBG_RETURN(FAIL);
+ 	}
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	packet->authentication_plugin_data.s = packet->intern_auth_plugin_data;
+ 	packet->authentication_plugin_data.l = sizeof(packet->intern_auth_plugin_data);
+ 
+-	if (packet->header.size < sizeof(buf)) {
+-		/*
+-		  Null-terminate the string, so strdup can work even if the packets have a string at the end,
+-		  which is not ASCIIZ
+-		*/
+-		buf[packet->header.size] = '\0';
+-	}
+-
+ 	packet->protocol_version = uint1korr(p);
+ 	p++;
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	if (ERROR_MARKER == packet->protocol_version) {
+ 		php_mysqlnd_read_error_from_line(p, packet->header.size - 1,
+@@ -373,38 +405,35 @@
+ 		DBG_RETURN(PASS);
+ 	}
+ 
+-	packet->server_version = estrdup((char *)p);
+-	p+= strlen(packet->server_version) + 1; /* eat the '\0' */
+-	BAIL_IF_NO_MORE_DATA;
++	const char *version_nul_byte = memchr(p, '\0', packet->header.size - (p - begin));
++	if (!version_nul_byte) {
++		BAIL_PREMATURE_END;
++	}
++	packet->server_version = estrndup((char *)p, version_nul_byte - (const char *)p);
++	p = (zend_uchar *) version_nul_byte + 1;
++	BAIL_IF_NOT_ENOUGH_DATA_EX(4 + SCRAMBLE_LENGTH_323 + 1 + 2 + 1 + 2 + 13);
+ 
+ 	packet->thread_id = uint4korr(p);
+ 	p+=4;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	memcpy(packet->authentication_plugin_data.s, p, SCRAMBLE_LENGTH_323);
+ 	p+= SCRAMBLE_LENGTH_323;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* pad1 */
+ 	p++;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	packet->server_capabilities = uint2korr(p);
+ 	p+= 2;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	packet->charset_no = uint1korr(p);
+ 	p++;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	packet->server_status = uint2korr(p);
+ 	p+= 2;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* pad2 */
+ 	pad_start = p;
+ 	p+= 13;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	if ((size_t) (p - buf) < packet->header.size) {
+ 		/* auth_plugin_data is split into two parts */
+@@ -421,10 +450,11 @@
+ 		p--;
+ 
+     	/* Additional 16 bits for server capabilities */
+-		packet->server_capabilities |= uint2korr(pad_start) << 16;
++		packet->server_capabilities |= ((uint32_t) uint2korr(pad_start)) << 16;
+ 		/* And a length of the server scramble in one byte */
+ 		packet->authentication_plugin_data.l = uint1korr(pad_start + 2);
+ 		if (packet->authentication_plugin_data.l > SCRAMBLE_LENGTH) {
++			BAIL_IF_NOT_ENOUGH_DATA_EX(packet->authentication_plugin_data.l - SCRAMBLE_LENGTH);
+ 			/* more data*/
+ 			char * new_auth_plugin_data = emalloc(packet->authentication_plugin_data.l);
+ 			if (!new_auth_plugin_data) {
+@@ -440,11 +470,14 @@
+ 	}
+ 
+ 	if (packet->server_capabilities & CLIENT_PLUGIN_AUTH) {
+-		BAIL_IF_NO_MORE_DATA;
++		/* This is actually checked above and it needs to pass to set extended server capabilities
++		 * so it should never bail. */
++		BAIL_IF_NOT_ENOUGH_DATA;
+ 		/* The server is 5.5.x and supports authentication plugins */
+ 		size_t remaining_size = packet->header.size - (size_t)(p - buf);
+ 		if (remaining_size == 0) {
+-			/* Might be better to fail but this will fail anyway */
++			/* This should never happen as the size should be at least 1 but it is kept just in
++			 * case something above changes. */
+ 			packet->auth_protocol = estrdup("");
+ 		} else {
+ 			/* Check if NUL present */
+@@ -478,9 +511,8 @@
+ 
+ 	DBG_RETURN(PASS);
+ premature_end:
+-	DBG_ERR_FMT("GREET packet %d bytes shorter than expected", p - begin - packet->header.size);
+-	php_error_docref(NULL, E_WARNING, "GREET packet "MYSQLND_SZ_T_SPEC" bytes shorter than expected",
+-					 p - begin - packet->header.size);
++	DBG_ERR_FMT("GREET packet shorter than expected");
++	php_error_docref(NULL, E_WARNING, "GREET packet shorter than expected");
+ 	DBG_RETURN(FAIL);
+ }
+ /* }}} */
+@@ -701,7 +733,7 @@
+ 	if (FAIL == mysqlnd_read_packet_header_and_body(&(packet->header), pfc, vio, stats, error_info, connection_state, buf, buf_len, "OK", PROT_OK_PACKET)) {
+ 		DBG_RETURN(FAIL);
+ 	}
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	/*
+ 	  zero-terminate the buffer for safety. We are sure there is place for the \0
+@@ -712,7 +744,7 @@
+ 	/* Should be always 0x0 or ERROR_MARKER for error */
+ 	packet->response_code = uint1korr(p);
+ 	p++;
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	if (ERROR_MARKER == packet->response_code) {
+ 		php_mysqlnd_read_error_from_line(p, packet->header.size - 1,
+@@ -724,9 +756,14 @@
+ 	if (0xFE == packet->response_code) {
+ 		/* Authentication Switch Response */
+ 		if (packet->header.size > (size_t) (p - buf)) {
+-			packet->new_auth_protocol = mnd_pestrdup((char *)p, FALSE);
+-			packet->new_auth_protocol_len = strlen(packet->new_auth_protocol);
+-			p+= packet->new_auth_protocol_len + 1; /* +1 for the \0 */
++			/* The plugin name MUST be NUL terminated, search for a NUL byte in the remaining space. */
++			const char *auth_protocol_nul_byte = memchr(p, '\0', packet->header.size - (p - buf));
++			if (!auth_protocol_nul_byte) {
++				BAIL_PREMATURE_END;
++			}
++			packet->new_auth_protocol_len = auth_protocol_nul_byte - (const char *) p;
++			packet->new_auth_protocol = mnd_pestrndup((char *) p, packet->new_auth_protocol_len, FALSE);
++			p = (zend_uchar *) auth_protocol_nul_byte + 1; /* eat the '\0' */
+ 
+ 			packet->new_auth_protocol_data_len = packet->header.size - (size_t) (p - buf);
+ 			if (packet->new_auth_protocol_data_len) {
+@@ -737,27 +774,37 @@
+ 			DBG_INF_FMT("Server salt : [%d][%.*s]", packet->new_auth_protocol_data_len, packet->new_auth_protocol_data_len, packet->new_auth_protocol_data);
+ 		}
+ 	} else {
++		/* Everything was fine! */
+ 		zend_ulong net_len;
+-		/* Everything was fine! */
+-		packet->affected_rows  = php_mysqlnd_net_field_length_ll(&p);
+-		BAIL_IF_NO_MORE_DATA;
+-
+-		packet->last_insert_id = php_mysqlnd_net_field_length_ll(&p);
+-		BAIL_IF_NO_MORE_DATA;
++		MYSQLND_OPTIONAL_UINT64_T len_ll;
++
++		len_ll = php_mysqlnd_net_field_length_ll(&p, packet->header.size - (p - begin));
++		if (UNEXPECTED(!len_ll.has_value)) {
++			BAIL_PREMATURE_END;
++		}
++		packet->affected_rows = len_ll.value;
++
++		len_ll = php_mysqlnd_net_field_length_ll(&p, packet->header.size - (p - begin));
++		if (UNEXPECTED(!len_ll.has_value)) {
++			BAIL_PREMATURE_END;
++		}
++		packet->last_insert_id = len_ll.value;
++
++		BAIL_IF_NOT_ENOUGH_DATA_EX(4);
+ 
+ 		packet->server_status = uint2korr(p);
+ 		p+= 2;
+-		BAIL_IF_NO_MORE_DATA;
+ 
+ 		packet->warning_count = uint2korr(p);
+ 		p+= 2;
+-		BAIL_IF_NO_MORE_DATA;
+ 
+ 		/* There is a message */
+-		if (packet->header.size > (size_t) (p - buf) && (net_len = php_mysqlnd_net_field_length(&p))) {
+-			/* p can get past packet size when getting field length so it needs to be checked first
+-			 * and after that it can be checked that the net_len is not greater than the packet size */
+-			if ((p - buf) > packet->header.size || packet->header.size - (p - buf) < net_len) {
++		if (packet->header.size > (size_t) (p - buf) && (net_len = php_mysqlnd_net_field_length(&p, packet->header.size - (p - begin)))) {
++			/* In older versions of mysqlnd we had to perform an extra check because reading the field length
++			 * could overread the OK packet. Now reading the length won't go out of bounds and we only have
++			 * to check whether the message length is in bounds. */
++			ZEND_ASSERT((p - buf) <= packet->header.size);
++			if (packet->header.size - (p - buf) < net_len) {
+ 				DBG_ERR_FMT("OK packet message length is past the packet size");
+ 				php_error_docref(NULL, E_WARNING, "OK packet message length is past the packet size");
+ 				DBG_RETURN(FAIL);
+@@ -776,9 +823,8 @@
+ 
+ 	DBG_RETURN(PASS);
+ premature_end:
+-	DBG_ERR_FMT("OK packet %d bytes shorter than expected", p - begin - packet->header.size);
+-	php_error_docref(NULL, E_WARNING, "AUTH_RESPONSE packet "MYSQLND_SZ_T_SPEC" bytes shorter than expected",
+-					 p - begin - packet->header.size);
++	DBG_ERR_FMT("OK packet shorter than expected");
++	php_error_docref(NULL, E_WARNING, "AUTH_RESPONSE packet shorter than expected");
+ 	DBG_RETURN(FAIL);
+ }
+ /* }}} */
+@@ -883,12 +929,12 @@
+ 	if (FAIL == mysqlnd_read_packet_header_and_body(&(packet->header), pfc, vio, stats, error_info, connection_state, buf, buf_len, "OK", PROT_OK_PACKET)) {
+ 		DBG_RETURN(FAIL);
+ 	}
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	/* Should be always 0x0 or ERROR_MARKER for error */
+ 	packet->field_count = uint1korr(p);
+ 	p++;
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	if (ERROR_MARKER == packet->field_count) {
+ 		php_mysqlnd_read_error_from_line(p, packet->header.size - 1,
+@@ -898,22 +944,33 @@
+ 		DBG_RETURN(PASS);
+ 	}
+ 	/* Everything was fine! */
+-	packet->affected_rows  = php_mysqlnd_net_field_length_ll(&p);
+-	BAIL_IF_NO_MORE_DATA;
+-
+-	packet->last_insert_id = php_mysqlnd_net_field_length_ll(&p);
+-	BAIL_IF_NO_MORE_DATA;
++	MYSQLND_OPTIONAL_UINT64_T len_ll;
++
++	len_ll = php_mysqlnd_net_field_length_ll(&p, packet->header.size - (p - begin));
++	if (UNEXPECTED(!len_ll.has_value)) {
++		BAIL_PREMATURE_END;
++	}
++	packet->affected_rows = len_ll.value;
++
++	len_ll = php_mysqlnd_net_field_length_ll(&p, packet->header.size - (p - begin));
++	if (UNEXPECTED(!len_ll.has_value)) {
++		BAIL_PREMATURE_END;
++	}
++	packet->last_insert_id = len_ll.value;
++
++	BAIL_IF_NOT_ENOUGH_DATA_EX(4);
+ 
+ 	packet->server_status = uint2korr(p);
+ 	p+= 2;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	packet->warning_count = uint2korr(p);
+ 	p+= 2;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* There is a message */
+-	if (packet->header.size > (size_t) (p - buf) && (net_len = php_mysqlnd_net_field_length(&p))) {
++	if (packet->header.size > (size_t) (p - buf) && (net_len = php_mysqlnd_net_field_length(&p, packet->header.size - (p - begin)))) {
++		if (UNEXPECTED(net_len == MYSQLND_INVALID_NET_FIELD_LENGTH)) {
++			BAIL_PREMATURE_END;
++		}
+ 		packet->message_len = MIN(net_len, buf_len - (p - begin));
+ 		packet->message = mnd_pestrndup((char *)p, packet->message_len, FALSE);
+ 	} else {
+@@ -925,13 +982,10 @@
+ 				packet->affected_rows, packet->last_insert_id, packet->server_status,
+ 				packet->warning_count);
+ 
+-	BAIL_IF_NO_MORE_DATA;
+-
+ 	DBG_RETURN(PASS);
+ premature_end:
+-	DBG_ERR_FMT("OK packet %d bytes shorter than expected", p - begin - packet->header.size);
+-	php_error_docref(NULL, E_WARNING, "OK packet "MYSQLND_SZ_T_SPEC" bytes shorter than expected",
+-					 p - begin - packet->header.size);
++	DBG_ERR_FMT("OK packet shorter than expected");
++	php_error_docref(NULL, E_WARNING, "OK packet shorter than expected");
+ 	DBG_RETURN(FAIL);
+ }
+ /* }}} */
+@@ -979,12 +1033,12 @@
+ 	if (FAIL == mysqlnd_read_packet_header_and_body(&(packet->header), pfc, vio, stats, error_info, connection_state, buf, buf_len, "EOF", PROT_EOF_PACKET)) {
+ 		DBG_RETURN(FAIL);
+ 	}
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	/* Should be always EODATA_MARKER */
+ 	packet->field_count = uint1korr(p);
+ 	p++;
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	if (ERROR_MARKER == packet->field_count) {
+ 		php_mysqlnd_read_error_from_line(p, packet->header.size - 1,
+@@ -1000,28 +1054,25 @@
+ 		according to the Docs@Forge!!!
+ 	*/
+ 	if (packet->header.size > 1) {
++		BAIL_IF_NOT_ENOUGH_DATA_EX(4);
++
+ 		packet->warning_count = uint2korr(p);
+ 		p+= 2;
+-		BAIL_IF_NO_MORE_DATA;
+ 
+ 		packet->server_status = uint2korr(p);
+ 		p+= 2;
+-		BAIL_IF_NO_MORE_DATA;
+ 	} else {
+ 		packet->warning_count = 0;
+ 		packet->server_status = 0;
+ 	}
+ 
+-	BAIL_IF_NO_MORE_DATA;
+-
+ 	DBG_INF_FMT("EOF packet: fields=%u status=%u warnings=%u",
+ 				packet->field_count, packet->server_status, packet->warning_count);
+ 
+ 	DBG_RETURN(PASS);
+ premature_end:
+-	DBG_ERR_FMT("EOF packet %d bytes shorter than expected", p - begin - packet->header.size);
+-	php_error_docref(NULL, E_WARNING, "EOF packet "MYSQLND_SZ_T_SPEC" bytes shorter than expected",
+-					 p - begin - packet->header.size);
++	DBG_ERR_FMT("EOF packet shorter than expected");
++	php_error_docref(NULL, E_WARNING, "EOF packet shorter than expected");
+ 	DBG_RETURN(FAIL);
+ }
+ /* }}} */
+@@ -1134,13 +1185,14 @@
+ 	const zend_uchar * p = buf;
+ 	const zend_uchar * const begin = buf;
+ 	size_t len;
++	MYSQLND_OPTIONAL_UINT64_T len_ll;
+ 
+ 	DBG_ENTER("php_mysqlnd_rset_header_read");
+ 
+ 	if (FAIL == mysqlnd_read_packet_header_and_body(&(packet->header), pfc, vio, stats, error_info, connection_state, buf, buf_len, "resultset header", PROT_RSET_HEADER_PACKET)) {
+ 		DBG_RETURN(FAIL);
+ 	}
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	/*
+ 	  Don't increment. First byte is ERROR_MARKER on error, but otherwise is starting byte
+@@ -1149,7 +1201,7 @@
+ 	if (ERROR_MARKER == *p) {
+ 		/* Error */
+ 		p++;
+-		BAIL_IF_NO_MORE_DATA;
++		BAIL_IF_NOT_ENOUGH_DATA;
+ 		php_mysqlnd_read_error_from_line(p, packet->header.size - 1,
+ 										 packet->error_info.error, sizeof(packet->error_info.error),
+ 										 &packet->error_info.error_no, packet->error_info.sqlstate
+@@ -1157,8 +1209,11 @@
+ 		DBG_RETURN(PASS);
+ 	}
+ 
+-	packet->field_count = php_mysqlnd_net_field_length(&p);
+-	BAIL_IF_NO_MORE_DATA;
++	zend_ulong field_count = php_mysqlnd_net_field_length(&p, packet->header.size - (p - begin));
++	if (UNEXPECTED(field_count == MYSQLND_INVALID_NET_FIELD_LENGTH)) {
++		BAIL_PREMATURE_END;
++	}
++	packet->field_count = field_count;
+ 
+ 	switch (packet->field_count) {
+ 		case MYSQLND_NULL_LENGTH:
+@@ -1166,7 +1221,7 @@
+ 			/*
+ 			  First byte in the packet is the field count.
+ 			  Thus, the name is size - 1. And we add 1 for a trailing \0.
+-			  Because we have BAIL_IF_NO_MORE_DATA before the switch, we are guaranteed
++			  Because we have BAIL_IF_NOT_ENOUGH_DATA before the switch, we are guaranteed
+ 			  that packet->header.size is > 0. Which means that len can't underflow, that
+ 			  would lead to 0 byte allocation but 2^32 or 2^64 bytes copied.
+ 			*/
+@@ -1183,24 +1238,34 @@
+ 			break;
+ 		case 0x00:
+ 			DBG_INF("UPSERT");
+-			packet->affected_rows = php_mysqlnd_net_field_length_ll(&p);
+-			BAIL_IF_NO_MORE_DATA;
+-
+-			packet->last_insert_id = php_mysqlnd_net_field_length_ll(&p);
+-			BAIL_IF_NO_MORE_DATA;
++
++			len_ll = php_mysqlnd_net_field_length_ll(&p, packet->header.size - (p - begin));
++			if (UNEXPECTED(!len_ll.has_value)) {
++				BAIL_PREMATURE_END;
++			}
++			packet->affected_rows = len_ll.value;
++
++			len_ll = php_mysqlnd_net_field_length_ll(&p, packet->header.size - (p - begin));
++			if (UNEXPECTED(!len_ll.has_value)) {
++				BAIL_PREMATURE_END;
++			}
++			packet->last_insert_id = len_ll.value;
++
++			BAIL_IF_NOT_ENOUGH_DATA_EX(4);
+ 
+ 			packet->server_status = uint2korr(p);
+ 			p+=2;
+-			BAIL_IF_NO_MORE_DATA;
+ 
+ 			packet->warning_count = uint2korr(p);
+ 			p+=2;
+-			BAIL_IF_NO_MORE_DATA;
++
++			len = php_mysqlnd_net_field_length(&p, packet->header.size - (p - begin));
++
+ 			/* Check for additional textual data */
+-			if (packet->header.size  > (size_t) (p - buf) && (len = php_mysqlnd_net_field_length(&p))) {
+-				/* p can get past packet size when getting field length so it needs to be checked first
+-				 * and after that it can be checked that the len is not greater than the packet size */
+-				if ((p - buf) > packet->header.size || packet->header.size - (p - buf) < len) {
++			if (len && len != MYSQLND_INVALID_NET_FIELD_LENGTH) {
++				/* This checks both whether reading the len was successful
++				 * and that the len is not greater than the packet size */
++				if (packet->header.size - (p - buf) < len) {
+ 					size_t local_file_name_over_read = ((p - buf) - packet->header.size) + len;
+ 					DBG_ERR_FMT("RSET_HEADER packet additional data length is past %zu bytes the packet size",
+ 						local_file_name_over_read);
+@@ -1228,13 +1293,11 @@
+ 			/* Result set */
+ 			break;
+ 	}
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	DBG_RETURN(ret);
+ premature_end:
+-	DBG_ERR_FMT("RSET_HEADER packet %d bytes shorter than expected", p - begin - packet->header.size);
+-	php_error_docref(NULL, E_WARNING, "RSET_HEADER packet "MYSQLND_SZ_T_SPEC" bytes shorter than expected",
+-					 p - begin - packet->header.size);
++	DBG_ERR_FMT("RSET_HEADER packet shorter than expected");
++	php_error_docref(NULL, E_WARNING, "RSET_HEADER packet shorter than expected");
+ 	DBG_RETURN(FAIL);
+ }
+ /* }}} */
+@@ -1304,11 +1367,11 @@
+ 		DBG_RETURN(PASS);
+ 	}
+ 
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 	if (ERROR_MARKER == *p) {
+ 		/* Error */
+ 		p++;
+-		BAIL_IF_NO_MORE_DATA;
++		BAIL_IF_NOT_ENOUGH_DATA;
+ 		php_mysqlnd_read_error_from_line(p, packet->header.size - 1,
+ 										 packet->error_info.error, sizeof(packet->error_info.error),
+ 										 &packet->error_info.error_no, packet->error_info.sqlstate
+@@ -1324,8 +1387,10 @@
+ 	meta = packet->metadata;
+ 
+ 	for (i = 0; i < field_count; i += 2) {
+-		len = php_mysqlnd_net_field_length(&p);
+-		BAIL_IF_NO_MORE_DATA;
++		len = php_mysqlnd_net_field_length(&p, packet->header.size - (p - begin));
++		if (UNEXPECTED(len == MYSQLND_NULL_LENGTH || len > packet->header.size - (p - begin))) {
++			goto faulty_or_fake;
++		}
+ 		switch ((len)) {
+ 			case 0:
+ 				*(const char **)(((char*)meta) + rset_field_offsets[i]) = mysqlnd_empty_string;
+@@ -1340,9 +1405,9 @@
+ 				total_len += len + 1;
+ 				break;
+ 		}
+-		BAIL_IF_NO_MORE_DATA;
+-	}
+-
++	}
++
++	BAIL_IF_NOT_ENOUGH_DATA_EX(1 + 2 + 4 + 1 + 2 + 1 + 2);
+ 	/* 1 byte length */
+ 	if (12 != *p) {
+ 		DBG_ERR_FMT("Protocol error. Server sent false length. Expected 12 got %d", (int) *p);
+@@ -1350,31 +1415,24 @@
+ 	}
+ 
+ 	p++;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	meta->charsetnr = uint2korr(p);
+ 	p += 2;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	meta->length = uint4korr(p);
+ 	p += 4;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	meta->type = uint1korr(p);
+ 	p += 1;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	meta->flags = uint2korr(p);
+ 	p += 2;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	meta->decimals = uint1korr(p);
+ 	p += 1;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* 2 byte filler */
+ 	p +=2;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* Should we set NUM_FLAG (libmysql does it) ? */
+ 	if (
+@@ -1387,9 +1445,8 @@
+ 
+ 
+ 	/* COM_FIELD_LIST is no longer supported so def should not be present */
+-	if (packet->header.size > (size_t) (p - buf) &&
+-		(len = php_mysqlnd_net_field_length(&p)) &&
+-		len != MYSQLND_NULL_LENGTH)
++	len = php_mysqlnd_net_field_length(&p, packet->header.size - (p - begin));
++	if (len < MYSQLND_INVALID_NET_FIELD_LENGTH)
+ 	{
+ 		DBG_ERR_FMT("Protocol error. Server sent default for unsupported field list");
+ 		php_error_docref(NULL, E_WARNING,
+@@ -1463,9 +1520,8 @@
+ 					 " The server is faulty");
+ 	DBG_RETURN(FAIL);
+ premature_end:
+-	DBG_ERR_FMT("RSET field packet %d bytes shorter than expected", p - begin - packet->header.size);
+-	php_error_docref(NULL, E_WARNING, "Result set field packet "MYSQLND_SZ_T_SPEC" bytes "
+-			 		"shorter than expected", p - begin - packet->header.size);
++	DBG_ERR_FMT("RSET field packet shorter than expected");
++	php_error_docref(NULL, E_WARNING, "Result set field packet shorter than expected");
+ 	DBG_RETURN(FAIL);
+ }
+ /* }}} */
+@@ -1699,12 +1755,12 @@
+ 
+ 	for (i = 0, current_field = start_field; current_field < end_field; current_field++, i++) {
+ 		/* php_mysqlnd_net_field_length() call should be after *this_field_len_pos = p; */
+-		const zend_ulong len = php_mysqlnd_net_field_length((const zend_uchar **) &p);
++		zend_ulong len = php_mysqlnd_net_field_length((const zend_uchar **) &p, packet_end - p);
+ 
+ 		/* NULL or NOT NULL, this is the question! */
+ 		if (len == MYSQLND_NULL_LENGTH) {
+ 			ZVAL_NULL(current_field);
+-		} else if (p > packet_end || len > packet_end - p) {
++		} else if (len > packet_end - p) {
+ 			php_error_docref(NULL, E_WARNING, "Malformed server packet. Field length pointing after end of packet");
+ 			for (j = 0, current_field = start_field; j < i; current_field++, j++) {
+ 				zval_ptr_dtor(current_field);
+@@ -1914,7 +1970,8 @@
+ 	} else if (EODATA_MARKER == *p && data_size < 8) { /* EOF */
+ 		packet->eof = TRUE;
+ 		p++;
+-		if (data_size > 1) {
++		/* the marker is followed by 2 bytes of warnings and 2 bytes of status */
++		if (data_size >= 5) {
+ 			packet->warning_count = uint2korr(p);
+ 			p += 2;
+ 			packet->server_status = uint2korr(p);
+@@ -2057,12 +2114,12 @@
+ 	if (FAIL == mysqlnd_read_packet_header_and_body(&(packet->header), pfc, vio, stats, error_info, connection_state, buf, buf_len, "prepare", PROT_PREPARE_RESP_PACKET)) {
+ 		DBG_RETURN(FAIL);
+ 	}
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	data_size = packet->header.size;
+ 	packet->error_code = uint1korr(p);
+ 	p++;
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	if (ERROR_MARKER == packet->error_code) {
+ 		php_mysqlnd_read_error_from_line(p, data_size - 1,
+@@ -2082,23 +2139,23 @@
+ 		DBG_RETURN(FAIL);
+ 	}
+ 
++	BAIL_IF_NOT_ENOUGH_DATA_EX(8);
++
+ 	packet->stmt_id = uint4korr(p);
+ 	p += 4;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	/* Number of columns in result set */
+ 	packet->field_count = uint2korr(p);
+ 	p += 2;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	packet->param_count = uint2korr(p);
+ 	p += 2;
+-	BAIL_IF_NO_MORE_DATA;
+ 
+ 	if (data_size > 9) {
++		BAIL_IF_NOT_ENOUGH_DATA_EX(3);
++
+ 		/* 0x0 filler sent by the server for 5.0+ clients */
+ 		p++;
+-		BAIL_IF_NO_MORE_DATA;
+ 
+ 		packet->warning_count = uint2korr(p);
+ 	}
+@@ -2106,13 +2163,10 @@
+ 	DBG_INF_FMT("Prepare packet read: stmt_id=%u fields=%u params=%u",
+ 				packet->stmt_id, packet->field_count, packet->param_count);
+ 
+-	BAIL_IF_NO_MORE_DATA;
+-
+ 	DBG_RETURN(PASS);
+ premature_end:
+-	DBG_ERR_FMT("PREPARE packet %d bytes shorter than expected", p - begin - packet->header.size);
+-	php_error_docref(NULL, E_WARNING, "PREPARE packet "MYSQLND_SZ_T_SPEC" bytes shorter than expected",
+-					 p - begin - packet->header.size);
++	DBG_ERR_FMT("PREPARE packet shorter than expected");
++	php_error_docref(NULL, E_WARNING, "PREPARE packet shorter than expected");
+ 	DBG_RETURN(FAIL);
+ }
+ /* }}} */
+@@ -2151,7 +2205,7 @@
+ 	if (FAIL == mysqlnd_read_packet_header_and_body(&(packet->header), pfc, vio, stats, error_info, connection_state, buf, buf_len, "change user response", PROT_CHG_USER_RESP_PACKET)) {
+ 		DBG_RETURN(FAIL);
+ 	}
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	/*
+ 	  Don't increment. First byte is ERROR_MARKER on error, but otherwise is starting byte
+@@ -2176,11 +2230,16 @@
+ 										 packet->error_info.sqlstate
+ 										);
+ 	}
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 	if (packet->response_code == 0xFE && packet->header.size > (size_t) (p - buf)) {
+-		packet->new_auth_protocol = mnd_pestrdup((char *)p, FALSE);
+-		packet->new_auth_protocol_len = strlen(packet->new_auth_protocol);
+-		p+= packet->new_auth_protocol_len + 1; /* +1 for the \0 */
++		/* The plugin name MUST be NUL terminated, search for a NUL byte in the remaining space. */
++		const char *auth_protocol_nul_byte = memchr(p, '\0', packet->header.size - (p - buf));
++		if (!auth_protocol_nul_byte) {
++			BAIL_PREMATURE_END;
++		}
++		packet->new_auth_protocol_len = auth_protocol_nul_byte - (const char *) p;
++		packet->new_auth_protocol = mnd_pestrndup((char *) p, packet->new_auth_protocol_len, FALSE);
++		p = (zend_uchar *) auth_protocol_nul_byte + 1; /* eat the '\0' */
+ 		packet->new_auth_protocol_data_len = packet->header.size - (size_t) (p - buf);
+ 		if (packet->new_auth_protocol_data_len) {
+ 			packet->new_auth_protocol_data = mnd_emalloc(packet->new_auth_protocol_data_len);
+@@ -2192,9 +2251,8 @@
+ 
+ 	DBG_RETURN(PASS);
+ premature_end:
+-	DBG_ERR_FMT("CHANGE_USER packet %d bytes shorter than expected", p - begin - packet->header.size);
+-	php_error_docref(NULL, E_WARNING, "CHANGE_USER packet "MYSQLND_SZ_T_SPEC" bytes shorter than expected",
+-						 p - begin - packet->header.size);
++	DBG_ERR_FMT("CHANGE_USER packet shorter than expected");
++	php_error_docref(NULL, E_WARNING, "CHANGE_USER packet shorter than expected");
+ 	DBG_RETURN(FAIL);
+ }
+ /* }}} */
+@@ -2281,10 +2339,10 @@
+ 	if (FAIL == mysqlnd_read_packet_header_and_body(&(packet->header), pfc, vio, stats, error_info, connection_state, buf, sizeof(buf), "SHA256_PK_REQUEST_RESPONSE", PROT_SHA256_PK_REQUEST_RESPONSE_PACKET)) {
+ 		DBG_RETURN(FAIL);
+ 	}
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	p++;
+-	BAIL_IF_NO_MORE_DATA;
++	BAIL_IF_NOT_ENOUGH_DATA;
+ 
+ 	packet->public_key_len = packet->header.size - (p - buf);
+ 	packet->public_key = mnd_emalloc(packet->public_key_len + 1);
+@@ -2294,9 +2352,8 @@
+ 	DBG_RETURN(PASS);
+ 
+ premature_end:
+-	DBG_ERR_FMT("OK packet %d bytes shorter than expected", p - begin - packet->header.size);
+-	php_error_docref(NULL, E_WARNING, "SHA256_PK_REQUEST_RESPONSE packet "MYSQLND_SZ_T_SPEC" bytes shorter than expected",
+-					 p - begin - packet->header.size);
++	DBG_ERR_FMT("OK packet shorter than expected");
++	php_error_docref(NULL, E_WARNING, "SHA256_PK_REQUEST_RESPONSE packet shorter than expected");
+ 	DBG_RETURN(FAIL);
+ }
+ /* }}} */
+--- a/ext/mysqlnd/mysqlnd_wireprotocol.h
++++ b/ext/mysqlnd/mysqlnd_wireprotocol.h
+@@ -293,7 +293,12 @@
+ } MYSQLND_PACKET_SHA256_PK_REQUEST_RESPONSE;
+ 
+ 
+-zend_ulong		php_mysqlnd_net_field_length(const zend_uchar **packet);
++typedef struct st_mysqlnd_optional_uint64_t {
++	uint64_t value;
++	zend_bool has_value;
++} MYSQLND_OPTIONAL_UINT64_T;
++#define MYSQLND_INVALID_NET_FIELD_LENGTH ((zend_ulong) -2)
++zend_ulong		php_mysqlnd_net_field_length(const zend_uchar **packet, size_t remaining_size);
+ zend_uchar *	php_mysqlnd_net_store_length(zend_uchar *packet, const uint64_t length);
+ size_t			php_mysqlnd_net_store_length_size(uint64_t length);
+ 

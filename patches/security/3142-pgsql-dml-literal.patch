@@ -1,0 +1,15 @@
+From: LookBack
+Subject: 保持PGSQL转义字符串的普通字面量语义
+
+来源：PHP7.0已适配实现，针对PHP7.1旧API严格应用。
+
+--- a/ext/pgsql/pgsql.c
++++ b/ext/pgsql/pgsql.c
+@@ -5831,7 +5831,6 @@
+ 	assert(Z_TYPE_P(src) == IS_STRING);
+ 	assert(should_free == 1 || should_free == 0);
+ 
+-	smart_str_appendc(&str, 'E');
+ 	smart_str_appendc(&str, '\'');
+ 	smart_str_appendl(&str, Z_STRVAL_P(src), Z_STRLEN_P(src));
+ 	smart_str_appendc(&str, '\'');

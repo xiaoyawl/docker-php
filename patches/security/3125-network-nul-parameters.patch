@@ -1,0 +1,195 @@
+From: LookBack
+Subject: 网络函数拒绝内嵌NUL参数
+
+来源：已签名Surý PHP7.4 0125，按本版API与上下文移植。
+
+--- a/ext/standard/basic_functions.c
++++ b/ext/standard/basic_functions.c
+@@ -3944,7 +3944,7 @@
+ 	size_t address_len;
+ 	char buffer[17];
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &address, &address_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p", &address, &address_len) == FAILURE) {
+ 		RETURN_FALSE;
+ 	}
+ 
+@@ -3984,7 +3984,7 @@
+ 	zend_ulong ip;
+ #endif
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &addr, &addr_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p", &addr, &addr_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -5634,7 +5634,7 @@
+ 	size_t name_len, proto_len;
+ 	struct servent *serv;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "ss", &name, &name_len, &proto, &proto_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "pp", &name, &name_len, &proto, &proto_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -5677,7 +5677,7 @@
+ 	zend_long port;
+ 	struct servent *serv;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "ls", &port, &proto, &proto_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "lp", &port, &proto, &proto_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -5701,7 +5701,7 @@
+ 	size_t name_len;
+ 	struct protoent *ent;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &name, &name_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p", &name, &name_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+--- a/ext/standard/dns.c
++++ b/ext/standard/dns.c
+@@ -372,7 +372,7 @@
+ 	struct __res_state *handle = &state;
+ #endif
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|s", &hostname, &hostname_len, &rectype, &rectype_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p|s", &hostname, &hostname_len, &rectype, &rectype_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -817,7 +817,7 @@
+ 	int type, first_query = 1, store_results = 1;
+ 	zend_bool raw = 0;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|lz/!z/!b",
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p|lz/!z/!b",
+ 			&hostname, &hostname_len, &type_param, &authns, &addtl, &raw) == FAILURE) {
+ 		return;
+ 	}
+@@ -1048,7 +1048,7 @@
+ 	struct __res_state *handle = &state;
+ #endif
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sz/|z/", &hostname, &hostname_len, &mx_list, &weight_list) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "pz/|z/", &hostname, &hostname_len, &mx_list, &weight_list) == FAILURE) {
+ 		return;
+ 	}
+ 
+--- a/ext/standard/dns_win32.c
++++ b/ext/standard/dns_win32.c
+@@ -50,7 +50,7 @@
+ 	DNS_STATUS      status;                 /* Return value of DnsQuery_A() function */
+ 	PDNS_RECORD     pResult, pRec;          /* Pointer to DNS_RECORD structure */
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sz/|z/", &hostname, &hostname_len, &mx_list, &weight_list) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "pz/|z/", &hostname, &hostname_len, &mx_list, &weight_list) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -99,7 +99,7 @@
+ 	DNS_STATUS      status;                 /* Return value of DnsQuery_A() function */
+ 	PDNS_RECORD     pResult;          /* Pointer to DNS_RECORD structure */
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|s", &hostname, &hostname_len, &rectype, &rectype_len) == FAILURE) {
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p|s", &hostname, &hostname_len, &rectype, &rectype_len) == FAILURE) {
+ 		return;
+ 	}
+ 
+@@ -352,7 +352,7 @@
+ 	int type, type_to_fetch, first_query = 1, store_results = 1;
+ 	zend_bool raw = 0;
+ 
+-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|lz/!z/!b",
++	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p|lz/!z/!b",
+ 			&hostname, &hostname_len, &type_param, &authns, &addtl, &raw) == FAILURE) {
+ 		return;
+ 	}
+--- /dev/null
++++ b/ext/standard/tests/network/ghsa-www2-q4fc-65wf.phpt
+@@ -0,0 +1,71 @@
++--TEST--
++GHSA-www2-q4fc-65wf
++--DESCRIPTION--
++This is a ZPP test but *keep* this as it is security-sensitive!
++--FILE--
++<?php
++try {
++    dns_check_record("\0");
++} catch (ValueError $e) {
++    echo $e->getMessage(), "\n";
++}
++try {
++    dns_get_mx("\0", $out);
++} catch (ValueError $e) {
++    echo $e->getMessage(), "\n";
++}
++try {
++    dns_get_record("\0");
++} catch (ValueError $e) {
++    echo $e->getMessage(), "\n";
++}
++try {
++    getprotobyname("\0");
++} catch (ValueError $e) {
++    echo $e->getMessage(), "\n";
++}
++try {
++    getservbyname("\0", "tcp");
++} catch (ValueError $e) {
++    echo $e->getMessage(), "\n";
++}
++try {
++    getservbyname("x", "tcp\0");
++} catch (ValueError $e) {
++    echo $e->getMessage(), "\n";
++}
++try {
++    getservbyport(0, "tcp\0");
++} catch (ValueError $e) {
++    echo $e->getMessage(), "\n";
++}
++try {
++    inet_pton("\0");
++} catch (ValueError $e) {
++    echo $e->getMessage(), "\n";
++}
++try {
++    ip2long("\0");
++} catch (ValueError $e) {
++    echo $e->getMessage(), "\n";
++}
++?>
++--EXPECTF--
++Warning: dns_check_record() expects parameter 1 to be a valid path, string given in %s
++
++Warning: dns_get_mx() expects parameter 1 to be a valid path, string given in %s
++
++Warning: dns_get_record() expects parameter 1 to be a valid path, string given in %s
++
++Warning: getprotobyname() expects parameter 1 to be a valid path, string given in %s
++
++Warning: getservbyname() expects parameter 1 to be a valid path, string given in %s
++
++Warning: getservbyname() expects parameter 2 to be a valid path, string given in %s
++
++Warning: getservbyport() expects parameter 2 to be a valid path, string given in %s
++
++Warning: inet_pton() expects parameter 1 to be a valid path, string given in %s
++
++Warning: ip2long() expects parameter 1 to be a valid path, string given in %s
++
+--- a/ext/standard/tests/network/ip_x86_64.phpt
++++ b/ext/standard/tests/network/ip_x86_64.phpt
+@@ -54,7 +54,7 @@
+ bool(false)
+ int(1869573999)
+ 
+-Warning: ip2long() expects parameter 1 to be string, array given in %sip_x86_64.php on line %d
++Warning: ip2long() expects parameter 1 to be a valid path, array given in %sip_x86_64.php on line %d
+ NULL
+ 
+ Warning: long2ip() expects exactly 1 parameter, 0 given in %sip_x86_64.php on line %d

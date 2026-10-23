@@ -1,0 +1,20 @@
+stages:
+  - build
+
+# 此标签必须绑定指定构建节点的 Shell Runner；不使用生产 Runner。
+php-build:
+  stage: build
+  # 当前按用户要求仅构建与验收 amd64，暂停 ARM64/QEMU。
+  timeout: 2h
+  tags:
+    - php-remote-builder
+  when: manual
+  script:
+    - for script in scripts/*.sh tests/*.sh; do bash -n "$script" || exit; done
+    - bash scripts/build-image.sh
+    - bash scripts/verify-artifact.sh
+  artifacts:
+    when: always
+    paths:
+      - artifacts/
+    expire_in: 14 days

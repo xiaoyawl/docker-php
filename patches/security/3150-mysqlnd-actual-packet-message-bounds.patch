@@ -1,0 +1,63 @@
+Subject: MySQLnd实际包长复制边界、长度累加防溢出与拒绝非法0xff长度前缀
+
+--- a/ext/mysqlnd/mysqlnd_wireprotocol.c
++++ b/ext/mysqlnd/mysqlnd_wireprotocol.c
+@@ -31,7 +31,7 @@
+ 		goto premature_end; \
+ 	} while (0)
+ #define BAIL_IF_NOT_ENOUGH_DATA_EX(min_required_bytes) \
+-	if (UNEXPECTED((size_t)(p - begin) + (min_required_bytes) > packet->header.size)) { \
++	if (UNEXPECTED((size_t)(p - begin) > packet->header.size || (size_t)(min_required_bytes) > packet->header.size - (size_t)(p - begin))) { \
+ 		BAIL_PREMATURE_END; \
+ 	}
+ #define BAIL_IF_NOT_ENOUGH_DATA BAIL_IF_NOT_ENOUGH_DATA_EX(1)
+@@ -124,11 +124,13 @@
+ 				return (zend_ulong) uint3korr(p+1);
+ 			}
+ 			return MYSQLND_INVALID_NET_FIELD_LENGTH;
+-		default:
++		case 254:
+ 			if (EXPECTED(remaining_size >= 9)) {
+ 				(*packet) += 9;
+ 				return (zend_ulong) uint4korr(p+1);
+ 			}
++			return MYSQLND_INVALID_NET_FIELD_LENGTH;
++		default:
+ 			return MYSQLND_INVALID_NET_FIELD_LENGTH;
+ 	}
+ }
+@@ -177,12 +179,14 @@
+ 				result.has_value = 1;
+ 			}
+ 			return result;
+-		default:
++		case 254:
+ 			if (EXPECTED(remaining_size >= 9)) {
+ 				(*packet) += 9;
+ 				result.value = uint8korr(p+1);
+ 				result.has_value = 1;
+ 			}
++			return result;
++		default:
+ 			return result;
+ 	}
+ }
+@@ -804,7 +808,7 @@
+ 			 * could overread the OK packet. Now reading the length won't go out of bounds and we only have
+ 			 * to check whether the message length is in bounds. */
+ 			ZEND_ASSERT((p - buf) <= packet->header.size);
+-			if (packet->header.size - (p - buf) < net_len) {
++			if (net_len == MYSQLND_INVALID_NET_FIELD_LENGTH || packet->header.size - (p - buf) < net_len) {
+ 				DBG_ERR_FMT("OK packet message length is past the packet size");
+ 				php_error_docref(NULL, E_WARNING, "OK packet message length is past the packet size");
+ 				DBG_RETURN(FAIL);
+@@ -971,7 +975,8 @@
+ 		if (UNEXPECTED(net_len == MYSQLND_INVALID_NET_FIELD_LENGTH)) {
+ 			BAIL_PREMATURE_END;
+ 		}
+-		packet->message_len = MIN(net_len, buf_len - (p - begin));
++		BAIL_IF_NOT_ENOUGH_DATA_EX(net_len);
++		packet->message_len = net_len;
+ 		packet->message = mnd_pestrndup((char *)p, packet->message_len, FALSE);
+ 	} else {
+ 		packet->message = NULL;
