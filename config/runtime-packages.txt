@@ -1,0 +1,16 @@
+# 运行阶段额外 apk 包（一行一项，# 为注释）。动态库依赖由构建阶段 ELF 扫描自动补齐，此处只列扫描覆盖不到的包。
+ca-certificates
+tzdata
+# glibc 兼容层与 libudev.so.1：ionCube / SourceGuardian 官方 Loader 需要
+gcompat
+libudev-zero
+# Imagick 通过 dlopen 加载的图像格式模块
+imagemagick
+# 进程管理、日志与 FastCGI 探测工具
+supervisor
+logrotate
+inotify-tools
+fcgi
+# Composer 拉取源码依赖所需的 git 与 ssh 客户端
+git
+openssh-client-default

@@ -1,0 +1,9 @@
+# 上游 PHPT 额外用例清单（相对 PHP 源码根目录，支持目录与通配符，# 为注释）。
+# 补丁序列附带的 .phpt 会自动收集，无需在此列出。
+# GD：本镜像使用补丁版外部 libgd，需全量回归与 PHP 内置 GD 的差异。
+ext/gd/tests
+# 系统 PCRE、Oniguruma（mbregex）与 libzip 替换内置库后的回归。
+ext/pcre/tests
+ext/mbstring/tests/mb_ereg*.phpt
+ext/mbstring/tests/mb_regex*.phpt
+ext/zip/tests

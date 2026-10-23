@@ -1,0 +1,89 @@
+# PHP 7.3.33 configure 参数（一行一项，# 为注释）。各分支只在本文件体现 configure 差异。
+# 安装布局与 SAPI
+--prefix=/usr/local/php
+--with-config-file-path=/usr/local/php/etc
+--with-config-file-scan-dir=/usr/local/php/etc/php.d
+--with-layout=GNU
+--enable-fpm
+--with-fpm-user=www
+--with-fpm-group=www
+--enable-cli
+--enable-cgi
+--enable-opcache
+--disable-debug
+--disable-rpath
+--with-pic
+--enable-shared
+--enable-ipv6
+# 数据库：mysqlnd 系列、SQLite、PostgreSQL、ODBC、FreeTDS（ext/mysql、mssql、sybase_ct 已于 PHP 7.0 上游移除）
+--with-mysqli=mysqlnd
+--with-pdo-mysql=mysqlnd
+--with-sqlite3=/usr
+--with-pdo-sqlite=/usr
+--with-pgsql=/usr
+--with-pdo-pgsql=/usr
+--with-unixODBC=/usr
+--with-pdo-odbc=unixODBC,/usr
+--with-pdo-dblib=/usr
+# 编码与文本：GNU libiconv、系统 PCRE 与 Oniguruma、ICU、拼写与整理
+--with-iconv=/opt/libiconv
+--with-pcre-regex=/usr
+--enable-mbstring
+--enable-mbregex
+--with-onig=/usr
+--enable-intl
+--with-gettext
+--with-enchant=/usr
+--with-pspell=/usr
+--with-tidy=/usr
+# 图像：补丁版 libgd（/opt/libgd）与系统图像库
+--with-gd=/opt/libgd
+--with-freetype-dir=/usr
+--with-jpeg-dir=/usr
+--with-png-dir=/usr
+--with-xpm-dir=/usr
+--enable-gd-native-ttf
+--enable-gd-jis-conv
+--enable-exif
+# XML 与 Web 服务（xmlrpc、wddx 在 PHP 8.0 / 7.4 上游移除）
+--with-libxml-dir=/usr
+--enable-xml
+--with-xsl
+--enable-soap
+--with-xmlrpc
+--enable-wddx
+# 网络、加密与压缩（mcrypt 于 7.2 上游移除，改由 sodium 提供现代加密；argon2 自 7.2 起可用）
+--with-openssl
+--with-curl
+--enable-ftp
+--enable-sockets
+--with-imap
+--with-imap-ssl
+--with-ldap=/usr
+--with-ldap-sasl=/usr
+--with-snmp=/usr
+--with-sodium
+--with-password-argon2
+--with-mhash
+--with-zlib
+--with-bz2
+--enable-zip
+--with-libzip=/usr
+# 数据存储（DBA）
+--enable-dba
+--with-db4=/usr
+--with-gdbm=/usr
+--with-cdb
+--enable-inifile
+--enable-flatfile
+# 进程、IPC 与其它
+--enable-fileinfo
+--enable-bcmath
+--with-gmp=/usr
+--enable-calendar
+--enable-pcntl
+--enable-shmop
+--enable-sysvsem
+--enable-sysvmsg
+--enable-sysvshm
+--with-readline=/usr

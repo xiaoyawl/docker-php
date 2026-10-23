@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "php": "7.3.33",
+  "native_modules": [
+    "bcmath",
+    "bz2",
+    "calendar",
+    "Core",
+    "ctype",
+    "curl",
+    "date",
+    "dba",
+    "dom",
+    "enchant",
+    "exif",
+    "fileinfo",
+    "filter",
+    "ftp",
+    "gd",
+    "gettext",
+    "gmp",
+    "hash",
+    "iconv",
+    "imap",
+    "intl",
+    "json",
+    "ldap",
+    "libxml",
+    "mbstring",
+    "mysqli",
+    "mysqlnd",
+    "odbc",
+    "openssl",
+    "pcntl",
+    "pcre",
+    "PDO",
+    "pdo_dblib",
+    "pdo_mysql",
+    "PDO_ODBC",
+    "pdo_pgsql",
+    "pdo_sqlite",
+    "pgsql",
+    "Phar",
+    "posix",
+    "pspell",
+    "readline",
+    "Reflection",
+    "session",
+    "shmop",
+    "SimpleXML",
+    "snmp",
+    "soap",
+    "sockets",
+    "sodium",
+    "SPL",
+    "sqlite3",
+    "standard",
+    "sysvmsg",
+    "sysvsem",
+    "sysvshm",
+    "tidy",
+    "tokenizer",
+    "wddx",
+    "xml",
+    "xmlreader",
+    "xmlrpc",
+    "xmlwriter",
+    "xsl",
+    "zip",
+    "zlib"
+  ],
+  "comment": "本文件是分支的版本差异清单：扩展、开关、编译参数与 Loader 均在此定义，脚本不写死版本信息。",
+  "opcache": {
+    "builtin": false
+  },
+  "fpm": {
+    "oom_worker_exits": true,
+    "oom_reason": "补丁 security/0139-Avoid-state-corruption-via-bailout（CVE-2026-109618/109619 回补）把 zend_mm_safe_error 等内存耗尽致命路径的 exit(1) 改为 _exit(1)；2026-10-23 实测本版镜像 FPM（pm.max_children=1）内存耗尽请求后 worker 以退出码 1 退出，下一请求 pid 由 51 变为 64，由 master 补充新进程"
+  },
+  "tools": {
+    "composer": "composer-2.10.3.phar",
+    "composer_reason": "PHP 7.2.5+ 使用 Composer 最新稳定版",
+    "packages": "git 与 ssh 客户端见 config/runtime-packages.txt"
+  },
+  "variants": [
+    {
+      "suffix": "",
+      "swoole": "swoole-4.8.13"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "memcache",
+      "package": "memcache-4.0.5.2",
+      "switch": "MEMCACHE",
+      "configure": [],
+      "ini": [],
+      "reason": "memcache 4.x 已自行处理 C11 inline 语义，不能加 -fgnu89-inline（会导致 mmc_buffer_alloc 未导出）"
+    },
+    {
+      "name": "memcached",
+      "package": "memcached-3.4.0",
+      "switch": "MEMCACHE",
+      "configure": [
+        "--enable-memcached-sasl"
+      ],
+      "ini": [
+        "memcached.use_sasl=1"
+      ]
+    },
+    {
+      "name": "redis",
+      "package": "redis-6.0.2",
+      "switch": "REDIS",
+      "configure": [
+        "--enable-redis-session",
+        "--disable-redis-igbinary",
+        "--disable-redis-lzf"
+      ],
+      "ini": [],
+      "reason": "Session 支持与默认 PHP 序列化；不引入 igbinary/LZF"
+    },
+    {
+      "name": "swoole",
+      "package": "variant",
+      "switch": "SWOOLE",
+      "configure": [
+        "--enable-openssl",
+        "--enable-sockets",
+        "--enable-mysqlnd",
+        "--enable-swoole-curl",
+        "SED=sed"
+      ],
+      "ini": [],
+      "reason": "U6：该 Swoole 版本支持的最大公共集合；SED=sed 见 mongodb 说明"
+    },
+    {
+      "name": "xdebug",
+      "package": "xdebug-3.1.6",
+      "switch": "XDEBUG",
+      "zend": true,
+      "configure": [
+        "SED=sed"
+      ],
+      "ini": [],
+      "xdebug_ini": [
+        "xdebug.mode=debug,develop",
+        "xdebug.start_with_request=yes",
+        "xdebug.client_host={host}",
+        "xdebug.client_port={port}",
+        "xdebug.discover_client_host=0",
+        "xdebug.output_dir=/tmp"
+      ]
+    },
+    {
+      "name": "mongodb",
+      "package": "mongodb-1.16.2",
+      "switch": "MONGODB",
+      "configure": [
+        "--with-mongodb-system-libs=yes",
+        "--with-mongodb-client-side-encryption=no",
+        "SED=sed"
+      ],
+      "ini": [],
+      "reason": "使用维护中的系统 libmongoc/libbson；PHP 7.0–7.3 的 phpize 生成的 configure 未设置 $SED，会丢失扩展头文件与链接参数，显式 SED=sed"
+    },
+    {
+      "name": "zstd",
+      "package": "zstd-0.18.0",
+      "switch": "ZSTD",
+      "configure": [
+        "--with-libzstd"
+      ],
+      "ini": []
+    },
+    {
+      "name": "event",
+      "package": "event-3.1.6",
+      "switch": "EVENT",
+      "configure": [
+        "--with-event-core",
+        "--with-event-extra",
+        "--with-event-openssl"
+      ],
+      "ini": []
+    },
+    {
+      "name": "apcu",
+      "package": "apcu-5.1.28",
+      "switch": "APCU",
+      "configure": [],
+      "ini": [],
+      "reason": "APCu 5.x 支持 PHP 7"
+    },
+    {
+      "name": "imagick",
+      "package": "imagick-3.8.1",
+      "switch": "IMAGICK",
+      "configure": [
+        "--with-imagick",
+        "SED=sed"
+      ],
+      "ini": []
+    },
+    {
+      "name": "hprose",
+      "package": "hprose-1.8.0",
+      "switch": "HPROSE",
+      "configure": [],
+      "ini": []
+    }
+  ],
+  "loaders": [
+    {
+      "name": "ionCube Loader",
+      "module": "ionCube Loader",
+      "switch": "IONCUBE",
+      "zend": true,
+      "path": "/usr/local/ioncube/ioncube_loader_lin-musl_7.3.so",
+      "preload": "",
+      "conflicts": "XDEBUG",
+      "reason": "PHP 7.1+ 使用官方 musl 版 Loader，无需预加载 gcompat"
+    },
+    {
+      "name": "SourceGuardian Loader",
+      "module": "SourceGuardian",
+      "switch": "SOURCEGUARDIAN",
+      "zend": false,
+      "path": "/usr/local/sourceguardian/ixed.7.3.lin",
+      "preload": "",
+      "conflicts": "",
+      "reason": "官方 glibc 版 Loader，依赖 gcompat 提供的 libc.so.6 与 libudev-zero"
+    }
+  ]
+}

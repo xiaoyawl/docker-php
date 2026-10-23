@@ -1,0 +1,17 @@
+Subject: 外部GD保留PHP历史翻转模式常量
+
+--- a/ext/gd/gd.c
++++ b/ext/gd/gd.c
+@@ -61,6 +61,12 @@
+ static int le_gd, le_gd_font;
+ 
+ #include <gd.h>
++/* 这些是PHP历史公开模式值，不是外部libgd的ABI标志。 */
++#ifndef GD_FLIP_HORINZONTAL
++# define GD_FLIP_HORINZONTAL 1
++# define GD_FLIP_VERTICAL 2
++# define GD_FLIP_BOTH 3
++#endif
+ #include <gd_errors.h>
+ #include <gdfontt.h>  /* 1 Tiny font */
+ #include <gdfonts.h>  /* 2 Small font */
