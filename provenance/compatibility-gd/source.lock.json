@@ -1,0 +1,26 @@
+{
+  "php": "8.3.36",
+  "reason": "系统libgd2.3.3尚缺上游GD-2.3双三次插值设置修复；PHPwrapper仅在系统setter拒绝这两个模式时按官方相同字段语义补齐，其余方法不变",
+  "upstream_commit": "a5f5698a6832fc1f8179a9257f0b91c9a8ef496b",
+  "references": [
+    {
+      "file": "upstream-libgd.patch",
+      "url": "https://github.com/libgd/libgd/commit/a5f5698a6832fc1f8179a9257f0b91c9a8ef496b.patch",
+      "sha256": "d7902b7245023ae36b15bccd9742b24f8c96d84c51aae81fd7b61018ef5d02b4",
+      "size": 3055
+    },
+    {
+      "file": "COPYING",
+      "url": "https://raw.githubusercontent.com/libgd/libgd/a5f5698a6832fc1f8179a9257f0b91c9a8ef496b/COPYING",
+      "sha256": "005f4b6b0141d1bd11d371bbf7d4f67947f85a4906b7f5465f942204cf918ba3",
+      "size": 2991
+    }
+  ],
+  "patch": {
+    "file": "9002-system-gd-bicubic.patch",
+    "sha256": "8adaf4c3f97f50d62d39c1eb1e626bb36603e73f9729d8852585682bd4eb330d"
+  },
+  "before_sha256": "d0a84bd65ac94058e4d5b0c2f5ad33675c3e99ab5a3f4ea64a41fa6df154d0b8",
+  "after_sha256": "e5bc87986f81413b8deffa5faadb6d8f59c929c961663a032ace4f73fa1aca45",
+  "target": "ext/gd/gd.c"
+}

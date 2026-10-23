@@ -1,0 +1,62 @@
+# 构建阶段 apk 包（一行一项，# 为注释）。仅进入 build 阶段，不进入运行镜像。
+# 编译工具与校验工具
+build-base
+autoconf
+automake
+libtool
+bison
+re2c
+pkgconf
+linux-headers
+python3
+gnupg
+git
+patch
+xz
+ca-certificates
+# PHP 内核依赖
+curl-dev
+openssl-dev
+libxml2-dev
+sqlite-dev
+icu-dev
+gettext-dev
+libxslt-dev
+zlib-dev
+bzip2-dev
+imap-dev
+db-dev
+gdbm-dev
+gmp-dev
+enchant2-dev
+aspell-dev
+freetds-dev
+net-snmp-dev
+openldap-dev
+postgresql18-dev
+readline-dev
+tidyhtml-dev
+unixodbc-dev
+oniguruma-dev
+pcre2-dev
+libsodium-dev
+argon2-dev
+libffi-dev
+libzip-dev
+# 图像库（供补丁版 libgd 与 GD 使用）
+freetype-dev
+fontconfig-dev
+libjpeg-turbo-dev
+libpng-dev
+libwebp-dev
+libavif-dev
+libxpm-dev
+tiff-dev
+# PECL 扩展依赖
+libmemcached-dev
+cyrus-sasl-dev
+mongo-c-driver-dev
+libbson-dev
+libevent-dev
+zstd-dev
+imagemagick-dev

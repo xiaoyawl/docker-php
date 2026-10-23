@@ -1,0 +1,82 @@
+# PHP 8.3.36 configure 参数（一行一项，# 为注释）。各分支只在本文件体现 configure 差异。
+# 安装布局与 SAPI（U1：恢复 GNU 布局、PIC 与共享库选项，与 5.6–8.1 一致）
+--prefix=/usr/local/php
+--with-config-file-path=/usr/local/php/etc
+--with-config-file-scan-dir=/usr/local/php/etc/php.d
+--with-layout=GNU
+--enable-fpm
+--with-fpm-user=www
+--with-fpm-group=www
+--enable-cli
+--enable-cgi
+--enable-opcache
+--disable-debug
+--disable-rpath
+--with-pic
+--enable-shared
+# 数据库：mysqlnd 系列、SQLite、PostgreSQL、ODBC、FreeTDS（ext/mysql、mssql、sybase_ct 已于 PHP 7.0 移除）
+--with-mysqli=mysqlnd
+--with-pdo-mysql=mysqlnd
+--with-sqlite3
+--with-pdo-sqlite
+--with-pgsql
+--with-pdo-pgsql
+--with-unixODBC
+--with-pdo-odbc=unixODBC,/usr
+--with-pdo-dblib
+# 编码与文本：GNU libiconv、系统 PCRE2 与 Oniguruma、ICU、拼写与整理
+--with-iconv=/opt/libiconv
+--with-external-pcre
+--enable-mbstring
+--enable-intl
+--with-gettext
+--with-enchant
+--with-pspell
+--with-tidy
+# 图像：补丁版外部 libgd（/opt/libgd）与系统图像库（U4：恢复 JIS 转换）
+--enable-gd
+--with-external-gd
+--with-freetype
+--with-jpeg
+--with-webp
+--with-avif
+--with-xpm
+--enable-gd-jis-conv
+--enable-exif
+# XML 与 Web 服务（xmlrpc 于 PHP 8.0 移出内核）
+--with-xsl
+--enable-soap
+# 网络、加密与压缩
+--with-openssl
+--with-curl
+--enable-ftp
+--enable-sockets
+--with-imap
+--with-imap-ssl
+--with-ldap
+--with-ldap-sasl
+--with-snmp
+# U2：恢复 mhash 兼容函数
+--with-mhash
+--with-sodium
+--with-password-argon2
+--with-zlib
+--with-bz2
+--with-zip
+# 数据存储（DBA；U2：恢复 db4 处理器）
+--enable-dba
+--with-db4
+--with-gdbm
+--with-cdb
+# 进程、IPC 与其它
+--enable-bcmath
+--with-gmp
+--enable-calendar
+--enable-pcntl
+--enable-shmop
+--enable-sysvsem
+--enable-sysvmsg
+--enable-sysvshm
+--with-readline
+# FFI 以共享模块编译，入口开关 FFI=enable 时加载
+--with-ffi=shared

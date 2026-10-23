@@ -1,0 +1,32 @@
+# 上游 PHPT 额外用例清单（相对 PHP 源码根目录，支持目录与通配符，# 为注释）。
+# 补丁序列附带的 .phpt 会自动收集，无需在此列出。
+# 上游安全回归：与原 tests/upstream-security.sh 范围一致（GHSA / bailout 命名用例，文件名大小写混用）。
+Zend/tests/**/*ghsa*.phpt
+Zend/tests/**/*GHSA*.phpt
+Zend/tests/**/*bailout*.phpt
+ext/filter/tests/**/*ghsa*.phpt
+ext/filter/tests/**/*GHSA*.phpt
+ext/filter/tests/**/*bailout*.phpt
+ext/mysqli/tests/**/*ghsa*.phpt
+ext/mysqli/tests/**/*GHSA*.phpt
+ext/mysqli/tests/**/*bailout*.phpt
+ext/openssl/tests/**/*ghsa*.phpt
+ext/openssl/tests/**/*GHSA*.phpt
+ext/openssl/tests/**/*bailout*.phpt
+ext/phar/tests/**/*ghsa*.phpt
+ext/phar/tests/**/*GHSA*.phpt
+ext/phar/tests/**/*bailout*.phpt
+ext/soap/tests/**/*ghsa*.phpt
+ext/soap/tests/**/*GHSA*.phpt
+ext/soap/tests/**/*bailout*.phpt
+ext/standard/tests/**/*ghsa*.phpt
+ext/standard/tests/**/*GHSA*.phpt
+ext/standard/tests/**/*bailout*.phpt
+sapi/fpm/tests/**/*ghsa*.phpt
+sapi/fpm/tests/**/*GHSA*.phpt
+sapi/fpm/tests/**/*bailout*.phpt
+# FPM 安全测试以非 root 运行（运行器本身以 nobody 执行）；mysqlnd GHSA-r6x9 用例位于 ext/mysqli/tests，已由上面覆盖。
+# 系统 PCRE2：原安全回归包含全部 PCRE 用例。
+ext/pcre/tests
+# GD：本镜像使用补丁版外部 libgd，需全量回归与 PHP 内置 GD 的差异。
+ext/gd/tests
