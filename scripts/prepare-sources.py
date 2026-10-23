@@ -8,6 +8,7 @@
 # @Contact  : admin@dstw.com
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 import subprocess
@@ -18,6 +19,10 @@ root = Path(__file__).resolve().parent.parent
 lock = json.loads((root / 'sources.lock.json').read_text())
 php_version = json.loads((root / 'config/extensions.json').read_text())['php']
 cache = root / '.cache/sources'
+# 只处理当前目标架构需要的源码（如各架构的官方 Loader 包）；未声明 arch 的源码适用于所有架构。
+arch = os.environ.get('TARGETARCH') or 'amd64'
+lock['sources'] = [s for s in lock['sources'] if s.get('arch', arch) == arch]
+lock['binary_loaders'] = [l for l in lock.get('binary_loaders', []) if l.get('arch', arch) == arch]
 cache.mkdir(parents=True, exist_ok=True)
 
 

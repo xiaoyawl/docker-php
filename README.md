@@ -2,7 +2,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.1.34-777BB4)
 ![Alpine](https://img.shields.io/badge/Alpine-3.24-0D597F)
-![架构](https://img.shields.io/badge/架构-amd64-blue)
+![架构](https://img.shields.io/badge/架构-amd64%20%7C%20arm64-blue)
 ![维护状态](https://img.shields.io/badge/上游-EOL-B0332B)
 
 本分支 `php-8.1.34` 构建 `benyoo/php-alpine:8.1.34.<构建日>-swoole5`、`benyoo/php-alpine:8.1.34.<构建日>-swoole6`：基于 Alpine 3.24 从源码编译 PHP 8.1.34，纳入可信安全回补、现代依赖适配、常用数据库与缓存扩展、官方 Loader，并在构建时更新 CA 信任库。
@@ -79,8 +79,8 @@ configure 参数见 [`config/php-configure.txt`](config/php-configure.txt)。
 | zstd | 0.18.0 | `ZSTD` | 链接系统 libzstd |
 | imagick | 3.8.1 | `IMAGICK` | 运行镜像含 imagemagick 格式模块 |
 | FFI | 8.1.34（内置） | `FFI` | 以共享模块编译，开启时同时设置 `ffi.enable=1` |
-| ionCube Loader | 15.5.1 | `IONCUBE` | 官方 musl 版，无需 glibc 兼容层；与 Xdebug 互斥 |
-| SourceGuardian Loader | 17.0.0 | `SOURCEGUARDIAN` | 官方 glibc 版，依赖 gcompat 与 libudev-zero |
+| ionCube Loader | 15.5.1 | `IONCUBE` | 官方 musl 版，无需 glibc 兼容层；与 Xdebug 互斥；arm64 使用官方 aarch64 glibc 版，启用时预加载 gcompat |
+| SourceGuardian Loader | 17.0.0 | `SOURCEGUARDIAN` | 官方 glibc 版，依赖 gcompat 与 libudev-zero；arm64 使用官方 aarch64 版 |
 
 扩展的版本、编译参数与开关统一定义在 [`config/extensions.json`](config/extensions.json)，源码摘要见 [`sources.lock.json`](sources.lock.json)。
 
@@ -162,9 +162,10 @@ configure 参数见 [`config/php-configure.txt`](config/php-configure.txt)。
 | `libgd/` | 补丁版 libgd 的源码锁与补丁 |
 
 ```bash
-# 在指定的远程 Linux 构建节点执行（只构建 amd64，不推送）
-bash scripts/build-image.sh       # 产物：artifacts/<变体>/php-8.1.34-amd64.oci.tar
-bash scripts/verify-artifact.sh   # 全套验收：功能、扩展、数据库与缓存真实读写、TLS/CA、FPM 生命周期、扫描
+# 在指定的远程 Linux 构建节点执行（默认 linux/amd64,linux/arm64，不推送；PLATFORMS 可只构建部分架构）
+bash scripts/build-image.sh       # 产物：artifacts/<变体>/php-8.1.34.oci.tar（多架构 OCI 索引）
+bash scripts/verify-artifact.sh   # 按架构全套验收：功能、扩展、数据库与缓存真实读写、TLS/CA、FPM 生命周期、扫描
+printf '%s' "$令牌" | DOCKERHUB_USER=benyoo bash scripts/push-image.sh   # 原样推送已验收归档并核对仓库端摘要
 ```
 
 ## 目录与维护说明
@@ -194,12 +195,16 @@ bash scripts/verify-artifact.sh   # 全套验收：功能、扩展、数据库�
 
 ## 验收结果
 
-最近一次模板构建（2026-10-23，amd64）：
+最近一次模板构建（2026-10-23，linux/amd64 与 linux/arm64，两种架构分别验收）：
 
-- **产物**：
-  - `benyoo/php-alpine:8.1.34.20261023-swoole5`：OCI SHA-256 `a28c059d2823b633e9ebd0542800f587db82e880322add1b41c41572591825ae`；清单 `sha256:280f6326…49eb9855`；配置 `sha256:63407f69…b61d10156`；镜像约 121 MB。
-  - `benyoo/php-alpine:8.1.34.20261023-swoole6`：OCI SHA-256 `361efd7416d721ba4cf1568591d3dfae1ec0f53df5bb91fca112a504e1d65250`；清单 `sha256:e8c19a13…b61a608f`；配置 `sha256:18eadba2…a58dfb90d`；镜像约 121 MB。
 - **全套验收通过（两个变体）**：扩展与 Loader 版本逐项核对（memcache 8.2、memcached 3.4.0、redis 6.3.0、swoole 5.1.8 / 6.1.10、xdebug 3.5.3、mongodb 2.5.5、zstd 0.18.0、event 3.1.6、apcu 5.1.28、imagick 3.8.1、FFI、ionCube 15.5.1、SourceGuardian 17.0.0）；ionCube + SourceGuardian + OPcache 组合与 FPM worker 中加载；`HPROSE` / `MONGO` 开关报错退出；libgd 旋转回归 210 组；可选扩展离线功能（Imagick、SourceGuardian、APCu、FFI）；Xdebug 3.5.3 覆盖率与跟踪；Swoole（`Swoole\Server` / `Swoole\Client`）TCP 收发；Redis 6.3.0 接口基线与真实读写；git 与 Composer；MySQL / PostgreSQL / Memcache / Memcached 真实读写；MongoDB 8.0（捆绑 libmongoc 2.5.6）；HTTP 与 mysqlnd 协议安全回归、TLS 与 CA；FPM 同 worker 请求、内存耗尽后 worker 按 0083 补丁退出并由 master 补充（清单 `fpm.oom_worker_exits=true`）、重启与退出；argon2、WebP、AVIF、db4 实测生效；扩展包许可文件（含 MongoDB 捆绑 C 驱动）随镜像保存在 `/usr/local/php/share/licenses/`；Trivy 扫描 0 项（扫描器无法识别自编译 PHP 与闭源 Loader，0 项不等于没有漏洞）。
-- **上游 PHPT**（官方 `run-tests.php`，非 root、断网；与 Swoole 变体无关，在 `-swoole5` 构建阶段镜像运行）：共 526 个用例（补丁附带 80 个 + GD、PCRE 全套 + mysqlnd 安全用例），通过 459、失败 11、跳过 56；GHSA-r6x9 的 38 个伪服务端用例全部通过。失败项逐项核实，**没有安全修复缺失**，11 项均为环境或系统库差异：外部 libgd / FreeType 的字体度量 6 项、旋转与缩放尺寸 2 项（bug65148、bug73272）、PCRE2 10.49 错误文本 1 项、musl 区域设置 2 项。
+- **上游 PHPT**（官方 `run-tests.php`，非 root、断网；与 Swoole 变体无关，在 `-swoole5` 构建阶段镜像运行）：linux/amd64 与 linux/arm64 结果相同、失败清单一致，没有 arm64 独有失败；共 526 个用例（补丁附带 80 个 + GD、PCRE 全套 + mysqlnd 安全用例），通过 459、失败 11、跳过 56；GHSA-r6x9 的 38 个伪服务端用例全部通过。失败项逐项核实，**没有安全修复缺失**，11 项均为环境或系统库差异：外部 libgd / FreeType 的字体度量 6 项、旋转与缩放尺寸 2 项（bug65148、bug73272）、PCRE2 10.49 错误文本 1 项、musl 区域设置 2 项。
 
-镜像摘要在推送后补充。
+| 镜像标签（已推送） | 索引摘要（仓库端与归档一致） | amd64 清单 | arm64 清单 | 压缩层 amd64 / arm64 | OCI 归档 SHA-256 |
+|---|---|---|---|---|---|
+| `benyoo/php-alpine:8.1.34.20261023-swoole5` | `sha256:7961d819e890427e2f5059b29f2f583152034d7bdaa1934baf60b9540b5b834a` | `sha256:88e01e5a6db63a833c86f4c4a4616208f83cad0fa82dfc81ff66589d0dafa7e2` | `sha256:2f58669881a0af94b059fe02cd136a656f21abc28a1685b57764a01e71faac43` | 约 121 / 120 MB | `32ddd0dbaa36d9be65e8a9b854f28edb5f0b144c1ae3bcd8d84d3770da5c82b6` |
+| `benyoo/php-alpine:8.1.34.20261023-swoole6` | `sha256:285bc435b387cfa2cf95f708db554abec20cf48273c7dfceceba7f561b84bad4` | `sha256:25d0664da219dc018ba85666cbc373ed10fbbb804bd47e1d63c129b19de7bba2` | `sha256:f847290fe5f0c0fd900c2d9d9e8cdf10d344dfe26e7f44ebdfb8147b247b67ea` | 约 121 / 120 MB | `15b23083b96c59b687defe9b600986da83e4c74b4110e702e48fe7da73c96f88` |
+
+无后缀标签 `benyoo/php-alpine:8.1.34.20261023` 是 swoole6 标签的别名，指向同一索引摘要。
+
+Trivy 扫描（每个变体与架构）：swoole5、swoole6 的 amd64 与 arm64 均为 0 项。
